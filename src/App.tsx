@@ -24,6 +24,7 @@ import InterviewPrep from "./pages/InterviewPrep";
 import Enterprise from "./pages/Enterprise";
 import ContentManagement from "./pages/ContentManagement";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,52 +46,54 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/skills-assessment"
-                element={
-                  <AuthGuard>
-                    <SkillsAssessmentPage />
-                  </AuthGuard>
-                }
-              />
-              <Route path="/register" element={<Register />} />
-              <Route
-                path="/email-verification"
-                element={<EmailVerification />}
-              />
-              <Route path="/learning" element={<LearningHub />} />
-              <Route
-                path="/learning-enhancement"
-                element={<LearningEnhancement />}
-              />
-              <Route path="/ai-learning" element={<AILearning />} />
-              <Route
-                path="/collaborative"
-                element={<CollaborativeLearning />}
-              />
-              <Route path="/interview-prep" element={<InterviewPrep />} />
-              <Route path="/gamification" element={<Gamification />} />
-              <Route path="/social" element={<SocialHub />} />
-              <Route path="/advanced" element={<AdvancedFeatures />} />
-              <Route path="/enterprise" element={<Enterprise />} />
-              <Route
-                path="/content-management"
-                element={<ContentManagement />}
-              />
-              <Route
-                path="/dashboard"
-                element={
-                  <AuthGuard>
-                    <Dashboard />
-                  </AuthGuard>
-                }
-              />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/skills-assessment"
+                  element={
+                    <AuthGuard>
+                      <SkillsAssessmentPage />
+                    </AuthGuard>
+                  }
+                />
+                <Route path="/register" element={<Register />} />
+                <Route
+                  path="/email-verification"
+                  element={<EmailVerification />}
+                />
+                <Route path="/learning" element={<LearningHub />} />
+                <Route
+                  path="/learning-enhancement"
+                  element={<LearningEnhancement />}
+                />
+                <Route path="/ai-learning" element={<AILearning />} />
+                <Route
+                  path="/collaborative"
+                  element={<CollaborativeLearning />}
+                />
+                <Route path="/interview-prep" element={<InterviewPrep />} />
+                <Route path="/gamification" element={<Gamification />} />
+                <Route path="/social" element={<SocialHub />} />
+                <Route path="/advanced" element={<AdvancedFeatures />} />
+                <Route path="/enterprise" element={<Enterprise />} />
+                <Route
+                  path="/content-management"
+                  element={<ContentManagement />}
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <AuthGuard>
+                      <Dashboard />
+                    </AuthGuard>
+                  }
+                />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
