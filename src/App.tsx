@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +23,8 @@ import CollaborativeLearning from "./pages/CollaborativeLearning";
 import InterviewPrep from "./pages/InterviewPrep";
 import Enterprise from "./pages/Enterprise";
 import ContentManagement from "./pages/ContentManagement";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,38 +46,58 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/skills-assessment" element={
-              <AuthGuard>
-                <SkillsAssessmentPage />
-              </AuthGuard>
-            } />
-            <Route path="/register" element={<Register />} />
-            <Route path="/email-verification" element={<EmailVerification />} />
-            <Route path="/learning" element={<LearningHub />} />
-            <Route path="/learning-enhancement" element={<LearningEnhancement />} />
-            <Route path="/ai-learning" element={<AILearning />} />
-            <Route path="/collaborative" element={<CollaborativeLearning />} />
-            <Route path="/interview-prep" element={<InterviewPrep />} />
-            <Route path="/gamification" element={<Gamification />} />
-            <Route path="/social" element={<SocialHub />} />
-            <Route path="/advanced" element={<AdvancedFeatures />} />
-            <Route path="/enterprise" element={<Enterprise />} />
-            <Route path="/content-management" element={<ContentManagement />} />
-            <Route path="/dashboard" element={
-              <AuthGuard>
-                <Dashboard />
-              </AuthGuard>
-            } />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/skills-assessment"
+                element={
+                  <AuthGuard>
+                    <SkillsAssessmentPage />
+                  </AuthGuard>
+                }
+              />
+              <Route path="/register" element={<Register />} />
+              <Route
+                path="/email-verification"
+                element={<EmailVerification />}
+              />
+              <Route path="/learning" element={<LearningHub />} />
+              <Route
+                path="/learning-enhancement"
+                element={<LearningEnhancement />}
+              />
+              <Route path="/ai-learning" element={<AILearning />} />
+              <Route
+                path="/collaborative"
+                element={<CollaborativeLearning />}
+              />
+              <Route path="/interview-prep" element={<InterviewPrep />} />
+              <Route path="/gamification" element={<Gamification />} />
+              <Route path="/social" element={<SocialHub />} />
+              <Route path="/advanced" element={<AdvancedFeatures />} />
+              <Route path="/enterprise" element={<Enterprise />} />
+              <Route
+                path="/content-management"
+                element={<ContentManagement />}
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <AuthGuard>
+                    <Dashboard />
+                  </AuthGuard>
+                }
+              />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+      <SpeedInsights />
+      <Analytics />
+    </QueryClientProvider>
   </ErrorBoundary>
 );
 
