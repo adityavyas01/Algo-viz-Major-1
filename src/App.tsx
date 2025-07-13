@@ -23,8 +23,7 @@ import CollaborativeLearning from "./pages/CollaborativeLearning";
 import InterviewPrep from "./pages/InterviewPrep";
 import Enterprise from "./pages/Enterprise";
 import ContentManagement from "./pages/ContentManagement";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,7 +95,6 @@ const App = () => (
         </TooltipProvider>
       </ThemeProvider>
       <SpeedInsights />
-      <Analytics />
     </QueryClientProvider>
   </ErrorBoundary>
 );
