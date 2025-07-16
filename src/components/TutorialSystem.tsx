@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Play, BookOpen, Code, CheckCircle } from 'lucide-react';
 import { algorithmDatabase, type AlgorithmExplanation } from '@/data/algorithmDatabase';
+import { LeetCodeQuestions } from '@/components/LeetCodeQuestions';
 
 interface TutorialSystemProps {
   algorithmId: string;
@@ -191,6 +192,12 @@ export const TutorialSystem: React.FC<TutorialSystemProps> = ({ algorithmId }) =
           />
         ))}
       </div>
+
+      {/* LeetCode Questions Section */}
+      <LeetCodeQuestions 
+        topicId={algorithm.id} 
+        topicName={algorithm.name}
+      />
     </div>
   );
 };
