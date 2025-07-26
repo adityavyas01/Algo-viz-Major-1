@@ -1,11 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Mail, CheckCircle, RefreshCw, ArrowLeft } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Mail, CheckCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const EmailVerification = () => {
   const [searchParams] = useSearchParams();
@@ -15,47 +21,120 @@ const EmailVerification = () => {
   const [isResending, setIsResending] = useState(false);
   const [resendCount, setResendCount] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
-  
-  const email = searchParams.get('email') || '';
+  const [isChecking, setIsChecking] = useState(false);
+
+  const email = searchParams.get("email") || "";
+
+  // Function to check if user has completed skills assessment
+  const checkUserStatus = async () => {
+    if (!user) return null;
+
+    const { data: assessment } = await supabase
+      .from("user_assessments")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    return assessment;
+  };
+
+  // Function to redirect user to appropriate page
+  const redirectUser = async () => {
+    const assessment = await checkUserStatus();
+    if (assessment) {
+      navigate("/dashboard");
+    } else {
+      navigate("/skills-assessment");
+    }
+  };
 
   useEffect(() => {
-    // If user is already authenticated and verified, redirect to home page
+    // If user is already authenticated and verified, redirect to appropriate page
     if (user && user.email_confirmed_at) {
       setIsVerified(true);
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+      redirectUser();
     }
   }, [user, navigate]);
+
+  // Polling mechanism to check verification status
+  useEffect(() => {
+    if (!user || user.email_confirmed_at) return;
+
+    const pollInterval = setInterval(async () => {
+      setIsChecking(true);
+      try {
+        // Refresh the session to get latest user data
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error("Error refreshing session:", error);
+          return;
+        }
+
+        // Check if user is now verified
+        if (session?.user?.email_confirmed_at) {
+          setIsVerified(true);
+          toast({
+            title: "Email Verified! 🎉",
+            description:
+              "Your email has been successfully verified. Redirecting...",
+          });
+
+          // Redirect to appropriate page
+          const assessment = await checkUserStatus();
+          if (assessment) {
+            navigate("/dashboard");
+          } else {
+            navigate("/skills-assessment");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking verification status:", error);
+      } finally {
+        setIsChecking(false);
+      }
+    }, 3000); // Check every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [user, navigate, toast]);
 
   const handleResendEmail = async () => {
     if (!email) {
       toast({
         title: "Error",
         description: "Email address not found. Please try signing up again.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     setIsResending(true);
     try {
+      // Use deployed URL for email verification redirect
+      const redirectUrl =
+        process.env.NODE_ENV === "production"
+          ? "https://algo-viz-major-1.vercel.app/email-verification-success"
+          : `${window.location.origin}/email-verification-success`;
+
       const { error } = await supabase.auth.resend({
-        type: 'signup',
+        type: "signup",
         email: email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
+          emailRedirectTo: redirectUrl,
+        },
       });
 
       if (error) {
         toast({
           title: "Error",
           description: error.message,
-          variant: "destructive"
+          variant: "destructive",
         });
       } else {
-        setResendCount(prev => prev + 1);
+        setResendCount((prev) => prev + 1);
         toast({
           title: "Email Sent",
           description: "We've sent you another confirmation email.",
@@ -65,7 +144,7 @@ const EmailVerification = () => {
       toast({
         title: "Error",
         description: "Failed to resend email. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsResending(false);
@@ -73,7 +152,7 @@ const EmailVerification = () => {
   };
 
   const handleBackToSignup = () => {
-    navigate('/register');
+    navigate("/register");
   };
 
   if (isVerified) {
@@ -84,9 +163,12 @@ const EmailVerification = () => {
             <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-green-400" />
             </div>
-            <CardTitle className="text-2xl font-bold text-white">Thank You!</CardTitle>
+            <CardTitle className="text-2xl font-bold text-white">
+              Email Verified! 🎉
+            </CardTitle>
             <CardDescription className="text-white/70">
-              Your email has been successfully verified. You can now access all features! Redirecting to home page...
+              Your email has been successfully verified. Redirecting you to the
+              next step...
             </CardDescription>
           </CardHeader>
         </Card>
@@ -101,21 +183,29 @@ const EmailVerification = () => {
           <div className="mx-auto w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mb-4">
             <Mail className="w-8 h-8 text-cyan-400" />
           </div>
-          <CardTitle className="text-2xl font-bold text-white">Check Your Email</CardTitle>
+          <CardTitle className="text-2xl font-bold text-white">
+            Check Your Email
+          </CardTitle>
           <CardDescription className="text-white/70">
-            We've sent a verification link to{' '}
+            We've sent a verification link to{" "}
             <span className="text-cyan-400 font-medium">{email}</span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center">
             <p className="text-white/60 text-sm">
-              Click the link in your email to verify your account and complete the signup process.
+              Click the link in your email to verify your account and complete
+              the signup process.
             </p>
+            {isChecking && (
+              <p className="text-cyan-400 text-sm mt-2">
+                Checking verification status...
+              </p>
+            )}
           </div>
 
           <div className="space-y-4">
-            <Button 
+            <Button
               onClick={handleResendEmail}
               disabled={isResending || resendCount >= 3}
               className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
@@ -128,18 +218,21 @@ const EmailVerification = () => {
               ) : (
                 <>
                   <Mail className="w-4 h-4 mr-2" />
-                  {resendCount > 0 ? 'Resend Email' : 'Resend Verification Email'}
+                  {resendCount > 0
+                    ? "Resend Email"
+                    : "Resend Verification Email"}
                 </>
               )}
             </Button>
 
             {resendCount >= 3 && (
               <p className="text-yellow-400 text-sm text-center">
-                Maximum resend attempts reached. Please try again later or contact support.
+                Maximum resend attempts reached. Please try again later or
+                contact support.
               </p>
             )}
 
-            <Button 
+            <Button
               onClick={handleBackToSignup}
               variant="outline"
               className="w-full border-white/30 text-white/70 hover:bg-white/10"
@@ -152,6 +245,8 @@ const EmailVerification = () => {
           <div className="text-center">
             <p className="text-white/50 text-xs">
               Didn't receive the email? Check your spam folder or try resending.
+              {isChecking &&
+                " We'll automatically detect when you verify your email."}
             </p>
           </div>
         </CardContent>

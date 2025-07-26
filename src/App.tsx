@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import SkillsAssessmentPage from "./pages/SkillsAssessment";
 import Register from "./pages/Register";
 import EmailVerification from "./pages/EmailVerification";
+import EmailVerificationSuccess from "./pages/EmailVerificationSuccess";
 import Dashboard from "./pages/Dashboard";
 import LearningHub from "./pages/LearningHub";
 import Gamification from "./pages/Gamification";
@@ -62,6 +63,10 @@ const App = () => (
                 <Route
                   path="/email-verification"
                   element={<EmailVerification />}
+                />
+                <Route
+                  path="/email-verification-success"
+                  element={<EmailVerificationSuccess />}
                 />
                 <Route path="/learning" element={<LearningHub />} />
                 <Route
