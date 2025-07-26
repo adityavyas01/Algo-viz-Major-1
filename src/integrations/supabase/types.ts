@@ -137,6 +137,68 @@ export type Database = {
         }
         Relationships: []
       }
+      leetcode_questions: {
+        Row: {
+          created_at: string
+          description: string | null
+          difficulty: string
+          difficulty_level: number
+          hints: string[] | null
+          id: string
+          leetcode_url: string
+          problem_number: number | null
+          solution: string | null
+          space_complexity: string | null
+          tags: string[] | null
+          time_complexity: string | null
+          title: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          difficulty: string
+          difficulty_level: number
+          hints?: string[] | null
+          id?: string
+          leetcode_url: string
+          problem_number?: number | null
+          solution?: string | null
+          space_complexity?: string | null
+          tags?: string[] | null
+          time_complexity?: string | null
+          title: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          difficulty_level?: number
+          hints?: string[] | null
+          id?: string
+          leetcode_url?: string
+          problem_number?: number | null
+          solution?: string | null
+          space_complexity?: string | null
+          tags?: string[] | null
+          time_complexity?: string | null
+          title?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leetcode_questions_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "dsa_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
