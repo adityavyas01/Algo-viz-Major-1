@@ -36,22 +36,22 @@ export const AuthAwareFeature: React.FC<AuthAwareFeatureProps> = ({
       </div>
       
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20 max-w-md w-full">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-40">
+        <Card className="bg-popover/95 backdrop-blur-sm border-border max-w-md w-full">
           <CardContent className="p-6 text-center">
             <div className="w-16 h-16 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8 text-white" />
             </div>
             
-            <h3 className="text-white text-xl font-semibold mb-2">
+            <h3 className="text-foreground text-xl font-semibold mb-2">
               Unlock {featureName}
             </h3>
             
-            <p className="text-white/80 mb-4 text-sm leading-relaxed">
+            <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
               {benefit}
             </p>
             
-            <div className="flex items-center justify-center gap-2 mb-6 text-cyan-300 text-sm">
+            <div className="flex items-center justify-center gap-2 mb-6 text-primary text-sm">
               <Star className="w-4 h-4" />
               <span>Premium Feature</span>
             </div>
@@ -60,7 +60,7 @@ export const AuthAwareFeature: React.FC<AuthAwareFeatureProps> = ({
               <Button 
                 asChild
                 size="sm"
-                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Link to="/register">
                   <Trophy className="w-4 h-4 mr-2" />
@@ -72,7 +72,7 @@ export const AuthAwareFeature: React.FC<AuthAwareFeatureProps> = ({
                 asChild
                 variant="outline"
                 size="sm"
-                className="w-full border-white/30 text-white hover:bg-white/10"
+                className="w-full"
               >
                 <Link to="/login">
                   Already have an account? Sign In
