@@ -17,23 +17,23 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-white/10 backdrop-blur-sm border-b border-white/20 sticky top-0 z-50">
+    <header className="bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link to="/" className="text-2xl font-bold text-white">
+            <Link to="/" className="text-2xl font-bold text-primary">
               AlgoViz
             </Link>
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/learning" className="text-white/80 hover:text-white transition-colors">
+            <Link to="/learning" className="text-foreground hover:text-primary transition-colors font-medium">
               Learning
             </Link>
-            <Link to="/social" className="text-white/80 hover:text-white transition-colors">
+            <Link to="/social" className="text-foreground hover:text-primary transition-colors font-medium">
               Community
             </Link>
-            <Link to="/gamification" className="text-white/80 hover:text-white transition-colors">
+            <Link to="/gamification" className="text-foreground hover:text-primary transition-colors font-medium">
               Challenges
             </Link>
           </nav>
@@ -50,20 +50,20 @@ export const Header = () => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white/10 backdrop-blur-sm border-white/20" align="end">
-                  <DropdownMenuItem className="text-white hover:bg-white/10">
+                <DropdownMenuContent className="w-56 bg-popover/95 backdrop-blur-sm border-border" align="end">
+                  <DropdownMenuItem className="text-popover-foreground hover:bg-accent">
                     <User className="mr-2 h-4 w-4" />
                     <span>{user.email}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white hover:bg-white/10"
+                    className="text-popover-foreground hover:bg-accent"
                     onClick={() => navigate('/dashboard')}
                   >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    className="text-white hover:bg-white/10"
+                    className="text-popover-foreground hover:bg-accent"
                     onClick={handleSignOut}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -73,10 +73,10 @@ export const Header = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button asChild variant="ghost" className="text-white hover:bg-white/10">
+                <Button asChild variant="ghost" className="text-foreground hover:bg-accent">
                   <Link to="/login">Sign In</Link>
                 </Button>
-                <Button asChild className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700">
+                <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <Link to="/register">Sign Up</Link>
                 </Button>
               </div>
