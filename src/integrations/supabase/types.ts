@@ -14,6 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_roles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          created_by: string
+          description: string
+          difficulty: string
+          hints: string[] | null
+          id: string
+          is_active: boolean
+          mcq_questions: Json | null
+          points: number
+          problem_statement: string | null
+          sample_input: string | null
+          sample_output: string | null
+          solution: string | null
+          test_cases: Json | null
+          time_limit: number
+          title: string
+          topic_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          challenge_type: string
+          created_at?: string
+          created_by: string
+          description: string
+          difficulty: string
+          hints?: string[] | null
+          id?: string
+          is_active?: boolean
+          mcq_questions?: Json | null
+          points?: number
+          problem_statement?: string | null
+          sample_input?: string | null
+          sample_output?: string | null
+          solution?: string | null
+          test_cases?: Json | null
+          time_limit?: number
+          title: string
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          difficulty?: string
+          hints?: string[] | null
+          id?: string
+          is_active?: boolean
+          mcq_questions?: Json | null
+          points?: number
+          problem_statement?: string | null
+          sample_input?: string | null
+          sample_output?: string | null
+          solution?: string | null
+          test_cases?: Json | null
+          time_limit?: number
+          title?: string
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "dsa_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_challenges: {
+        Row: {
+          challenge_date: string
+          challenge_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          challenge_date?: string
+          challenge_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          challenge_date?: string
+          challenge_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dsa_topics: {
         Row: {
           category: string
@@ -273,6 +406,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_challenge_attempts: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          mcq_answers: Json | null
+          score: number | null
+          started_at: string
+          status: string
+          submission_code: string | null
+          time_taken: number | null
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mcq_answers?: Json | null
+          score?: number | null
+          started_at?: string
+          status: string
+          submission_code?: string | null
+          time_taken?: number | null
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mcq_answers?: Json | null
+          score?: number | null
+          started_at?: string
+          status?: string
+          submission_code?: string | null
+          time_taken?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenge_attempts_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_stats: {
         Row: {
