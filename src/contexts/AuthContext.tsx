@@ -89,11 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [navigate]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    // Use deployed URL for email verification redirect
+    // Always use the hosted URL for email verification redirect
+    // This ensures verification links work from any device
     const redirectUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://algo-viz-major-1.vercel.app/email-verification-success"
-        : `${window.location.origin}/email-verification-success`;
+      "https://algo-viz-major-1.vercel.app/email-verification-success";
 
     const { error } = await supabase.auth.signUp({
       email,

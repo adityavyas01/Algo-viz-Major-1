@@ -56,12 +56,17 @@ const EmailVerification = () => {
     }
   }, [user, navigate]);
 
-  // Polling mechanism to check verification status
+  // Enhanced polling mechanism to check verification status (webhook-style)
   useEffect(() => {
     if (!user || user.email_confirmed_at) return;
 
+    let pollCount = 0;
+    const maxPolls = 60; // Stop polling after 5 minutes (60 * 5 seconds)
+
     const pollInterval = setInterval(async () => {
+      pollCount++;
       setIsChecking(true);
+
       try {
         // Refresh the session to get latest user data
         const {
@@ -90,13 +95,28 @@ const EmailVerification = () => {
           } else {
             navigate("/skills-assessment");
           }
+
+          // Clear the interval since verification is complete
+          clearInterval(pollInterval);
+          return;
+        }
+
+        // If we've been polling for too long, stop and show a message
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          toast({
+            title: "Verification Timeout",
+            description:
+              "Please check your email and click the verification link, or try resending the email.",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error("Error checking verification status:", error);
       } finally {
         setIsChecking(false);
       }
-    }, 3000); // Check every 3 seconds
+    }, 5000); // Check every 5 seconds for better performance
 
     return () => clearInterval(pollInterval);
   }, [user, navigate, toast]);
@@ -113,11 +133,10 @@ const EmailVerification = () => {
 
     setIsResending(true);
     try {
-      // Use deployed URL for email verification redirect
+      // Always use the hosted URL for email verification redirect
+      // This ensures verification links work from any device
       const redirectUrl =
-        process.env.NODE_ENV === "production"
-          ? "https://algo-viz-major-1.vercel.app/email-verification-success"
-          : `${window.location.origin}/email-verification-success`;
+        "https://algo-viz-major-1.vercel.app/email-verification-success";
 
       const { error } = await supabase.auth.resend({
         type: "signup",
@@ -198,9 +217,17 @@ const EmailVerification = () => {
               the signup process.
             </p>
             {isChecking && (
-              <p className="text-cyan-400 text-sm mt-2">
-                Checking verification status...
-              </p>
+              <div className="mt-3 p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
+                  <p className="text-cyan-400 text-sm font-medium">
+                    🔍 Checking verification status...
+                  </p>
+                </div>
+                <p className="text-cyan-300/70 text-xs mt-1">
+                  We'll automatically detect when you verify from any device
+                </p>
+              </div>
             )}
           </div>
 
@@ -245,8 +272,11 @@ const EmailVerification = () => {
           <div className="text-center">
             <p className="text-white/50 text-xs">
               Didn't receive the email? Check your spam folder or try resending.
-              {isChecking &&
-                " We'll automatically detect when you verify your email."}
+              {isChecking && (
+                <span className="block mt-1 text-cyan-300/70">
+                  🔄 Auto-detecting verification from any device...
+                </span>
+              )}
             </p>
           </div>
         </CardContent>
