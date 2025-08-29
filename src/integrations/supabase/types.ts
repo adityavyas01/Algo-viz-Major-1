@@ -17,24 +17,244 @@ export type Database = {
       admin_roles: {
         Row: {
           created_at: string
-          created_by: string | null
+          created_by: string
           id: string
           role: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
+          created_by: string
           id?: string
           role: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           id?: string
           role?: string
+          updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      proctoring_sessions: {
+        Row: {
+          camera_enabled: boolean
+          copy_paste_attempts: number
+          id: string
+          screen_recording_enabled: boolean
+          session_end: string | null
+          session_start: string
+          session_terminated: boolean
+          suspicious_activities: Json
+          tab_switches: number
+          tournament_id: string
+          user_id: string
+          warnings_issued: number
+        }
+        Insert: {
+          camera_enabled?: boolean
+          copy_paste_attempts?: number
+          id?: string
+          screen_recording_enabled?: boolean
+          session_end?: string | null
+          session_start?: string
+          session_terminated?: boolean
+          suspicious_activities?: Json
+          tab_switches?: number
+          tournament_id: string
+          user_id: string
+          warnings_issued?: number
+        }
+        Update: {
+          camera_enabled?: boolean
+          copy_paste_attempts?: number
+          id?: string
+          screen_recording_enabled?: boolean
+          session_end?: string | null
+          session_start?: string
+          session_terminated?: boolean
+          suspicious_activities?: Json
+          tab_switches?: number
+          tournament_id?: string
+          user_id?: string
+          warnings_issued?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proctoring_sessions_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_challenges: {
+        Row: {
+          challenge_id: string
+          challenge_order: number
+          id: string
+          points_multiplier: number
+          tournament_id: string
+        }
+        Insert: {
+          challenge_id: string
+          challenge_order: number
+          id?: string
+          points_multiplier?: number
+          tournament_id: string
+        }
+        Update: {
+          challenge_id?: string
+          challenge_order?: number
+          id?: string
+          points_multiplier?: number
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_challenges_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_participants: {
+        Row: {
+          final_rank: number | null
+          final_score: number
+          id: string
+          proctoring_violations: Json
+          registered_at: string
+          submission_time: string | null
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          final_rank?: number | null
+          final_score?: number
+          id?: string
+          proctoring_violations?: Json
+          registered_at?: string
+          submission_time?: string | null
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          final_rank?: number | null
+          final_score?: number
+          id?: string
+          proctoring_violations?: Json
+          registered_at?: string
+          submission_time?: string | null
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_participants_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          end_time: string
+          entry_fee: number
+          id: string
+          max_participants: number
+          prize_pool: number
+          requires_camera: boolean
+          requires_screen_recording: boolean
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_time: string
+          entry_fee?: number
+          id?: string
+          max_participants?: number
+          prize_pool?: number
+          requires_camera?: boolean
+          requires_screen_recording?: boolean
+          start_time: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_time?: string
+          entry_fee?: number
+          id?: string
+          max_participants?: number
+          prize_pool?: number
+          requires_camera?: boolean
+          requires_screen_recording?: boolean
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }

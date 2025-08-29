@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<LoginForm>>({});
   
-  const { signIn } = useAuth();
+  const { signIn, signInWithMagicLink } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -132,6 +131,26 @@ const Login = () => {
                 Sign up
               </Link>
             </p>
+          </div>
+
+          <div className="mt-4 space-y-2 text-center">
+            <Link to="/forgot-password" className="text-cyan-400 hover:text-cyan-300 text-sm block">
+              Forgot your password?
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                const email = (document.getElementById('email') as HTMLInputElement)?.value;
+                if (email) {
+                  signInWithMagicLink(email);
+                } else {
+                  toast.error('Please enter your email first');
+                }
+              }}
+              className="text-purple-400 hover:text-purple-300 text-sm block w-full"
+            >
+              Send magic link instead
+            </button>
           </div>
         </CardContent>
       </Card>

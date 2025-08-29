@@ -133,10 +133,8 @@ const EmailVerification = () => {
 
     setIsResending(true);
     try {
-      // Always use the hosted URL for email verification redirect
-      // This ensures verification links work from any device
-      const redirectUrl =
-        "https://algo-viz-major-1.vercel.app/email-verification-success";
+      // Production URL for email verification redirect
+      const redirectUrl = "https://algo-viz-major-1.vercel.app/email-verification-success";
 
       const { error } = await supabase.auth.resend({
         type: "signup",
@@ -274,7 +272,7 @@ const EmailVerification = () => {
               Didn't receive the email? Check your spam folder or try resending.
               {isChecking && (
                 <span className="block mt-1 text-cyan-300/70">
-                  🔄 Auto-detecting verification from any device...
+                  🔄 Checking verification status...
                 </span>
               )}
             </p>

@@ -17,6 +17,7 @@ const EmailVerificationSuccess = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [hasAssessment, setHasAssessment] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
     const checkUserStatus = async () => {
@@ -29,6 +30,25 @@ const EmailVerificationSuccess = () => {
           .single();
 
         setHasAssessment(!!assessment);
+        
+        // Start countdown timer
+        const countdownInterval = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval);
+              // Auto-redirect after countdown
+              if (assessment) {
+                navigate("/dashboard");
+              } else {
+                navigate("/skills-assessment");
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
+        return () => clearInterval(countdownInterval);
       }
       setIsLoading(false);
     };
@@ -36,7 +56,7 @@ const EmailVerificationSuccess = () => {
     // Wait a bit for auth state to settle
     const timer = setTimeout(checkUserStatus, 1000);
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, navigate]);
 
   const handleContinue = () => {
     if (hasAssessment) {
@@ -118,6 +138,16 @@ const EmailVerificationSuccess = () => {
                 ? "You can now access all features and continue your learning journey."
                 : "Complete a quick skills assessment to get your personalized learning path."}
             </p>
+            {countdown > 0 && (
+              <div className="mt-3 p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                <p className="text-cyan-400 text-sm font-medium">
+                  🚀 Auto-redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
+                </p>
+                <p className="text-cyan-300/70 text-xs mt-1">
+                  Click the button above to continue immediately
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

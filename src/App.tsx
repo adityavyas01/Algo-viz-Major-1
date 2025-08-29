@@ -1,110 +1,187 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import SkillsAssessmentPage from "./pages/SkillsAssessment";
-import Register from "./pages/Register";
-import EmailVerification from "./pages/EmailVerification";
-import EmailVerificationSuccess from "./pages/EmailVerificationSuccess";
-import Dashboard from "./pages/Dashboard";
-import LearningHub from "./pages/LearningHub";
-import Gamification from "./pages/Gamification";
-import NotFound from "./pages/NotFound";
-import { AuthGuard } from "./components/AuthGuard";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import AdvancedFeatures from "./pages/AdvancedFeatures";
-import SocialHub from "./pages/SocialHub";
-import LearningEnhancement from "./pages/LearningEnhancement";
-import AILearning from "./pages/AILearning";
-import CollaborativeLearning from "./pages/CollaborativeLearning";
-import InterviewPrep from "./pages/InterviewPrep";
-import Enterprise from "./pages/Enterprise";
-import ContentManagement from "./pages/ContentManagement";
-import { SpeedInsights } from "@vercel/speed-insights/react";
-import { AuthProvider } from "./contexts/AuthContext";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminProvider } from "@/contexts/AdminContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { EnhancedThemeProvider } from "@/contexts/EnhancedTheme";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
+// Pages
+import Home from "@/pages/Home";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import Dashboard from "@/pages/Dashboard";
+import Learning from "@/pages/Learning";
+import Community from "@/pages/Community";
+import Challenges from "@/pages/Challenges";
+import Profile from "@/pages/Profile";
+import SkillsAssessment from "@/pages/SkillsAssessment";
+import EmailVerification from "@/pages/EmailVerification";
+import EmailVerificationSuccess from "@/pages/EmailVerificationSuccess";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+import AdminPage from "@/pages/AdminPage";
+import AdvancedFeatures from "@/pages/AdvancedFeatures";
+import PracticeProblems from "@/pages/PracticeProblems";
+import Leaderboard from "@/pages/Leaderboard";
+import EnhancedVisualizationDemo from "@/pages/EnhancedVisualizationDemo";
+import NotFound from "@/pages/NotFound";
+
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 1000 * 60 * 5, // 5 minutes
       retry: (failureCount, error: any) => {
-        if (error?.status === 404) return false;
+        // Don't retry on 4xx errors (client errors)
+        if (error?.status >= 400 && error?.status < 500) {
+          return false;
+        }
         return failureCount < 3;
       },
     },
   },
 });
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AuthProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route
-                  path="/skills-assessment"
-                  element={
-                    <AuthGuard>
-                      <SkillsAssessmentPage />
-                    </AuthGuard>
-                  }
-                />
-                <Route path="/register" element={<Register />} />
-                <Route
-                  path="/email-verification"
-                  element={<EmailVerification />}
-                />
-                <Route
-                  path="/email-verification-success"
-                  element={<EmailVerificationSuccess />}
-                />
-                <Route path="/learning" element={<LearningHub />} />
-                <Route
-                  path="/learning-enhancement"
-                  element={<LearningEnhancement />}
-                />
-                <Route path="/ai-learning" element={<AILearning />} />
-                <Route
-                  path="/collaborative"
-                  element={<CollaborativeLearning />}
-                />
-                <Route path="/interview-prep" element={<InterviewPrep />} />
-                <Route path="/gamification" element={<Gamification />} />
-                <Route path="/social" element={<SocialHub />} />
-                <Route path="/advanced" element={<AdvancedFeatures />} />
-                <Route path="/enterprise" element={<Enterprise />} />
-                <Route
-                  path="/content-management"
-                  element={<ContentManagement />}
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <AuthGuard>
-                      <Dashboard />
-                    </AuthGuard>
-                  }
-                />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-      <SpeedInsights />
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+function App() {
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <EnhancedThemeProvider>
+            <Router future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true
+              }}>
+              <AuthProvider>
+                <AdminProvider>
+                <div className="App">
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/email-verification" element={<EmailVerification />} />
+                    <Route path="/email-verification-success" element={<EmailVerificationSuccess />} />
+                    
+                    {/* Protected Routes */}
+                    <Route 
+                      path="/dashboard" 
+                      element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/learning" 
+                      element={
+                        <ProtectedRoute>
+                          <Learning />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/community" 
+                      element={
+                        <ProtectedRoute>
+                          <Community />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/challenges" 
+                      element={
+                        <ProtectedRoute>
+                          <Challenges />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/practice" 
+                      element={
+                        <ProtectedRoute>
+                          <PracticeProblems />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/profile" 
+                      element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/skills-assessment" 
+                      element={
+                        <ProtectedRoute>
+                          <SkillsAssessment />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/leaderboard" 
+                      element={
+                        <ProtectedRoute>
+                          <Leaderboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/advanced-features" 
+                      element={
+                        <ProtectedRoute>
+                          <AdvancedFeatures />
+                        </ProtectedRoute>
+                      } 
+                    />
+
+                    <Route 
+                      path="/demo" 
+                      element={<EnhancedVisualizationDemo />} 
+                    />
+                    
+                    {/* Admin Routes */}
+                    <Route 
+                      path="/admin" 
+                      element={
+                        <ProtectedRoute requireAdmin>
+                          <AdminPage />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* Catch all route */}
+                    <Route path="/404" element={<NotFound />} />
+                    <Route path="*" element={<Navigate to="/404" replace />} />
+                  </Routes>
+                  
+                  <Toaster 
+                    position="top-right"
+                    toastOptions={{
+                      style: {
+                        background: "rgba(0, 0, 0, 0.8)",
+                        color: "white",
+                        border: "1px solid rgba(255, 255, 255, 0.2)",
+                      },
+                    }}
+                  />
+                </div>
+                </AdminProvider>
+              </AuthProvider>
+            </Router>
+          </EnhancedThemeProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+}
 
 export default App;
