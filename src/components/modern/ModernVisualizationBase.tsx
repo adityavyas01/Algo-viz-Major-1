@@ -91,7 +91,7 @@ const ModernControls: React.FC<ModernControlsProps> = ({
       <CardContent className="p-6">
         <div className="controls-section">
           {/* Primary Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Button
               onClick={onReset}
               variant="outline"
@@ -284,9 +284,9 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
         }}
       >
         <CardHeader className="pb-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="space-y-2">
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex flex-wrap items-center gap-3 mb-2">
                 <Badge 
                   className="px-3 py-1 rounded-full border-0 font-medium"
                   style={{ 
@@ -308,27 +308,27 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
                 </Badge>
               </div>
               <CardTitle 
-                className="text-3xl font-bold bg-gradient-to-r bg-clip-text text-transparent"
+                className="text-2xl lg:text-3xl font-bold bg-gradient-to-r bg-clip-text text-transparent break-words"
                 style={{ 
                   backgroundImage: `linear-gradient(135deg, ${currentTheme.colors.primary} 0%, ${currentTheme.colors.secondary} 100%)`
                 }}
               >
                 {title}
               </CardTitle>
-              <p className="text-lg leading-relaxed" style={{ color: currentTheme.colors.textSecondary }}>
+              <p className="text-base lg:text-lg leading-relaxed" style={{ color: currentTheme.colors.textSecondary }}>
                 {description}
               </p>
             </div>
-            <div className="flex flex-col gap-2 min-w-[200px]">
+            <div className="flex flex-row lg:flex-col gap-3 lg:gap-2 min-w-[200px] flex-wrap lg:flex-nowrap">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4" style={{ color: currentTheme.colors.primary }} />
-                <span className="text-sm font-medium" style={{ color: currentTheme.colors.textSecondary }}>
+                <span className="text-sm font-medium whitespace-nowrap" style={{ color: currentTheme.colors.textSecondary }}>
                   Time: {complexity.time}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" style={{ color: currentTheme.colors.secondary }} />
-                <span className="text-sm font-medium" style={{ color: currentTheme.colors.textSecondary }}>
+                <span className="text-sm font-medium whitespace-nowrap" style={{ color: currentTheme.colors.textSecondary }}>
                   Space: {complexity.space}
                 </span>
               </div>
@@ -352,7 +352,7 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
           borderRadius: '24px'
         }}
       >
-        <CardContent className="p-8">
+        <CardContent className="p-4 md:p-8">
           {children}
         </CardContent>
       </Card>
@@ -367,7 +367,7 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
             borderRadius: '24px'
           }}
         >
-          <CardHeader>
+          <CardHeader className="card-header-mobile">
             <CardTitle 
               className="flex items-center gap-2"
               style={{ color: currentTheme.colors.text }}
@@ -376,52 +376,52 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
               Learn More
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="card-content-mobile">
             <Tabs defaultValue="concepts" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 mb-6">
                 <TabsTrigger value="concepts">Key Concepts</TabsTrigger>
                 <TabsTrigger value="pseudocode">Pseudocode</TabsTrigger>
                 <TabsTrigger value="applications">Applications</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="concepts" className="space-y-3">
+              <TabsContent value="concepts" className="space-y-3 tabs-content">
                 {educational.keyPoints.map((point, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: currentTheme.colors.surface + '40' }}>
+                  <div key={index} className="educational-point flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: currentTheme.colors.surface + '40' }}>
                     <div 
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5"
+                      className="point-number w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 flex-shrink-0"
                       style={{ backgroundColor: currentTheme.colors.primary, color: 'white' }}
                     >
                       {index + 1}
                     </div>
-                    <p style={{ color: currentTheme.colors.text }}>{point}</p>
+                    <p className="text-sm md:text-base" style={{ color: currentTheme.colors.text }}>{point}</p>
                   </div>
                 ))}
               </TabsContent>
               
-              <TabsContent value="pseudocode">
+              <TabsContent value="pseudocode" className="tabs-content">
                 <div 
-                  className="p-4 rounded-lg font-mono text-sm space-y-1"
+                  className="p-4 rounded-lg font-mono text-xs md:text-sm space-y-1"
                   style={{ backgroundColor: currentTheme.colors.surface + '40' }}
                 >
                   {educational.pseudocode.map((line, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <span 
-                        className="text-xs w-6 text-center"
+                        className="text-xs w-6 text-center flex-shrink-0"
                         style={{ color: currentTheme.colors.textSecondary }}
                       >
                         {index + 1}
                       </span>
-                      <span style={{ color: currentTheme.colors.text }}>{line}</span>
+                      <span className="break-all" style={{ color: currentTheme.colors.text }}>{line}</span>
                     </div>
                   ))}
                 </div>
               </TabsContent>
               
-              <TabsContent value="applications" className="space-y-3">
+              <TabsContent value="applications" className="space-y-3 tabs-content">
                 {educational.realWorldUse.map((application, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: currentTheme.colors.surface + '40' }}>
-                    <Eye className="w-5 h-5 mt-0.5" style={{ color: currentTheme.colors.primary }} />
-                    <p style={{ color: currentTheme.colors.text }}>{application}</p>
+                  <div key={index} className="educational-point flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: currentTheme.colors.surface + '40' }}>
+                    <Eye className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: currentTheme.colors.primary }} />
+                    <p className="text-sm md:text-base" style={{ color: currentTheme.colors.text }}>{application}</p>
                   </div>
                 ))}
               </TabsContent>

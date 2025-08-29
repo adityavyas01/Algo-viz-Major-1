@@ -147,7 +147,6 @@ function App() {
                       path="/demo" 
                       element={<EnhancedVisualizationDemo />} 
                     />
-                    
                     {/* Admin Routes */}
                     <Route 
                       path="/admin" 

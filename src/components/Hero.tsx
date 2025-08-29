@@ -24,6 +24,12 @@ export const Hero = () => {
                 Start Learning
               </Button>
             </Link>
+            <Link to="/demo">
+              <Button size="lg" className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-8 py-3">
+                <Zap className="w-5 h-5 mr-2" />
+                Try Demo
+              </Button>
+            </Link>
             <Link to="/learning">
               <Button size="lg" className="bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 px-8 py-3">
                 <BookOpen className="w-5 h-5 mr-2" />
