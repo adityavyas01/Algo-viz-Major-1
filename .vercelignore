@@ -1,0 +1,36 @@
+# Dependencies
+node_modules
+.npm
+
+# Build outputs
+dist
+.vite
+
+# Development files
+.env.local
+.env.development
+*.log
+.DS_Store
+
+# IDE files
+.vscode
+.idea
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Database files
+*.sql
+database_*.sql
+
+# Supabase local development
+supabase/.temp
+supabase/logs
+
+# Development tools
+.lovable

@@ -22,22 +22,36 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: [
-            '@radix-ui/react-toast', 
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-tabs'
-          ],
-          supabase: ['@supabase/supabase-js'],
-          three: ['three', '@react-three/fiber', '@react-three/drei'],
-          charts: ['recharts'],
-          monaco: ['@monaco-editor/react'],
+        manualChunks: (id) => {
+          // Create smaller, more specific chunks
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'vendor-radix';
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('three')) {
+              return 'vendor-three';
+            }
+            if (id.includes('recharts')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('@monaco-editor')) {
+              return 'vendor-monaco';
+            }
+            if (id.includes('@sentry')) {
+              return 'vendor-sentry';
+            }
+            return 'vendor-other';
+          }
         },
       },
     },
+    chunkSizeWarningLimit: 1000,
     sourcemap: mode === 'development',
     minify: mode === 'production' ? 'esbuild' : false,
   },

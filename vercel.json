@@ -1,31 +1,8 @@
 {
-  "version": 2,
-  "name": "algo-viz",
-  "builds": [
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/robots.txt",
-      "dest": "/robots.txt"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/favicon.ico"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!api/.*).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -46,7 +23,7 @@
           "value": "nosniff"
         },
         {
-          "key": "X-Frame-Options",
+          "key": "X-Frame-Options", 
           "value": "DENY"
         },
         {
