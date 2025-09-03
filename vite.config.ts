@@ -19,13 +19,22 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      '@supabase/supabase-js'
+    ],
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: (id) => {
           // Create smaller, more specific chunks
           if (id.includes('node_modules')) {
-            if (id.includes('react')) {
+            if (id.includes('react') || id.includes('react-dom')) {
               return 'vendor-react';
             }
             if (id.includes('@radix-ui')) {
@@ -45,6 +54,9 @@ export default defineConfig(({ mode }) => ({
             }
             if (id.includes('@sentry')) {
               return 'vendor-sentry';
+            }
+            if (id.includes('security') || id.includes('errorLogging')) {
+              return 'security';
             }
             return 'vendor-other';
           }

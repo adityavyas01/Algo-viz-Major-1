@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { EnhancedThemeProvider } from "@/contexts/EnhancedTheme";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import ReactContextTest from "@/components/ReactContextTest";
 
 // Pages
 import Home from "@/pages/Home";
@@ -58,6 +59,7 @@ function App() {
               }}>
               <AuthProvider>
                 <AdminProvider>
+                <ReactContextTest />
                 <div className="App">
                   <Routes>
                     {/* Public Routes */}
