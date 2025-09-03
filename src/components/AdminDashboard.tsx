@@ -84,7 +84,17 @@ export const AdminDashboard: React.FC = () => {
 
   // Create tournament mutation
   const createTournamentMutation = useMutation({
-    mutationFn: async (tournamentData: any) => {
+    mutationFn: async (tournamentData: {
+      title: string;
+      description?: string;
+      start_time: string;
+      end_time: string;
+      max_participants?: number;
+      entry_fee?: number;
+      prize_pool?: number;
+      requires_camera?: boolean;
+      requires_screen_recording?: boolean;
+    }) => {
       const { data, error } = await supabase
         .from('tournaments')
         .insert([{
@@ -112,7 +122,7 @@ export const AdminDashboard: React.FC = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['admin-tournaments'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to create tournament');
     },
   });
@@ -165,7 +175,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
           <p className="text-white/70">
-            Welcome back, {adminRole}! Manage your AlgoViz platform.
+            Welcome back, {String(adminRole).replace('_', ' ')}! Manage your AlgoViz platform.
           </p>
         </div>
 
@@ -437,12 +447,12 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   ) : users && users.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
-                      {users.map((user: any) => (
+                      {users.map((user: {avatar_url: string; bio: string; created_at: string; display_name: string; id: string; updated_at: string; user_id: string}) => (
                         <Card key={user.id} className="bg-white/5 border-white/10">
                           <CardContent className="p-4">
                             <div className="flex justify-between items-center">
                               <div>
-                                <p className="text-white font-medium">{user.email}</p>
+                                <p className="text-white font-medium">{user.display_name || `User ${user.id.slice(0, 8)}`}</p>
                                 <p className="text-white/70 text-sm">
                                   Joined: {new Date(user.created_at).toLocaleDateString()}
                                 </p>

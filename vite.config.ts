@@ -27,8 +27,12 @@ export default defineConfig(({ mode }) => ({
       '@tanstack/react-query',
       '@supabase/supabase-js'
     ],
+    exclude: ['@vite/client', '@vite/env']
   },
   build: {
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
     rollupOptions: {
       output: {
         manualChunks: (id) => {

@@ -620,7 +620,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         // Capture console.log output
         const originalLog = console.log;
         let capturedOutput = '';
-        console.log = (...args: any[]) => {
+        console.log = (...args: unknown[]) => {
           capturedOutput += args.join(' ') + '\n';
         };
         
@@ -638,8 +638,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         if (onCodeRun) {
           onCodeRun(code, selectedLanguage);
         }
-      } catch (error: any) {
-        setOutput(`Error: ${error.message}`);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setOutput(`Error: ${errorMessage}`);
         setExecutionTime(null);
       }
     } else {

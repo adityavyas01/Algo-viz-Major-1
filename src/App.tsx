@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { EnhancedThemeProvider } from "@/contexts/EnhancedTheme";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import ReactContextTest from "@/components/ReactContextTest";
 
 // Pages
 import Home from "@/pages/Home";
@@ -36,10 +35,13 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry on 4xx errors (client errors)
-        if (error?.status >= 400 && error?.status < 500) {
-          return false;
+        if (typeof error === 'object' && error !== null && 'status' in error) {
+          const httpError = error as { status: number };
+          if (httpError.status >= 400 && httpError.status < 500) {
+            return false;
+          }
         }
         return failureCount < 3;
       },
@@ -59,7 +61,6 @@ function App() {
               }}>
               <AuthProvider>
                 <AdminProvider>
-                <ReactContextTest />
                 <div className="App">
                   <Routes>
                     {/* Public Routes */}

@@ -39,7 +39,7 @@ export const ComputationalGeometry: React.FC = () => {
     if (points.length < 3) return points;
 
     // Find the bottom-most point (and leftmost in case of tie)
-    let start = points.reduce((min, p) => 
+    const start = points.reduce((min, p) => 
       p.y < min.y || (p.y === min.y && p.x < min.x) ? p : min
     );
 
