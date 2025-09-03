@@ -80,27 +80,15 @@ function App() {
                     />
                     <Route 
                       path="/learning" 
-                      element={
-                        <ProtectedRoute>
-                          <Learning />
-                        </ProtectedRoute>
-                      } 
+                      element={<Learning />} 
                     />
                     <Route 
                       path="/community" 
-                      element={
-                        <ProtectedRoute>
-                          <Community />
-                        </ProtectedRoute>
-                      } 
+                      element={<Community />} 
                     />
                     <Route 
                       path="/challenges" 
-                      element={
-                        <ProtectedRoute>
-                          <Challenges />
-                        </ProtectedRoute>
-                      } 
+                      element={<Challenges />} 
                     />
                     <Route 
                       path="/practice" 

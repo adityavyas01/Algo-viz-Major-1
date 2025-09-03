@@ -14,45 +14,117 @@ import {
   mockActivityFeed, 
   mockTournaments 
 } from '@/data/socialData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const SocialHub: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentUser] = useState(mockUserProfiles[0]);
+  const [likedVisualizations, setLikedVisualizations] = useState<Set<string>>(new Set());
+  const [likedActivities, setLikedActivities] = useState<Set<string>>(new Set());
+  const [joinedGroups, setJoinedGroups] = useState<Set<string>>(new Set());
+  const [joinedTournaments, setJoinedTournaments] = useState<Set<string>>(new Set());
+
+  const requireAuth = (action: () => void) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    action();
+  };
 
   const handleConnect = () => {
-    console.log('Sending friend request...');
+    requireAuth(() => {
+      console.log('Sending friend request...');
+      // Here you would call your API to send a friend request
+    });
   };
 
   const handleMessage = () => {
-    console.log('Opening message...');
+    requireAuth(() => {
+      console.log('Opening message...');
+      // Here you would navigate to messaging or open a chat modal
+    });
   };
 
   const handleLikeVisualization = (id: string) => {
-    console.log('Liking visualization:', id);
+    requireAuth(() => {
+      setLikedVisualizations(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(id)) {
+          newSet.delete(id);
+        } else {
+          newSet.add(id);
+        }
+        return newSet;
+      });
+    });
   };
 
   const handleShareVisualization = (id: string) => {
-    console.log('Sharing visualization:', id);
+    requireAuth(() => {
+      navigator.clipboard.writeText(`${window.location.origin}/visualizations/${id}`);
+      console.log('Visualization link copied to clipboard!');
+    });
   };
 
   const handleJoinGroup = (groupId: string) => {
-    console.log('Joining group:', groupId);
+    requireAuth(() => {
+      setJoinedGroups(prev => new Set([...prev, groupId]));
+      console.log('Joined group:', groupId);
+    });
   };
 
   const handleCreateGroup = () => {
-    console.log('Creating new group...');
+    requireAuth(() => {
+      navigate('/create-group');
+    });
   };
 
   const handleLikeActivity = (activityId: string) => {
-    console.log('Liking activity:', activityId);
+    requireAuth(() => {
+      setLikedActivities(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(activityId)) {
+          newSet.delete(activityId);
+        } else {
+          newSet.add(activityId);
+        }
+        return newSet;
+      });
+    });
   };
 
   const handleCommentActivity = (activityId: string) => {
-    console.log('Commenting on activity:', activityId);
+    requireAuth(() => {
+      console.log('Commenting on activity:', activityId);
+      // Here you would open a comment modal or navigate to the activity detail
+    });
   };
 
   const handleJoinTournament = (tournamentId: string) => {
-    console.log('Joining tournament:', tournamentId);
+    requireAuth(() => {
+      setJoinedTournaments(prev => new Set([...prev, tournamentId]));
+      console.log('Joined tournament:', tournamentId);
+    });
   };
+
+  // Update data with interaction states
+  const visualizationsWithLikes = mockSharedVisualizations.map(viz => ({
+    ...viz,
+    isLiked: likedVisualizations.has(viz.id)
+  }));
+
+  const activitiesWithLikes = mockActivityFeed.map(activity => ({
+    ...activity,
+    isLiked: likedActivities.has(activity.id)
+  }));
+
+  const tournamentsWithJoinState = mockTournaments.map(tournament => ({
+    ...tournament,
+    hasJoined: joinedTournaments.has(tournament.id)
+  }));
 
   return (
     <div className="space-y-6">
@@ -98,7 +170,7 @@ export const SocialHub: React.FC = () => {
 
         <TabsContent value="visualizations">
           <SharedVisualizations
-            visualizations={mockSharedVisualizations}
+            visualizations={visualizationsWithLikes}
             onLike={handleLikeVisualization}
             onShare={handleShareVisualization}
           />
@@ -114,7 +186,7 @@ export const SocialHub: React.FC = () => {
 
         <TabsContent value="activity">
           <ActivityFeed
-            activities={mockActivityFeed}
+            activities={activitiesWithLikes}
             onLike={handleLikeActivity}
             onComment={handleCommentActivity}
           />
@@ -122,7 +194,7 @@ export const SocialHub: React.FC = () => {
 
         <TabsContent value="tournaments">
           <Tournaments
-            tournaments={mockTournaments}
+            tournaments={tournamentsWithJoinState}
             onJoinTournament={handleJoinTournament}
           />
         </TabsContent>

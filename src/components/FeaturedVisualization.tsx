@@ -258,7 +258,7 @@ export const FeaturedVisualization = () => {
                 size="lg"
                 className="border-white/30 text-white hover:bg-white/10"
               >
-                <Link to={isAuthenticated ? "/gamification" : "/login"}>
+                <Link to={isAuthenticated ? "/challenges" : "/login"}>
                   <Zap className="w-5 h-5 mr-2" />
                   {isAuthenticated ? "Join Challenges" : "Sign In to Compete"}
                 </Link>

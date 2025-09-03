@@ -33,10 +33,10 @@ export const Header = () => {
             <Link to="/learning" className="text-white hover:text-cyan-400 transition-colors font-medium">
               Learning
             </Link>
-            <Link to="/social" className="text-white hover:text-cyan-400 transition-colors font-medium">
+            <Link to="/community" className="text-white hover:text-cyan-400 transition-colors font-medium">
               Community
             </Link>
-            <Link to="/gamification" className="text-white hover:text-cyan-400 transition-colors font-medium">
+            <Link to="/challenges" className="text-white hover:text-cyan-400 transition-colors font-medium">
               Challenges
             </Link>
           </nav>
