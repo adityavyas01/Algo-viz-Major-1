@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // import { Header } from '@/components/Header';
-import { useVisualizationTheme } from '@/hooks/useVisualizationTheme';
+import { useVisualizationTheme } from '@/contexts/EnhancedTheme';
 import ModernRedBlackTreeVisualization from '@/components/modern/ModernRedBlackTreeVisualization';
 import ModernBTreeVisualization from '@/components/modern/ModernBTreeVisualization';
 import ModernBPlusTreeVisualization from '@/components/modern/ModernBPlusTreeVisualization';

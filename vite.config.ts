@@ -19,6 +19,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    global: 'globalThis',
+    'process.env': {}
+  },
   optimizeDeps: {
     include: [
       'react',
@@ -29,6 +33,11 @@ export default defineConfig(({ mode }) => ({
       '@supabase/supabase-js'
     ],
     exclude: ['@vite/client', '@vite/env'],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      }
+    },
     force: true
   },
   build: {
@@ -42,7 +51,7 @@ export default defineConfig(({ mode }) => ({
         manualChunks: (id) => {
           // Create smaller, more specific chunks
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react/')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react/') || id.includes('jsx-runtime')) {
               return 'vendor-react';
             }
             if (id.includes('@radix-ui')) {
@@ -68,8 +77,8 @@ export default defineConfig(({ mode }) => ({
             }
             return 'vendor-other';
           }
-          // Keep contexts with React
-          if (id.includes('contexts/') || id.includes('Context.tsx')) {
+          // Force ALL context files and React hooks to be with React
+          if (id.includes('contexts/') || id.includes('Context.tsx') || id.includes('hooks/') || id.includes('createContext') || id.includes('useContext') || id.includes('useState') || id.includes('useEffect')) {
             return 'vendor-react';
           }
         },
