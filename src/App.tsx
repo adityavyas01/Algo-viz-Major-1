@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { EnhancedThemeProvider } from "@/contexts/EnhancedTheme";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -54,13 +53,12 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <EnhancedThemeProvider>
-            <Router future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true
-              }}>
-              <AuthProvider>
-                <AdminProvider>
+          <Router future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true
+            }}>
+            <AuthProvider>
+              <AdminProvider>
                 <div className="App">
                   <Routes>
                     {/* Public Routes */}
@@ -167,7 +165,6 @@ function App() {
                 </AdminProvider>
               </AuthProvider>
             </Router>
-          </EnhancedThemeProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>

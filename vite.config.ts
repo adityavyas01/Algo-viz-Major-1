@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => ({
         manualChunks: (id) => {
           // Create smaller, more specific chunks
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react/')) {
               return 'vendor-react';
             }
             if (id.includes('@radix-ui')) {
@@ -67,6 +67,10 @@ export default defineConfig(({ mode }) => ({
               return 'security';
             }
             return 'vendor-other';
+          }
+          // Keep contexts with React
+          if (id.includes('contexts/') || id.includes('Context.tsx')) {
+            return 'vendor-react';
           }
         },
         globals: {
