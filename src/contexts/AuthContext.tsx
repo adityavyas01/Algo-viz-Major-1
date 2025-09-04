@@ -31,10 +31,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
+    let mounted = true;
+    
+    // Set up auth state listener with enhanced session management
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -43,18 +47,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // Handle different sign-in scenarios
         const isEmailVerification = session.user.email_confirmed_at && window.location.pathname.includes('email-verification');
         const isFirstTimeUser = !session.user.last_sign_in_at;
+        const currentPath = window.location.pathname;
         
         if (isEmailVerification) {
           toast({
             title: "Email verified successfully! 🎉",
             description: "Welcome to AlgoViz! Setting up your account...",
           });
-        } else {
-          toast({
-            title: "Welcome back!",
-            description: "You have been successfully signed in.",
-          });
+        } else if (currentPath !== "/login" && currentPath !== "/register") {
+          // Don't show welcome message if user is just refreshing the page
+          console.log("User session restored");
         }
+
+        // Store session preference for "Remember Me" functionality
+        localStorage.setItem('algviz_remember_session', 'true');
 
         // Create user stats if they don't exist
         setTimeout(async () => {
@@ -106,83 +112,194 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }, 500);
       }
+
+      if (event === "SIGNED_OUT") {
+        // Clean up session preferences
+        localStorage.removeItem('algviz_remember_session');
+        localStorage.removeItem('algviz_last_visit');
+        
+        toast({
+          title: "Signed out successfully",
+          description: "Come back soon!",
+        });
+      }
     });
 
-    // Get initial session
+    // Get initial session with persistence check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      if (mounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        
+        // Store last visit for analytics
+        if (session) {
+          localStorage.setItem('algviz_last_visit', new Date().toISOString());
+        }
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    // Production URL for email verification redirect
-    const redirectUrl = "https://algo-viz-major-1.vercel.app/email-verification-success";
+    try {
+      setLoading(true);
+      
+      // Production URL for email verification redirect
+      const redirectUrl = "https://algo-viz-major-1.vercel.app/email-verification-success";
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: fullName ? { full_name: fullName } : undefined,
-      },
-    });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: fullName ? { full_name: fullName } : undefined,
+        },
+      });
 
-    if (error) {
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes("User already registered")) {
+          toast({
+            title: "Account Already Exists",
+            description: `An account with ${email} already exists. Please sign in instead.`,
+            variant: "destructive",
+          });
+          // Redirect to login page after a delay
+          setTimeout(() => {
+            navigate("/login");
+          }, 2000);
+        } else if (error.message.includes("Email rate limit exceeded")) {
+          toast({
+            title: "Rate Limit Exceeded",
+            description: "Too many signup attempts. Please try again in a few minutes.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Sign Up Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Check if user was created or already exists
+        if (data.user && !data.user.email_confirmed_at) {
+          toast({
+            title: "Check your email! 📧",
+            description: "We've sent you a confirmation link. Please check your inbox and spam folder.",
+          });
+        } else if (data.user && data.user.email_confirmed_at) {
+          toast({
+            title: "Welcome! 🎉",
+            description: "Your account is ready. Redirecting to dashboard...",
+          });
+          // Auto-redirect verified users
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+        }
+      }
+
+      return { error };
+    } catch (err) {
+      const error = err as Error;
       toast({
-        title: "Sign Up Error",
-        description: error.message,
+        title: "Network Error",
+        description: "Please check your internet connection and try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link",
-      });
+      return { error };
+    } finally {
+      setLoading(false);
     }
-
-    return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    // Rate limit authentication attempts
-    const { checkAuthRateLimit } = await import('@/lib/security');
-    const rateLimitResult = checkAuthRateLimit(email);
-    
-    if (!rateLimitResult.allowed) {
-      const waitTime = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000 / 60);
-      toast({
-        title: "Too Many Login Attempts",
-        description: `Please wait ${waitTime} minutes before trying again.`,
-        variant: "destructive",
-      });
-      return { error: new Error('Rate limited') };
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      const { logAuthError } = await import('@/lib/errorLogging');
-      logAuthError('Sign in failed', error, {
-        feature: 'authentication',
-        action: 'sign_in',
-        metadata: { email, errorCode: error.message },
-      });
+    try {
+      setLoading(true);
       
+      // Rate limit authentication attempts
+      const { checkAuthRateLimit } = await import('@/lib/security');
+      const rateLimitResult = checkAuthRateLimit(email);
+      
+      if (!rateLimitResult.allowed) {
+        const waitTime = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000 / 60);
+        toast({
+          title: "Too Many Login Attempts",
+          description: `Please wait ${waitTime} minutes before trying again.`,
+          variant: "destructive",
+        });
+        return { error: new Error('Rate limited') };
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        const { logAuthError } = await import('@/lib/errorLogging');
+        logAuthError('Sign in failed', error, {
+          feature: 'authentication',
+          action: 'sign_in',
+          metadata: { email, errorCode: error.message },
+        });
+
+        // Enhanced error messages
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Invalid Credentials",
+            description: "Please check your email and password and try again.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "Email Not Verified",
+            description: "Please check your email and click the verification link before signing in.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Sign In Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else if (data.user) {
+        // Success! Show welcome message and redirect
+        toast({
+          title: "Welcome back! 👋",
+          description: `Good to see you again, ${data.user.email?.split('@')[0]}!`,
+        });
+
+        // Auto-redirect based on user state
+        setTimeout(() => {
+          // Check if user needs to complete skills assessment
+          const currentPath = window.location.pathname;
+          if (currentPath === "/login" || currentPath === "/register" || currentPath === "/") {
+            navigate("/dashboard");
+          }
+          // If user was trying to access a protected route, they'll be redirected automatically
+        }, 1000);
+      }
+
+      return { error };
+    } catch (err) {
+      const error = err as Error;
       toast({
-        title: "Sign In Error",
-        description: error.message,
+        title: "Network Error",
+        description: "Please check your internet connection and try again.",
         variant: "destructive",
       });
+      return { error };
+    } finally {
+      setLoading(false);
     }
-
-    return { error };
   };
 
   const signOut = async () => {

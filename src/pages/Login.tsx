@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,10 +18,27 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<LoginForm>>({});
+  const [rememberMe, setRememberMe] = useState(true); // Default to true for better UX
   
-  const { signIn, signInWithMagicLink } = useAuth();
+  const { signIn, signInWithMagicLink, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  // Load remembered email on mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('algviz_remembered_email');
+    if (rememberedEmail) {
+      setFormData(prev => ({ ...prev, email: rememberedEmail }));
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -39,10 +57,19 @@ const Login = () => {
     
     try {
       const validatedData = loginSchema.parse(formData);
+      
+      // Store email for "Remember Me" functionality
+      if (rememberMe) {
+        localStorage.setItem('algviz_remembered_email', validatedData.email);
+      } else {
+        localStorage.removeItem('algviz_remembered_email');
+      }
+      
       const { error } = await signIn(validatedData.email, validatedData.password);
       
       if (!error) {
-        navigate('/dashboard');
+        // The AuthContext will handle the redirect automatically
+        console.log('Login successful');
       }
     } catch (error: any) {
       if (error.name === 'ZodError') {
@@ -115,6 +142,22 @@ const Login = () => {
               </div>
             </div>
 
+            {/* Remember Me checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                className="border-white/40 text-white data-[state=checked]:bg-cyan-500 data-[state=checked]:border-cyan-500"
+              />
+              <Label
+                htmlFor="remember"
+                className="text-sm text-white/80 cursor-pointer"
+              >
+                Remember me on this device
+              </Label>
+            </div>
+
             <Button 
               type="submit" 
               className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
@@ -144,7 +187,14 @@ const Login = () => {
                 if (email) {
                   signInWithMagicLink(email);
                 } else {
-                  toast.error('Please enter your email first');
+                  if (!formData.email) {
+                  toast({
+                    title: "Email Required",
+                    description: "Please enter your email first",
+                    variant: "destructive",
+                  });
+                  return;
+                }
                 }
               }}
               className="text-purple-400 hover:text-purple-300 text-sm block w-full"
