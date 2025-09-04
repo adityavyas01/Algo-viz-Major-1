@@ -48,47 +48,9 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       external: [],
       output: {
-        manualChunks: (id) => {
-          // Handle node_modules
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react/') || id.includes('jsx-runtime')) {
-              return 'vendor-react';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'vendor-radix';
-            }
-            if (id.includes('@supabase')) {
-              return 'vendor-supabase';
-            }
-            if (id.includes('three')) {
-              return 'vendor-three';
-            }
-            if (id.includes('recharts')) {
-              return 'vendor-charts';
-            }
-            if (id.includes('@monaco-editor')) {
-              return 'vendor-monaco';
-            }
-            if (id.includes('@sentry')) {
-              return 'vendor-sentry';
-            }
-            if (id.includes('security') || id.includes('errorLogging')) {
-              return 'security';
-            }
-            return 'vendor-other';
-          }
-          // Put ALL our source code with React to ensure createContext is available
-          // This prevents any component from being in vendor-other without React
-          return 'vendor-react';
-        },
-        globals: {},
-        // Ensure React is loaded first
-        entryFileNames: (chunkInfo) => {
-          if (chunkInfo.name === 'vendor-react') {
-            return 'assets/[name]-[hash].js';
-          }
-          return 'assets/[name]-[hash].js';
-        }
+        // Disable manual chunking to ensure everything stays together
+        manualChunks: undefined,
+        globals: {}
       },
     },
     chunkSizeWarningLimit: 1000,
