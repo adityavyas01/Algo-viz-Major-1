@@ -23,17 +23,21 @@ export default defineConfig(({ mode }) => ({
     include: [
       'react',
       'react-dom',
+      'react/jsx-runtime',
       'react-router-dom',
       '@tanstack/react-query',
       '@supabase/supabase-js'
     ],
-    exclude: ['@vite/client', '@vite/env']
+    exclude: ['@vite/client', '@vite/env'],
+    force: true
   },
   build: {
     commonjsOptions: {
       include: [/node_modules/],
+      transformMixedEsModules: true
     },
     rollupOptions: {
+      external: [],
       output: {
         manualChunks: (id) => {
           // Create smaller, more specific chunks
@@ -65,6 +69,10 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-other';
           }
         },
+        globals: {
+          'react': 'React',
+          'react-dom': 'ReactDOM'
+        }
       },
     },
     chunkSizeWarningLimit: 1000,

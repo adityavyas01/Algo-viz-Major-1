@@ -3,7 +3,7 @@
  * Comprehensive theme configuration for modern UI
  */
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 
 export type Theme = 'light' | 'dark' | 'auto'
 export type AnimationSpeed = 'slow' | 'normal' | 'fast' | 'instant'

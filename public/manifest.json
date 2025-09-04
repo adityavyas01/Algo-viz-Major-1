@@ -1,6 +1,6 @@
 {
   "name": "AlgoViz - Interactive Algorithm Visualization",
-  "short_name": "AlgoViz",
+  "short_name": "AlgoViz", 
   "description": "Master data structures and algorithms with interactive visualizations",
   "start_url": "/",
   "display": "standalone",
@@ -13,12 +13,6 @@
       "src": "/favicon.ico",
       "sizes": "48x48",
       "type": "image/x-icon"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any maskable"
     }
   ]
 }
