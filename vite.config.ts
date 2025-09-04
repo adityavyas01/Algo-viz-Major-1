@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => ({
       external: [],
       output: {
         manualChunks: (id) => {
-          // Create smaller, more specific chunks
+          // Handle node_modules
           if (id.includes('node_modules')) {
             if (id.includes('react') || id.includes('react-dom') || id.includes('react/') || id.includes('jsx-runtime')) {
               return 'vendor-react';
@@ -77,14 +77,17 @@ export default defineConfig(({ mode }) => ({
             }
             return 'vendor-other';
           }
-          // Force ALL context files and React hooks to be with React
-          if (id.includes('contexts/') || id.includes('Context.tsx') || id.includes('hooks/') || id.includes('createContext') || id.includes('useContext') || id.includes('useState') || id.includes('useEffect')) {
-            return 'vendor-react';
-          }
+          // Put ALL our source code with React to ensure createContext is available
+          // This prevents any component from being in vendor-other without React
+          return 'vendor-react';
         },
-        globals: {
-          'react': 'React',
-          'react-dom': 'ReactDOM'
+        globals: {},
+        // Ensure React is loaded first
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'vendor-react') {
+            return 'assets/[name]-[hash].js';
+          }
+          return 'assets/[name]-[hash].js';
         }
       },
     },
