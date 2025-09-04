@@ -8,7 +8,7 @@ import { EnhancedBubbleSortVisualization } from '@/components/EnhancedBubbleSort
 import { BinarySearchVisualization } from '@/components/BinarySearchVisualization';
 import { QuickSortVisualization } from '@/components/QuickSortVisualization';
 import { MergeSortVisualization } from '@/components/MergeSortVisualization';
-import { useVisualizationTheme } from '@/contexts/EnhancedTheme';
+import { useVisualizationTheme } from '@/hooks/useVisualizationTheme';
 import { 
   GitCompare, 
   BarChart3, 

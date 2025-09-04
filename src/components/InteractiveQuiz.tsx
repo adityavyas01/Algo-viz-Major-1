@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react'
 import { HelpCircle, CheckCircle, XCircle, Lightbulb, Brain } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useVisualizationTheme } from '@/contexts/EnhancedTheme'
+import { useVisualizationTheme } from '@/hooks/useVisualizationTheme'
 
 interface QuizQuestion {
   id: string
