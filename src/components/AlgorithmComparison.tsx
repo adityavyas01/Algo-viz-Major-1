@@ -40,7 +40,7 @@ interface AlgorithmOption {
   advantages: string[];
   disadvantages: string[];
   bestUseCase: string;
-  component: React.ComponentType<any>;
+  component: React.ComponentType<{ onMetricsUpdate?: (metrics: any) => void }>;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   stability: boolean;
   inPlace: boolean;
@@ -334,7 +334,7 @@ export const AlgorithmComparison: React.FC = () => {
               <label className="text-sm font-medium mb-2 block" style={{ color: currentTheme.colors.text }}>
                 Comparison Mode
               </label>
-              <Select value={comparisonMode} onValueChange={(value: any) => setComparisonMode(value)}>
+              <Select value={comparisonMode} onValueChange={(value: 'side-by-side' | 'race' | 'detailed') => setComparisonMode(value)}>
                 <SelectTrigger 
                   className="transition-all duration-200"
                   style={{

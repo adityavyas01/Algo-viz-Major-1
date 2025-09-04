@@ -25,7 +25,7 @@ interface GroupProjectCardProps {
   project: GroupProject;
   onJoinProject: (projectId: string) => void;
   onLeaveProject: (projectId: string) => void;
-  onSubmitProject: (projectId: string, submission: any) => void;
+  onSubmitProject: (projectId: string, submission: string) => void;
 }
 
 const GroupProjectCard: React.FC<GroupProjectCardProps> = ({ project, onJoinProject, onLeaveProject, onSubmitProject }) => {
@@ -99,7 +99,7 @@ interface GroupProjectManagementProps {
   onCreateProject: () => void;
   onJoinProject: (projectId: string) => void;
   onLeaveProject: (projectId: string) => void;
-  onSubmitProject: (projectId: string, submission: any) => void;
+  onSubmitProject: (projectId: string, submission: string) => void;
 }
 
 export const GroupProjectManagement: React.FC<GroupProjectManagementProps> = ({ 

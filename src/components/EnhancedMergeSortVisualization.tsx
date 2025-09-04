@@ -243,7 +243,11 @@ export const MergeSortVisualization = () => {
       switch (event.key) {
         case ' ':
           event.preventDefault();
-          isPlaying ? animation.pause() : animation.play();
+          if (isPlaying) {
+            animation.pause();
+          } else {
+            animation.play();
+          }
           break;
         case 'ArrowRight':
           event.preventDefault();

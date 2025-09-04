@@ -59,7 +59,7 @@ export const CommunityChallenges: React.FC<CommunityChallengesProps> = ({
         <p className="text-white/70">Join exciting challenges and compete with fellow learners</p>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as any)}>
+      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'active' | 'upcoming' | 'completed')}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>

@@ -301,7 +301,7 @@ export function EnhancedNavigation({ onNavigate }: EnhancedNavigationProps) {
       allAlgorithms = [...allAlgorithms, ...category.algorithms]
     })
 
-    let filtered = allAlgorithms.filter(alg => {
+    const filtered = allAlgorithms.filter(alg => {
       const matchesSearch = searchQuery === '' || 
         alg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         alg.description.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -280,7 +280,7 @@ export const HeapVisualization = () => {
   const extractRoot = () => {
     if (heap.length === 0) return;
 
-    let newHeap = [...heap];
+    const newHeap = [...heap];
     if (newHeap.length === 1) {
       setHeap([]);
       return;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -35,9 +35,9 @@ export const ProgressTracker: React.FC = () => {
     if (user) {
       fetchProgressData();
     }
-  }, [user]);
+  }, [user, fetchProgressData]);
 
-  const fetchProgressData = async () => {
+  const fetchProgressData = useCallback(async () => {
     try {
       // Fetch user stats
       const { data: userStats } = await supabase
@@ -109,7 +109,7 @@ export const ProgressTracker: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   const getNextLevelXP = (level: number) => {
     return level * 1000; // Simple progression: level * 1000 XP

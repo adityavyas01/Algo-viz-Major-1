@@ -157,7 +157,7 @@ export function EnhancedBubbleSortVisualization() {
           })
 
           // Perform swap
-          [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]
+          [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
 
           // After swap step
           steps.push({
@@ -337,9 +337,13 @@ export function EnhancedBubbleSortVisualization() {
 
       switch (event.code) {
         case 'Space':
-          event.preventDefault()
-          isPlaying ? pause() : play()
-          break
+          event.preventDefault();
+          if (isPlaying) {
+            pause();
+          } else {
+            play();
+          }
+          break;
         case 'ArrowRight':
           event.preventDefault()
           nextStep()

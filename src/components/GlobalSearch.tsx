@@ -11,7 +11,7 @@ interface SearchResult {
   description: string;
   category: string;
   route: string;
-  icon: any;
+  icon: React.ComponentType<any>;
   tags: string[];
   relevanceScore: number;
 }
