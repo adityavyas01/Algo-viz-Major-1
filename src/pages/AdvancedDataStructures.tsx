@@ -347,6 +347,7 @@ export default function AdvancedDataStructures() {
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 }
