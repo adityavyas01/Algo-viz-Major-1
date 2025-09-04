@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,26 +32,34 @@ export const LeetCodeQuestions: React.FC<LeetCodeQuestionsProps> = ({ topicId, t
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setLoading(true);
+        
+        // Mock data - replace with actual API call
+        const mockQuestions: LeetCodeQuestion[] = [
+          {
+            id: '1',
+            title: 'Two Sum',
+            difficulty: 'Easy',
+            description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.',
+            timeComplexity: 'O(n)',
+            spaceComplexity: 'O(n)',
+            leetcodeUrl: 'https://leetcode.com/problems/two-sum/'
+          },
+          // ... other mock questions
+        ];
+        
+        setQuestions(mockQuestions);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchQuestions();
   }, [topicId]);
-
-  const fetchQuestions = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('leetcode_questions')
-        .select('*')
-        .eq('topic_id', topicId)
-        .order('difficulty_level', { ascending: true });
-
-      if (error) throw error;
-      setQuestions(data as LeetCodeQuestion[] || []);
-    } catch (error) {
-      console.error('Error fetching LeetCode questions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const toggleQuestion = (questionId: string) => {
     const newExpanded = new Set(expandedQuestions);

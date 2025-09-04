@@ -157,7 +157,7 @@ export const NotificationBell: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, fetchNotifications, toast]);
 
   if (!user) return null;
 

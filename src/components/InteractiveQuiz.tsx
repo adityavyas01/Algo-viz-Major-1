@@ -320,7 +320,9 @@ export function EducationalTooltip({ tooltip, isVisible, onClose }: EducationalT
   )
 }
 
+/*
 // Hook for managing educational tooltips
+// Move this to a separate file: src/hooks/useEducationalTooltips.ts
 export function useEducationalTooltips() {
   const [activeTooltip, setActiveTooltip] = useState<EducationalTooltip | null>(null)
   const [shownTooltips, setShownTooltips] = useState<Set<string>>(new Set())
@@ -348,3 +350,4 @@ export function useEducationalTooltips() {
     hideTooltip
   }
 }
+*/

@@ -185,7 +185,7 @@ export const ProctoringSystem: React.FC<ProctoringSystemProps> = ({
       cleanupTabDetection();
       cleanup();
     };
-  }, [isMonitoring]);
+  }, [isMonitoring, cleanup, setupClipboardMonitoring, setupTabSwitchDetection]);
 
   const allPermissionsGranted = Object.values(permissions).every(Boolean);
 
