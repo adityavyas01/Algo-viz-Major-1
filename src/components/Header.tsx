@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Shield } from 'lucide-react';
+import { User, LogOut, Settings, Shield, BookOpen, Users, Zap, Home, Trophy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -13,11 +14,30 @@ export const Header = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
+
+  const isActivePath = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const navigationItems = [
+    { path: '/', label: 'Home', icon: Home, description: 'Homepage and demos' },
+    { path: '/learning', label: 'Learning', icon: BookOpen, description: 'Tutorials and learning paths', isNew: false },
+    { path: '/community', label: 'Community', icon: Users, description: 'Social features and groups', badge: 'Popular' },
+    { path: '/challenges', label: 'Challenges', icon: Zap, description: 'Coding challenges and competitions', isNew: true },
+  ];
+
+  if (user) {
+    navigationItems.push(
+      { path: '/dashboard', label: 'Dashboard', icon: User, description: 'Your personal dashboard' },
+      { path: '/leaderboard', label: 'Leaderboard', icon: Trophy, description: 'Rankings and achievements' }
+    );
+  }
 
   return (
     <header className="bg-slate-900/95 backdrop-blur-sm border-b border-white/20 sticky top-0 z-50">
@@ -29,16 +49,43 @@ export const Header = () => {
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/learning" className="text-white hover:text-cyan-400 transition-colors font-medium">
-              Learning
-            </Link>
-            <Link to="/community" className="text-white hover:text-cyan-400 transition-colors font-medium">
-              Community
-            </Link>
-            <Link to="/challenges" className="text-white hover:text-cyan-400 transition-colors font-medium">
-              Challenges
-            </Link>
+          <nav className="hidden lg:flex items-center space-x-1">
+            {navigationItems.slice(1, 4).map((item) => {
+              const Icon = item.icon;
+              const isActive = isActivePath(item.path);
+              
+              return (
+                <div key={item.path} className="relative group">
+                  <Link
+                    to={item.path}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium ${
+                      isActive
+                        ? 'bg-cyan-600/20 text-cyan-400 shadow-lg'
+                        : 'text-white hover:text-cyan-400 hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                    {item.badge && (
+                      <Badge variant="secondary" className="text-xs bg-green-500 text-white">
+                        {item.badge}
+                      </Badge>
+                    )}
+                    {item.isNew && (
+                      <Badge variant="secondary" className="text-xs bg-orange-500 text-white">
+                        New
+                      </Badge>
+                    )}
+                  </Link>
+                  
+                  {/* Tooltip */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-black/90 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
+                    {item.description}
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-black/90 rotate-45"></div>
+                  </div>
+                </div>
+              );
+            })}
           </nav>
 
           <div className="flex items-center space-x-4">

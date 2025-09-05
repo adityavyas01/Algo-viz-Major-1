@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -8,27 +8,30 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { EnhancedThemeProvider } from "@/contexts/EnhancedTheme";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PageLoader } from "@/components/ui/loader";
 
-// Pages
+// Core pages - loaded immediately
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-import Dashboard from "@/pages/Dashboard";
-import Learning from "@/pages/Learning";
-import Community from "@/pages/Community";
-import Challenges from "@/pages/Challenges";
-import Profile from "@/pages/Profile";
-import SkillsAssessment from "@/pages/SkillsAssessment";
-import EmailVerification from "@/pages/EmailVerification";
-import EmailVerificationSuccess from "@/pages/EmailVerificationSuccess";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
-import AdminPage from "@/pages/AdminPage";
-import AdvancedFeatures from "@/pages/AdvancedFeatures";
-import PracticeProblems from "@/pages/PracticeProblems";
-import Leaderboard from "@/pages/Leaderboard";
-import EnhancedVisualizationDemo from "@/pages/EnhancedVisualizationDemo";
-import NotFound from "@/pages/NotFound";
+
+// Lazy-loaded pages for better performance
+const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+const Learning = React.lazy(() => import("@/pages/Learning"));
+const Community = React.lazy(() => import("@/pages/Community"));
+const Challenges = React.lazy(() => import("@/pages/Challenges"));
+const Profile = React.lazy(() => import("@/pages/Profile"));
+const SkillsAssessment = React.lazy(() => import("@/pages/SkillsAssessment"));
+const EmailVerification = React.lazy(() => import("@/pages/EmailVerification"));
+const EmailVerificationSuccess = React.lazy(() => import("@/pages/EmailVerificationSuccess"));
+const ForgotPassword = React.lazy(() => import("@/pages/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("@/pages/ResetPassword"));
+const AdminPage = React.lazy(() => import("@/pages/AdminPage"));
+const AdvancedFeatures = React.lazy(() => import("@/pages/AdvancedFeatures"));
+const PracticeProblems = React.lazy(() => import("@/pages/PracticeProblems"));
+const Leaderboard = React.lazy(() => import("@/pages/Leaderboard"));
+const EnhancedVisualizationDemo = React.lazy(() => import("@/pages/EnhancedVisualizationDemo"));
+const NotFound = React.lazy(() => import("@/pages/NotFound"));
 
 // Create a client
 const queryClient = new QueryClient({
@@ -62,15 +65,16 @@ function App() {
               <AuthProvider>
                 <AdminProvider>
                 <div className="App">
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/email-verification" element={<EmailVerification />} />
-                    <Route path="/email-verification-success" element={<EmailVerificationSuccess />} />
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Home />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/email-verification" element={<EmailVerification />} />
+                      <Route path="/email-verification-success" element={<EmailVerificationSuccess />} />
                     
                     {/* Protected Routes */}
                     <Route 
@@ -152,6 +156,7 @@ function App() {
                     <Route path="/404" element={<NotFound />} />
                     <Route path="*" element={<Navigate to="/404" replace />} />
                   </Routes>
+                  </Suspense>
                   
                   <Toaster 
                     position="top-right"

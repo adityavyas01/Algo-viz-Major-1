@@ -48,12 +48,64 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       external: [],
       output: {
-        // Disable manual chunking to ensure everything stays together
-        manualChunks: undefined,
+        manualChunks: (id) => {
+          // Node modules chunking
+          if (id.includes('node_modules')) {
+            // React ecosystem
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor';
+            }
+            // Routing
+            if (id.includes('react-router')) {
+              return 'router-vendor';
+            }
+            // UI libraries
+            if (id.includes('lucide-react') || id.includes('@radix-ui') || id.includes('cmdk')) {
+              return 'ui-vendor';
+            }
+            // Supabase
+            if (id.includes('@supabase')) {
+              return 'supabase-vendor';
+            }
+            // Query libraries
+            if (id.includes('@tanstack/react-query')) {
+              return 'query-vendor';
+            }
+            // Other node modules
+            return 'vendor';
+          }
+          
+          // Component chunking by feature
+          if (id.includes('src/components/')) {
+            if (id.includes('Visualization') || id.includes('Sort') || id.includes('Search') || id.includes('Tree') || id.includes('Graph') || id.includes('Heap') || id.includes('Hash')) {
+              return 'visualization-components';
+            }
+            if (id.includes('Learning') || id.includes('Tutorial') || id.includes('Adaptive')) {
+              return 'learning-components';
+            }
+            if (id.includes('Challenge') || id.includes('LeetCode') || id.includes('Daily')) {
+              return 'challenge-components';
+            }
+            if (id.includes('Analytics') || id.includes('Progress') || id.includes('Behavior') || id.includes('Report')) {
+              return 'analytics-components';
+            }
+            if (id.includes('Activity') || id.includes('Social') || id.includes('Collaborative') || id.includes('Leaderboard') || id.includes('Community')) {
+              return 'social-components';
+            }
+            if (id.includes('Admin') || id.includes('Management')) {
+              return 'admin-components';
+            }
+          }
+          
+          // Page chunking
+          if (id.includes('src/pages/')) {
+            return 'pages';
+          }
+        },
         globals: {}
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 800, // Increase limit since we have good chunking now
     sourcemap: mode === 'development',
     minify: mode === 'production' ? 'esbuild' : false,
   },

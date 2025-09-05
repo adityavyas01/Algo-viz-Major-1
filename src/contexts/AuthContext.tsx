@@ -90,24 +90,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             });
           }
 
-          // Only auto-redirect if not on email verification pages
-          if (!window.location.pathname.includes('email-verification')) {
-            // Check if user has completed skills assessment
-            const { data: assessment } = await supabase
-              .from("user_assessments")
-              .select("id")
-              .eq("user_id", session.user.id)
-              .single();
+          // Only auto-redirect if not on email verification pages and this is an actual sign-in event
+          if (!window.location.pathname.includes('email-verification') && (event === "SIGNED_IN" || isFirstTimeUser)) {
+            const currentPath = window.location.pathname;
+            
+            // Don't redirect if user is already on a valid authenticated page
+            const authenticatedPaths = ['/dashboard', '/learning', '/community', '/challenges', '/profile', '/skills-assessment', '/practice', '/advanced-features', '/leaderboard'];
+            const isOnAuthenticatedPage = authenticatedPaths.some(path => currentPath.startsWith(path));
+            
+            if (!isOnAuthenticatedPage) {
+              // Check if user has completed skills assessment
+              const { data: assessment } = await supabase
+                .from("user_assessments")
+                .select("id")
+                .eq("user_id", session.user.id)
+                .single();
 
-            // Redirect to skills assessment if not completed and not already on that page
-            if (
-              !assessment &&
-              window.location.pathname !== "/skills-assessment"
-            ) {
-              navigate("/skills-assessment");
-            } else if (assessment && window.location.pathname === "/") {
-              // If they have completed assessment and are on home page, redirect to dashboard
-              navigate("/dashboard");
+              // Only redirect if coming from login/register pages, and only for new sign-ins
+              const shouldRedirect = ['/login', '/register'].includes(currentPath) && event === "SIGNED_IN";
+              
+              if (shouldRedirect) {
+                if (!assessment) {
+                  navigate("/skills-assessment");
+                } else {
+                  navigate("/dashboard");
+                }
+              }
             }
           }
         }, 500);

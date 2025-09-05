@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, BookOpen, ArrowRight, Trophy } from 'lucide-react';
 import { learningPaths, algorithmDatabase, type LearningPath } from '@/data/algorithmDatabase';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 export const LearningPathComponent: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [selectedPath, setSelectedPath] = useState<LearningPath | null>(null);
   const [completedAlgorithms, setCompletedAlgorithms] = useState<Set<string>>(new Set());
 
@@ -171,9 +173,11 @@ export const LearningPathComponent: React.FC = () => {
                       <div className="flex gap-2">
                         <Button
                           onClick={() => {
+                            // Navigate to the actual learning content with proper React Router
+                            navigate(`/learning?algorithm=${algorithmId}&tab=tutorials`);
                             toast({
-                              title: "Starting Learning Session",
-                              description: `Let's learn about ${algorithm.name}!`,
+                              title: "Starting Tutorial",
+                              description: `Learning ${algorithm.name} - Good luck!`,
                             });
                           }}
                           size="sm"
@@ -183,7 +187,28 @@ export const LearningPathComponent: React.FC = () => {
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                         <Button
-                          onClick={() => handleAlgorithmComplete(algorithmId)}
+                          onClick={() => {
+                            // Navigate to practice problems with React Router
+                            navigate(`/challenges`);
+                            toast({
+                              title: "Practice Mode",
+                              description: `Challenge yourself with ${algorithm.name} problems!`,
+                            });
+                          }}
+                          size="sm"
+                          variant="outline"
+                          className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
+                        >
+                          Practice
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            handleAlgorithmComplete(algorithmId);
+                            toast({
+                              title: "Progress Updated! 🎉",
+                              description: `${algorithm.name} marked as completed!`,
+                            });
+                          }}
                           size="sm"
                           variant="outline"
                           className="border-white/30 text-white/70 hover:bg-white/10"

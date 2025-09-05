@@ -49,8 +49,8 @@ export const FeaturedVisualization = () => {
       icon: Play,
       title: "Interactive Learning",
       description: "Step through algorithms at your own pace",
-      action: () => navigate('/learning?tab=tutorials'),
-      buttonText: "Start Tutorial",
+      action: () => navigate('/demo'),
+      buttonText: "Try Demo",
       requiresAuth: false
     },
     {
@@ -65,17 +65,17 @@ export const FeaturedVisualization = () => {
       icon: Zap,
       title: "Practice Problems",
       description: "Solve coding challenges to master concepts",
-      action: () => isAuthenticated ? navigate('/learning?tab=practice') : navigate('/login'),
-      buttonText: isAuthenticated ? "Practice Now" : "Sign Up to Practice",
+      action: () => isAuthenticated ? navigate('/challenges') : navigate('/login'),
+      buttonText: isAuthenticated ? "Start Challenges" : "Sign Up to Practice",
       requiresAuth: true
     },
     {
       icon: Target,
-      title: "Learning Paths",
-      description: "Follow structured learning roadmaps",
-      action: () => isAuthenticated ? navigate('/learning?tab=learning-paths') : navigate('/login'),
-      buttonText: isAuthenticated ? "View Paths" : "Unlock Paths",
-      requiresAuth: true
+      title: "Community Hub",
+      description: "Join collaborative learning sessions",
+      action: () => navigate('/community'),
+      buttonText: "Join Community",
+      requiresAuth: false
     }
   ];
 
@@ -249,7 +249,7 @@ export const FeaturedVisualization = () => {
               >
                 <Link to={isAuthenticated ? "/learning?tab=learning-paths" : "/register"}>
                   {isAuthenticated ? <Target className="w-5 h-5 mr-2" /> : <Lock className="w-5 h-5 mr-2" />}
-                  {isAuthenticated ? "Choose Learning Path" : "Sign Up for Premium Access"}
+                  {isAuthenticated ? "Continue Learning Path" : "Sign Up for Premium Access"}
                 </Link>
               </Button>
               <Button 

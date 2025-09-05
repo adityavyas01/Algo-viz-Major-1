@@ -4,22 +4,39 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Code, Play, CheckCircle, Clock, Award } from 'lucide-react';
+import { Code, Play, CheckCircle, Clock, Award, Terminal } from 'lucide-react';
 import { practiceProblems, type PracticeProblem } from '@/data/algorithmDatabase';
+import { CodeEditor } from '@/components/CodeEditor';
+import { useToast } from '@/hooks/use-toast';
 
 interface PracticeProblemsProps {
   algorithmId: string;
 }
 
 export const PracticeProblems: React.FC<PracticeProblemsProps> = ({ algorithmId }) => {
+  const { toast } = useToast();
   const [selectedProblem, setSelectedProblem] = useState<PracticeProblem | null>(null);
   const [showSolution, setShowSolution] = useState(false);
   const [solvedProblems, setSolvedProblems] = useState<Set<string>>(new Set());
+  const [userCode, setUserCode] = useState('');
+  const [showEditor, setShowEditor] = useState(false);
 
   const problems = practiceProblems.filter(p => p.algorithmId === algorithmId);
 
   const handleProblemSolved = (problemId: string) => {
     setSolvedProblems(prev => new Set([...prev, problemId]));
+    toast({
+      title: "Problem Solved! 🎉",
+      description: "Great job! You've completed this practice problem.",
+    });
+  };
+
+  const handleCodeRun = (code: string, language: string) => {
+    setUserCode(code);
+    toast({
+      title: "Code Executed",
+      description: `Your ${language} solution has been tested!`,
+    });
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -110,8 +127,9 @@ export const PracticeProblems: React.FC<PracticeProblemsProps> = ({ algorithmId 
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="problem" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="problem">Problem</TabsTrigger>
+                <TabsTrigger value="editor">Code Editor</TabsTrigger>
                 <TabsTrigger value="examples">Examples</TabsTrigger>
                 <TabsTrigger value="solution">Solution</TabsTrigger>
               </TabsList>
@@ -123,6 +141,13 @@ export const PracticeProblems: React.FC<PracticeProblemsProps> = ({ algorithmId 
                 </div>
                 
                 <div className="flex gap-4">
+                  <Button
+                    onClick={() => setShowEditor(true)}
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                  >
+                    <Terminal className="w-4 h-4 mr-2" />
+                    Open Code Editor
+                  </Button>
                   <Button
                     onClick={() => handleProblemSolved(selectedProblem.id)}
                     disabled={solvedProblems.has(selectedProblem.id)}
@@ -136,10 +161,37 @@ export const PracticeProblems: React.FC<PracticeProblemsProps> = ({ algorithmId 
                     ) : (
                       <>
                         <Play className="w-4 h-4 mr-2" />
-                        Start Solving
+                        Mark as Solved
                       </>
                     )}
                   </Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="editor" className="space-y-4">
+                <div>
+                  <h4 className="text-white font-semibold mb-4">Code Your Solution</h4>
+                  <CodeEditor
+                    algorithmName={selectedProblem.title}
+                    onCodeRun={handleCodeRun}
+                    complexity={{
+                      time: selectedProblem.solution.timeComplexity,
+                      space: selectedProblem.solution.spaceComplexity
+                    }}
+                  />
+                  <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <h5 className="text-blue-400 font-semibold mb-2">💡 Hint</h5>
+                    <p className="text-white/80 text-sm">{selectedProblem.solution.approach}</p>
+                  </div>
+                  <div className="flex justify-center mt-4">
+                    <Button
+                      onClick={() => handleProblemSolved(selectedProblem.id)}
+                      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Submit Solution
+                    </Button>
+                  </div>
                 </div>
               </TabsContent>
               

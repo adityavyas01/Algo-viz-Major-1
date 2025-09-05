@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -7,14 +7,33 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Play, BookOpen, Code, CheckCircle } from 'lucide-react';
 import { algorithmDatabase, type AlgorithmExplanation } from '@/data/algorithmDatabase';
 import { LeetCodeQuestions } from '@/components/LeetCodeQuestions';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateUserProgress } from '@/hooks/useDatabase';
+import { useToast } from '@/hooks/use-toast';
 
 interface TutorialSystemProps {
   algorithmId: string;
 }
 
 export const TutorialSystem: React.FC<TutorialSystemProps> = ({ algorithmId }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [tutorialCompleted, setTutorialCompleted] = useState(false);
+
+  // Load user progress for this tutorial
+  useEffect(() => {
+    if (user) {
+      const savedProgress = localStorage.getItem(`tutorial_${algorithmId}_${user.id}`);
+      if (savedProgress) {
+        const { currentStep: savedStep, completedSteps: savedCompleted, completed } = JSON.parse(savedProgress);
+        setCurrentStep(savedStep || 0);
+        setCompletedSteps(new Set(savedCompleted || []));
+        setTutorialCompleted(completed || false);
+      }
+    }
+  }, [user, algorithmId]);
   
   const algorithm = algorithmDatabase.find(alg => alg.id === algorithmId);
   
@@ -60,21 +79,57 @@ export const TutorialSystem: React.FC<TutorialSystemProps> = ({ algorithmId }) =
     }
   ];
 
-  const handleNext = () => {
+  const saveProgress = async (stepIndex: number, completed: Set<number>) => {
+    if (user) {
+      const progressData = {
+        currentStep: stepIndex,
+        completedSteps: Array.from(completed),
+        completed: completed.size >= tutorialSteps.length
+      };
+      
+      localStorage.setItem(`tutorial_${algorithmId}_${user.id}`, JSON.stringify(progressData));
+      
+      // If tutorial is completed, save to database
+      if (progressData.completed && !tutorialCompleted) {
+        try {
+          await updateUserProgress(algorithmId, true, undefined, 10); // 10 points for completing tutorial
+          setTutorialCompleted(true);
+          toast({
+            title: "Tutorial Completed! 🎉",
+            description: `You've mastered the ${algorithm.name} tutorial! +10 XP earned.`,
+          });
+        } catch (error) {
+          console.error('Error saving tutorial completion:', error);
+        }
+      }
+    }
+  };
+
+  const handleNext = async () => {
     if (currentStep < tutorialSteps.length - 1) {
-      setCompletedSteps(prev => new Set([...prev, currentStep]));
+      const newCompleted = new Set([...completedSteps, currentStep]);
+      setCompletedSteps(newCompleted);
       setCurrentStep(currentStep + 1);
+      await saveProgress(currentStep + 1, newCompleted);
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      // Don't need to save when going backward
     }
   };
 
-  const handleStepComplete = () => {
-    setCompletedSteps(prev => new Set([...prev, currentStep]));
+  const handleStepComplete = async () => {
+    const newCompleted = new Set([...completedSteps, currentStep]);
+    setCompletedSteps(newCompleted);
+    await saveProgress(currentStep, newCompleted);
+    
+    toast({
+      title: "Step Completed! ✅",
+      description: `Step ${currentStep + 1} of ${tutorialSteps.length} completed.`,
+    });
   };
 
   const progressPercentage = (completedSteps.size / tutorialSteps.length) * 100;

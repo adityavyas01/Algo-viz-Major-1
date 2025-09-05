@@ -4,8 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Timer, Play, Pause, RotateCcw, Trophy, Zap } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, Trophy, Zap, Code } from 'lucide-react';
 import { Challenge } from '@/types/gamification';
+import { CodeEditor } from '@/components/CodeEditor';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateUserProgress, updateUserStats } from '@/hooks/useDatabase';
 
 interface ChallengeModeProps {
   challenges: Challenge[];
@@ -16,10 +20,13 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
   challenges, 
   onChallengeComplete 
 }) => {
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -43,6 +50,12 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
     setTimeLeft(challenge.timeLimit);
     setIsActive(true);
     setIsCompleted(false);
+    setShowCodeEditor(true); // Automatically show code editor when starting challenge
+    
+    toast({
+      title: "Challenge Started! 🚀",
+      description: `You have ${formatTime(challenge.timeLimit)} to solve ${challenge.name}!`,
+    });
   };
 
   const pauseChallenge = () => {
@@ -61,13 +74,49 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
     }
   };
 
-  const completeChallenge = () => {
-    if (selectedChallenge) {
+  const completeChallenge = async () => {
+    if (selectedChallenge && user) {
       const completionTime = selectedChallenge.timeLimit - timeLeft;
       setIsCompleted(true);
       setIsActive(false);
+      
+      try {
+        // Save challenge completion to database
+        await updateUserProgress(
+          selectedChallenge.algorithmId || selectedChallenge.id,
+          true,
+          completionTime,
+          selectedChallenge.points
+        );
+
+        // Update user stats
+        await updateUserStats({
+          challenges_completed: 1, // This will be handled by the database to increment
+          total_points: selectedChallenge.points,
+          experience: selectedChallenge.points * 2
+        });
+
+        toast({
+          title: "Challenge Completed! 🎉",
+          description: `You completed ${selectedChallenge.name} in ${formatTime(completionTime)}! +${selectedChallenge.points} points earned.`,
+        });
+      } catch (error) {
+        console.error('Error saving challenge completion:', error);
+        toast({
+          title: "Challenge Completed! 🎉",
+          description: `You completed ${selectedChallenge.name} in ${formatTime(completionTime)}! (Progress not saved - please try again later)`,
+        });
+      }
+      
       onChallengeComplete?.(selectedChallenge.id, completionTime);
     }
+  };
+
+  const handleCodeRun = (code: string, language: string) => {
+    toast({
+      title: "Code Executed",
+      description: `Your ${language} code has been executed successfully!`,
+    });
   };
 
   const formatTime = (seconds: number) => {
@@ -129,6 +178,33 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
               </div>
             </div>
 
+            {/* Code Editor Toggle */}
+            <div className="flex justify-center">
+              <Button
+                onClick={() => setShowCodeEditor(!showCodeEditor)}
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10"
+              >
+                <Code className="w-4 h-4 mr-2" />
+                {showCodeEditor ? 'Hide Code Editor' : 'Show Code Editor'}
+              </Button>
+            </div>
+
+            {/* Code Editor */}
+            {showCodeEditor && (
+              <div className="bg-black/20 rounded-lg p-4">
+                <h4 className="text-white font-semibold mb-4">Code Your Solution</h4>
+                <CodeEditor 
+                  algorithmName={selectedChallenge.name}
+                  onCodeRun={handleCodeRun}
+                  complexity={{
+                    time: "O(n log n)",
+                    space: "O(1)"
+                  }}
+                />
+              </div>
+            )}
+
             {/* Control Buttons */}
             <div className="flex gap-2 justify-center">
               {!isCompleted && (
@@ -165,7 +241,7 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
                     onClick={completeChallenge}
                     className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
                   >
-                    Complete Challenge
+                    Submit Solution
                   </Button>
                 </>
               )}
@@ -173,12 +249,24 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
               {isCompleted && (
                 <div className="text-center">
                   <div className="text-green-400 font-semibold mb-2">Challenge Completed! 🎉</div>
-                  <Button
-                    onClick={() => setSelectedChallenge(null)}
-                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
-                  >
-                    Back to Challenges
-                  </Button>
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      onClick={() => {
+                        setSelectedChallenge(null);
+                        setShowCodeEditor(false);
+                      }}
+                      className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                    >
+                      Back to Challenges
+                    </Button>
+                    <Button
+                      onClick={resetChallenge}
+                      variant="outline"
+                      className="border-white/30 text-white hover:bg-white/10"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

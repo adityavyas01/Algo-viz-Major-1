@@ -55,6 +55,8 @@ export default function EnhancedVisualizationDemo() {
       title: 'Enhanced Theme System',
       description: 'Modern theme management with light/dark modes and algorithm-specific color palettes',
       icon: <Palette className="w-5 h-5" />,
+      features: ['Light/Dark/Auto mode', 'Algorithm-specific palettes', 'Animation controls', 'Accessibility support'],
+      isNew: true,
       component: (
         <div className="space-y-6">
           <div className="flex justify-center">
@@ -106,8 +108,6 @@ export default function EnhancedVisualizationDemo() {
           </div>
         </div>
       ),
-      features: ['Dynamic theming', 'Color customization', 'Animation controls', 'Auto mode'],
-      isNew: true
     },
     {
       id: 'enhanced-sorting',

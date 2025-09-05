@@ -230,3 +230,46 @@
     @apply bg-transparent hover:bg-white/10 text-white transition-colors;
   }
 }
+
+/* Custom Loader Animation */
+.loader {
+  width: 80px;
+  aspect-ratio: 1;
+  border: 10px solid #0000;
+  box-sizing: border-box;
+  background: 
+    radial-gradient(farthest-side,#fff 98%,#0000) 0    0/20px 20px,
+    radial-gradient(farthest-side,#fff 98%,#0000) 100% 0/20px 20px,
+    radial-gradient(farthest-side,#fff 98%,#0000) 100% 100%/20px 20px,
+    radial-gradient(farthest-side,#fff 98%,#0000) 0 100%/20px 20px,
+    linear-gradient(#fff 0 0) 50%/40px 40px,
+    #000;
+  background-repeat: no-repeat;
+  filter: blur(4px) contrast(10);
+  animation: l12 0.8s infinite;
+}
+
+/* Size variants */
+.w-8.h-8.loader {
+  width: 32px;
+  border-width: 4px;
+  background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px, 16px 16px;
+}
+
+.w-20.h-20.loader {
+  width: 80px;
+  border-width: 10px;
+  background-size: 20px 20px, 20px 20px, 20px 20px, 20px 20px, 40px 40px;
+}
+
+.w-32.h-32.loader {
+  width: 128px;
+  border-width: 16px;
+  background-size: 32px 32px, 32px 32px, 32px 32px, 32px 32px, 64px 64px;
+}
+
+@keyframes l12 {
+  100% {
+    background-position: 100% 0, 100% 100%, 0 100%, 0 0, center;
+  }
+}

@@ -4,6 +4,7 @@ import { SocialHub } from "@/components/SocialHub";
 import { CollaborativeLearning } from "@/components/CollaborativeLearning";
 import { CommunityChallenges } from "@/components/CommunityChallenges";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { AdvancedCollaborativeFeatures } from "@/components/AdvancedCollaborativeFeatures";
 import { CommunityChallenge } from "@/types/learning";
 import { ActivityFeedItem } from "@/types/social";
 import { mockActivityFeed, mockTournaments } from "@/data/socialData";
@@ -118,6 +119,9 @@ const Community: React.FC = () => {
           <div className="xl:col-span-2 space-y-8">
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-1">
               <SocialHub />
+            </div>
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-1">
+              <AdvancedCollaborativeFeatures />
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-1">
               <CollaborativeLearning />
