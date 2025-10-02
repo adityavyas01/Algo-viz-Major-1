@@ -35,53 +35,49 @@ export const LearningPathComponent: React.FC = () => {
 
   if (!selectedPath) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Learning Paths</h2>
-          <p className="text-white/80">Structured learning journeys to master algorithms and data structures</p>
+          <p className="text-white/80 text-sm mb-4">Choose your learning journey</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-3">
           {learningPaths.map((path) => {
             const progress = getPathProgress(path);
             const completedCount = path.algorithms.filter(algId => completedAlgorithms.has(algId)).length;
             
             return (
-              <Card
+              <div
                 key={path.id}
-                className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/15 transition-all cursor-pointer"
+                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-all cursor-pointer"
                 onClick={() => setSelectedPath(path)}
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <CardTitle className="text-white">{path.name}</CardTitle>
-                    <Badge className={`${getDifficultyColor(path.difficulty)} text-white`}>
-                      {path.difficulty}
-                    </Badge>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-white text-sm font-medium">{path.name}</h4>
+                  <Badge className={`${getDifficultyColor(path.difficulty)} text-white text-xs px-2 py-1`}>
+                    {path.difficulty.slice(0, 3)}
+                  </Badge>
+                </div>
+                <p className="text-white/60 text-xs mb-3 line-clamp-2">{path.description}</p>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-white/60">Progress</span>
+                    <span className="text-white">{completedCount}/{path.algorithms.length}</span>
                   </div>
-                  <p className="text-white/70">{path.description}</p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/70">Progress</span>
-                      <span className="text-white">{completedCount}/{path.algorithms.length}</span>
+                  <Progress value={progress} className="w-full h-1" />
+                  
+                  <div className="flex items-center justify-between text-xs text-white/50">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>{path.estimatedHours}h</span>
                     </div>
-                    <Progress value={progress} className="w-full" />
-                    
-                    <div className="flex items-center justify-between text-sm text-white/70">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span>{path.estimatedHours}h estimated</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4" />
-                        <span>{path.algorithms.length} algorithms</span>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <BookOpen className="w-3 h-3" />
+                      <span>{path.algorithms.length} topics</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>

@@ -46,14 +46,6 @@ export const FeaturedVisualization = () => {
 
   const features = [
     {
-      icon: Play,
-      title: "Interactive Learning",
-      description: "Step through algorithms at your own pace",
-      action: () => navigate('/demo'),
-      buttonText: "Try Demo",
-      requiresAuth: false
-    },
-    {
       icon: Sparkles,
       title: "Real-time Visualization",
       description: "Watch data structures come to life",
@@ -85,38 +77,92 @@ export const FeaturedVisualization = () => {
     { level: "Advanced", count: "15+ Algorithms", color: "bg-purple-500" }
   ];
 
+  // Animated counter hook
+  const useCounter = (end: number, duration: number = 2000) => {
+    const [count, setCount] = useState(0);
+    
+    useEffect(() => {
+      let startTime: number;
+      let animationFrame: number;
+      
+      const animate = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        
+        setCount(Math.floor(progress * end));
+        
+        if (progress < 1) {
+          animationFrame = requestAnimationFrame(animate);
+        }
+      };
+      
+      animationFrame = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(animationFrame);
+    }, [end, duration]);
+    
+    return count;
+  };
+
+  const algorithmsCount = useCounter(50);
+  const studentsCount = useCounter(10000);
+  const lessonsCount = useCounter(150);
+
   return (
-    <section className="py-20 px-4 relative overflow-hidden" id="demo">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 via-blue-900/30 to-purple-900/50"></div>
-      <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    <section className="py-24 px-4 relative overflow-hidden" id="visualizations">
+      {/* Enhanced Background Elements */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/60 via-blue-900/40 to-purple-900/60"></div>
+      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
+      <div className="absolute top-20 left-10 w-80 h-80 bg-gradient-to-r from-cyan-500/15 to-blue-500/15 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-purple-500/15 to-pink-500/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-cyan-500/5 rounded-full blur-3xl"></div>
       
       <div className="container mx-auto relative z-10">
-        {/* Hero Section */}
-        <div className="text-center mb-16 space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full border border-cyan-400/30 mb-4">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span className="text-cyan-300 text-sm font-medium">Interactive Learning Experience</span>
+        {/* Enhanced Hero Section */}
+        <div className="text-center mb-20 space-y-8 animate-fade-in-up">
+          <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 rounded-full border border-gradient-to-r border-cyan-400/20 backdrop-blur-sm mb-6">
+            <Sparkles className="w-5 h-5 text-cyan-400" />
+            <span className="text-cyan-300 font-medium">Interactive Learning Experience</span>
           </div>
           
-          <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
+            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-gradient">
               Interactive Algorithm
             </span>
             <br />
-            <span className="text-white">& Data Structure</span>
+            <span className="bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
+              & Data Structure
+            </span>
             <br />
-            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
               Visualizations
             </span>
           </h2>
           
-          <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed">
-            Master algorithms and data structures through 
-            <span className="text-cyan-400 font-semibold"> immersive visual learning</span> 
-            , step-by-step explanations, and hands-on practice
+                    <p className="text-xl md:text-2xl text-white/70 max-w-4xl mx-auto leading-relaxed">
+            Experience algorithms like never before. Step through each operation, understand complexity, and master the fundamentals with our cutting-edge visualization platform.
           </p>
+          
+          {/* Animated Statistics */}
+          <div className="flex flex-wrap justify-center gap-8 mt-12 animate-fade-in-up delay-300">
+            <div className="group text-center p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:border-cyan-400/30 transition-all duration-500 hover:scale-105">
+              <div className="text-4xl font-bold text-cyan-400 mb-2 animate-glow">
+                {algorithmsCount}+
+              </div>
+              <div className="text-sm text-white/60 group-hover:text-white/80 transition-colors">Algorithms</div>
+            </div>
+            <div className="group text-center p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:border-purple-400/30 transition-all duration-500 hover:scale-105">
+              <div className="text-4xl font-bold text-purple-400 mb-2 animate-glow delay-200">
+                {studentsCount.toLocaleString()}+
+              </div>
+              <div className="text-sm text-white/60 group-hover:text-white/80 transition-colors">Students</div>
+            </div>
+            <div className="group text-center p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:border-blue-400/30 transition-all duration-500 hover:scale-105">
+              <div className="text-4xl font-bold text-blue-400 mb-2 animate-glow delay-400">
+                {lessonsCount}+
+              </div>
+              <div className="text-sm text-white/60 group-hover:text-white/80 transition-colors">Lessons</div>
+            </div>
+          </div>
 
           <div className="flex flex-wrap justify-center gap-3 mt-8">
             {learningLevels.map((level, index) => (
@@ -152,34 +198,56 @@ export const FeaturedVisualization = () => {
           </div>
         </div>
 
-        {/* Feature Cards - Now with authentication awareness */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12 max-w-6xl mx-auto">
+        {/* Enhanced Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20 max-w-5xl mx-auto">
           {features.map((feature, index) => {
             const IconComponent = feature.icon;
+            const gradientColors = [
+              'from-cyan-500 via-blue-500 to-purple-500',
+              'from-purple-500 via-pink-500 to-rose-500',
+              'from-orange-500 via-red-500 to-pink-500'
+            ];
+            const shadowColors = [
+              'shadow-cyan-500/25 group-hover:shadow-cyan-500/40',
+              'shadow-purple-500/25 group-hover:shadow-purple-500/40', 
+              'shadow-orange-500/25 group-hover:shadow-orange-500/40'
+            ];
+            
             return (
-              <Card key={index} className={`bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 group ${feature.requiresAuth && !isAuthenticated ? 'relative' : ''}`}>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <IconComponent className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-white font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-white/70 text-sm mb-4">{feature.description}</p>
-                  {feature.requiresAuth && !isAuthenticated && (
-                    <div className="flex items-center justify-center gap-1 mb-2">
-                      <Lock className="w-3 h-3 text-yellow-400" />
-                      <span className="text-yellow-400 text-xs">Premium</span>
+              <Card key={index} className={`group bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-500 hover:scale-105 hover:bg-white/10 rounded-2xl overflow-hidden animate-fade-in-up`} 
+                style={{animationDelay: `${0.4 + index * 0.1}s`}}>
+                <CardContent className="p-8 text-center relative">
+                  {/* Background glow effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${gradientColors[index]} opacity-5 group-hover:opacity-10 transition-opacity rounded-2xl`} />
+                  
+                  <div className="relative z-10">
+                    <div className={`relative w-16 h-16 bg-gradient-to-br ${gradientColors[index]} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg ${shadowColors[index]} transition-all duration-300 group-hover:scale-110 group-hover:rotate-6`}>
+                      <IconComponent className="w-8 h-8 text-white" />
+                      <div className={`absolute inset-0 bg-gradient-to-br ${gradientColors[index]} rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity`} />
                     </div>
-                  )}
-                  <Button
-                    onClick={feature.action}
-                    size="sm"
-                    className={`${feature.requiresAuth && !isAuthenticated 
-                      ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700' 
-                      : 'bg-cyan-600 hover:bg-cyan-700'} text-white border-0 w-full`}
-                  >
-                    {feature.buttonText}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                    
+                    <h3 className="text-xl font-bold text-white mb-4 group-hover:text-cyan-300 transition-colors">{feature.title}</h3>
+                    <p className="text-white/60 group-hover:text-white/80 transition-colors leading-relaxed mb-6">{feature.description}</p>
+                    
+                    {feature.requiresAuth && !isAuthenticated && (
+                      <div className="flex items-center justify-center gap-2 mb-4 bg-yellow-500/10 rounded-full px-3 py-1 border border-yellow-500/20">
+                        <Lock className="w-4 h-4 text-yellow-400" />
+                        <span className="text-yellow-400 text-sm font-medium">Premium Feature</span>
+                      </div>
+                    )}
+                    
+                    <Button
+                      onClick={feature.action}
+                      className={`w-full ${feature.requiresAuth && !isAuthenticated 
+                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400' 
+                        : `bg-gradient-to-r ${gradientColors[index]} hover:scale-105`} text-white border-0 font-semibold py-3 rounded-xl shadow-lg transition-all duration-300`}
+                    >
+                      <div className="flex items-center justify-center">
+                        {feature.buttonText}
+                        <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );

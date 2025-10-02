@@ -30,7 +30,6 @@ const AdminPage = React.lazy(() => import("@/pages/AdminPage"));
 const AdvancedFeatures = React.lazy(() => import("@/pages/AdvancedFeatures"));
 const PracticeProblems = React.lazy(() => import("@/pages/PracticeProblems"));
 const Leaderboard = React.lazy(() => import("@/pages/Leaderboard"));
-const EnhancedVisualizationDemo = React.lazy(() => import("@/pages/EnhancedVisualizationDemo"));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
 
 // Create a client
@@ -138,10 +137,6 @@ function App() {
                       } 
                     />
 
-                    <Route 
-                      path="/demo" 
-                      element={<EnhancedVisualizationDemo />} 
-                    />
                     {/* Admin Routes */}
                     <Route 
                       path="/admin" 

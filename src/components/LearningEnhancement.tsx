@@ -1,156 +1,73 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LearningStreakCard } from '@/components/LearningStreakCard';
-import { DifficultyAdjustment } from '@/components/DifficultyAdjustment';
-import { LearningReports } from '@/components/LearningReports';
-import { MotivationSystem } from '@/components/MotivationSystem';
-import { CommunityChallenges } from '@/components/CommunityChallenges';
-import { CertificationSystem } from '@/components/CertificationSystem';
-import { Flame, Brain, FileText, Heart, Users, Award } from 'lucide-react';
-import { 
-  mockLearningStreak,
-  mockDifficultySettings,
-  mockLearningReports,
-  mockMotivationReminders,
-  mockCommunityMobileChallenges,
-  mockCertifications
-} from '@/data/learningData';
+import { Flame, Brain, Award, Heart, Target, TrendingUp } from 'lucide-react';
+import { mockLearningStreak } from '@/data/learningData';
 
 export const LearningEnhancement: React.FC = () => {
-  const [learningStreak, setLearningStreak] = useState(mockLearningStreak);
-  const [difficultySettings, setDifficultySettings] = useState(mockDifficultySettings);
-  const [motivationReminders, setMotivationReminders] = useState(mockMotivationReminders);
+  const [learningStreak] = useState(mockLearningStreak);
 
-  const handleUpdateStreakGoal = (newGoal: number) => {
-    setLearningStreak(prev => ({ ...prev, streakGoal: newGoal }));
-  };
+  // Compact enhancement tools for sidebar
+  const enhancementTools = [
+    { icon: Flame, title: 'Streak', value: `${learningStreak.currentStreak} days`, color: 'from-orange-500 to-red-500' },
+    { icon: Brain, title: 'Level', value: 'Intermediate', color: 'from-blue-500 to-purple-500' },
+    { icon: Award, title: 'Badges', value: '12 earned', color: 'from-yellow-500 to-orange-500' },
+  ];
 
-  const handleToggleAdaptive = (enabled: boolean) => {
-    setDifficultySettings(prev => ({ ...prev, adaptiveEnabled: enabled }));
-  };
 
-  const handleLevelChange = (level: typeof difficultySettings.currentLevel) => {
-    setDifficultySettings(prev => ({ ...prev, currentLevel: level }));
-  };
-
-  const handleToggleReminder = (reminderId: string, enabled: boolean) => {
-    setMotivationReminders(prev => 
-      prev.map(reminder => 
-        reminder.id === reminderId 
-          ? { ...reminder, isEnabled: enabled }
-          : reminder
-      )
-    );
-  };
-
-  const handleTimeChange = (reminderId: string, newTime: string) => {
-    setMotivationReminders(prev => 
-      prev.map(reminder => 
-        reminder.id === reminderId 
-          ? { ...reminder, scheduledTime: newTime }
-          : reminder
-      )
-    );
-  };
-
-  const handleJoinChallenge = (challengeId: string) => {
-    console.log('Joining challenge:', challengeId);
-  };
-
-  const handleStartCertification = (certificationId: string) => {
-    console.log('Starting certification:', certificationId);
-  };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-white mb-2">Learning Enhancement</h2>
-        <p className="text-white/70">Personalized learning tools to accelerate your progress</p>
+    <div className="space-y-4">
+      <div className="text-center">
+        <p className="text-white/80 text-sm mb-4">Your learning tools</p>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <LearningStreakCard 
-          streak={learningStreak}
-          onUpdateGoal={handleUpdateStreakGoal}
-        />
-        <DifficultyAdjustment
-          settings={difficultySettings}
-          onToggleAdaptive={handleToggleAdaptive}
-          onLevelChange={handleLevelChange}
-        />
+      <div className="space-y-3">
+        {enhancementTools.map((tool, index) => {
+          const IconComponent = tool.icon;
+          return (
+            <div key={index} className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-3 hover:bg-white/10 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 bg-gradient-to-r ${tool.color} rounded-lg flex items-center justify-center`}>
+                    <IconComponent className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">{tool.title}</p>
+                    <p className="text-white/60 text-xs">{tool.value}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <Tabs defaultValue="reports" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 mb-8">
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Reports</span>
-          </TabsTrigger>
-          <TabsTrigger value="motivation" className="flex items-center gap-2">
-            <Heart className="w-4 h-4" />
-            <span className="hidden sm:inline">Motivation</span>
-          </TabsTrigger>
-          <TabsTrigger value="challenges" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">Challenges</span>
-          </TabsTrigger>
-          <TabsTrigger value="certifications" className="flex items-center gap-2">
-            <Award className="w-4 h-4" />
-            <span className="hidden sm:inline">Certifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="streaks" className="flex items-center gap-2">
-            <Flame className="w-4 h-4" />
-            <span className="hidden sm:inline">Habits</span>
-          </TabsTrigger>
-          <TabsTrigger value="adaptive" className="flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            <span className="hidden sm:inline">Adaptive</span>
-          </TabsTrigger>
-        </TabsList>
+      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-4">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Target className="w-6 h-6 text-white" />
+          </div>
+          <p className="text-white text-sm font-medium mb-1">Daily Goal</p>
+          <p className="text-white/60 text-xs mb-2">3/5 algorithms completed</p>
+          <div className="w-full bg-white/10 rounded-full h-2">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full w-3/5"></div>
+          </div>
+        </div>
+      </div>
 
-        <TabsContent value="reports">
-          <LearningReports reports={mockLearningReports} />
-        </TabsContent>
-
-        <TabsContent value="motivation">
-          <MotivationSystem
-            reminders={motivationReminders}
-            onToggleReminder={handleToggleReminder}
-            onTimeChange={handleTimeChange}
-          />
-        </TabsContent>
-
-        <TabsContent value="challenges">
-          <CommunityChallenges
-            challenges={mockCommunityMobileChallenges}
-            onJoinChallenge={handleJoinChallenge}
-          />
-        </TabsContent>
-
-        <TabsContent value="certifications">
-          <CertificationSystem
-            certifications={mockCertifications}
-            onStartCertification={handleStartCertification}
-          />
-        </TabsContent>
-
-        <TabsContent value="streaks">
-          <LearningStreakCard 
-            streak={learningStreak}
-            onUpdateGoal={handleUpdateStreakGoal}
-          />
-        </TabsContent>
-
-        <TabsContent value="adaptive">
-          <DifficultyAdjustment
-            settings={difficultySettings}
-            onToggleAdaptive={handleToggleAdaptive}
-            onLevelChange={handleLevelChange}
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Progress</p>
+              <p className="text-white/60 text-xs">+15% this week</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

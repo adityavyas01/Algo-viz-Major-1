@@ -206,10 +206,10 @@ export default function AdvancedDataStructures() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/demo">
+              <Link to="/learning">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Demo
+                  Back to Learning
                 </Button>
               </Link>
               <div>
