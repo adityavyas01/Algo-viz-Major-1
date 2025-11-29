@@ -305,18 +305,18 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="text-2xl">{activity.avatar}</div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-baseline gap-x-2 text-sm mb-1">
                     {getActivityIcon(activity.type)}
-                    <span className="text-white font-medium">@{activity.username}</span>
-                    <span className="text-white/80">{activity.content}</span>
+                    <span className="text-white font-medium truncate">@{activity.username}</span>
+                    <span className="text-white/80 whitespace-normal">{activity.content}</span>
                     {activity.targetName && (
-                      <span className="text-cyan-400 font-medium">"{activity.targetName}"</span>
+                      <span className="text-cyan-400 font-medium truncate">"{activity.targetName}"</span>
                     )}
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <span className="text-white/60 text-sm">
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-white/60 text-xs">
                       {formatTimeAgo(activity.createdAt)}
                     </span>
                     

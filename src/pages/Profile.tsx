@@ -7,6 +7,8 @@ import { AchievementBadge } from "@/components/AchievementBadge";
 import { UserProfile as UserProfileType } from "@/types/social";
 import { LearningStreak } from "@/types/learning";
 import { Achievement } from "@/types/gamification";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Profile: React.FC = () => {
   // Mock user profile data
@@ -76,6 +78,11 @@ const Profile: React.FC = () => {
               profile={mockProfile}
               isOwnProfile={true}
             />
+            <div className="mt-4 text-center">
+              <Button asChild>
+                <Link to="/profile/certificates">View My Certificates</Link>
+              </Button>
+            </div>
             <div className="mt-8">
               <CategoryProgress data={mockCategoryData} />
             </div>

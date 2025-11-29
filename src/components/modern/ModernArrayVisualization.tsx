@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
-import { ModernCanvas, drawGlowingRect, drawAnimatedElement, drawArrow, drawGradientText, AnimatedElement } from './ModernCanvasSimple';
+import { ModernCanvas, CanvasUtils } from './ModernCanvas';
+import type { AnimatedElement } from './ModernCanvas';
 import { useVisualizationTheme } from '@/contexts/EnhancedTheme';
 
-interface ModernArrayElement {
+export interface ModernArrayElement {
   value: number;
-  state: 'normal' | 'comparing' | 'swapping' | 'sorted' | 'current' | 'minimum' | 'maximum' | 'pivot' | 'target';
+  state: 'normal' | 'comparing' | 'swapping' | 'sorted' | 'current' | 'minimum' | 'maximum' | 'pivot' | 'target' | 'inactive';
   index?: number;
   color?: string;
   glow?: boolean;
@@ -28,19 +29,23 @@ interface ModernArrayVisualizationProps {
   }>;
   animations?: boolean;
   style3D?: boolean;
+  useValueAsHeight?: boolean; // New prop
+  title?: string; // Add title prop
   className?: string;
 }
 
 export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> = ({
   data,
   width = 800,
-  height = 200,
+  height = 300, // Increased default height
   showIndices = true,
   showValues = true,
   showPointers = false,
   pointers = [],
   animations = true,
   style3D = false,
+  useValueAsHeight = false, // New prop
+  title, // Add title
   className = ""
 }) => {
   const { currentTheme } = useVisualizationTheme();
@@ -55,6 +60,7 @@ export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> =
       case 'maximum': return '#f97316'; // Orange
       case 'pivot': return '#ec4899'; // Pink
       case 'target': return '#06b6d4'; // Cyan
+      case 'inactive': return '#6b7280'; // Gray-500
       default: return currentTheme.colors.primary;
     }
   };
@@ -63,32 +69,46 @@ export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> =
     if (!data.length) return [];
 
     const elementWidth = Math.min(80, (width - 80) / data.length);
-    const elementHeight = 60;
     const spacing = 4;
     const totalWidth = data.length * elementWidth + (data.length - 1) * spacing;
     const startX = (width - totalWidth) / 2;
-    const centerY = height / 2 - elementHeight / 2;
+    
+    const maxValue = useValueAsHeight ? Math.max(...data.map(d => d.value), 1) : 1;
+    const maxHeight = height * 0.6;
 
-    return data.map((item, index) => ({
-      id: `element-${index}`,
-      x: startX + index * (elementWidth + spacing),
-      y: centerY,
-      targetX: startX + index * (elementWidth + spacing),
-      targetY: centerY,
-      width: elementWidth,
-      height: elementHeight,
-      color: item.color || getStateColor(item.state),
-      value: item.value,
-      opacity: 1,
-      scale: item.highlight ? 1.1 : 1,
-      rotation: 0,
-      glow: item.glow || item.state === 'comparing' || item.state === 'target',
-      pulse: item.pulse || item.state === 'current',
-      shake: item.shake || item.state === 'swapping'
-    }));
-  }, [data, width, height, currentTheme]);
+    return data.map((item, index) => {
+      const elementHeight = useValueAsHeight ? (item.value / maxValue) * maxHeight : 60;
+      const y = height - elementHeight - 60; // Position from bottom
 
-  const onDraw = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, theme: any) => {
+      return {
+        id: `element-${index}`,
+        x: startX + index * (elementWidth + spacing),
+        y: y,
+        targetX: startX + index * (elementWidth + spacing),
+        targetY: y,
+        width: elementWidth,
+        height: elementHeight,
+        color: item.color || getStateColor(item.state),
+        value: item.value,
+        opacity: 1,
+        scale: item.highlight ? 1.1 : 1,
+        rotation: 0,
+        glow: item.glow || item.state === 'comparing' || item.state === 'target',
+        pulse: item.pulse || item.state === 'current',
+        shake: item.shake || item.state === 'swapping'
+      };
+    });
+  }, [data, width, height, currentTheme, useValueAsHeight]);
+
+  const onDraw = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, theme: any, utils: CanvasUtils) => {
+    // Draw title if it exists
+    if (title) {
+      ctx.fillStyle = theme.colors.text;
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(title, width / 2, 30);
+    }
+    
     // Draw grid background (subtle)
     ctx.strokeStyle = theme.colors.border + '20';
     ctx.lineWidth = 1;
@@ -104,14 +124,32 @@ export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> =
     elements.forEach((element, index) => {
       // Add 3D effect if enabled
       if (style3D) {
-        // Draw shadow
-        ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(element.x + 5, element.y + 5, element.width, element.height);
-        ctx.restore();
+        const perspective = 8;
+        const sideColor = theme.colors.primary + '80';
+        const topColor = theme.colors.primary + '40';
+
+        // Right side
+        ctx.fillStyle = sideColor;
+        ctx.beginPath();
+        ctx.moveTo(element.x + element.width, element.y);
+        ctx.lineTo(element.x + element.width + perspective, element.y - perspective);
+        ctx.lineTo(element.x + element.width + perspective, element.y + element.height - perspective);
+        ctx.lineTo(element.x + element.width, element.y + element.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Top side
+        ctx.fillStyle = topColor;
+        ctx.beginPath();
+        ctx.moveTo(element.x, element.y);
+        ctx.lineTo(element.x + perspective, element.y - perspective);
+        ctx.lineTo(element.x + element.width + perspective, element.y - perspective);
+        ctx.lineTo(element.x + element.width, element.y);
+        ctx.closePath();
+        ctx.fill();
       }
 
-      drawAnimatedElement(ctx, element);
+      utils.drawAnimatedElement(element);
 
       // Draw indices
       if (showIndices) {
@@ -121,7 +159,7 @@ export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> =
         ctx.fillText(
           index.toString(),
           element.x + element.width / 2,
-          element.y + element.height + 20
+          height - 35 // Position indices at the bottom
         );
       }
 
@@ -129,8 +167,7 @@ export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> =
       const item = data[index];
       if (item.state === 'comparing' && index < data.length - 1 && data[index + 1].state === 'comparing') {
         const nextElement = elements[index + 1];
-        drawArrow(
-          ctx,
+        utils.drawArrow(
           element.x + element.width,
           element.y + element.height / 2,
           nextElement.x,
@@ -150,8 +187,7 @@ export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> =
           const pointerX = element.x + element.width / 2;
 
           // Draw pointer arrow
-          drawArrow(
-            ctx,
+          utils.drawArrow(
             pointerX,
             pointerY + (pointer.position === 'top' ? 20 : -20),
             pointerX,
@@ -189,7 +225,7 @@ export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> =
     }
 
     // Draw state legend
-    const legendY = height - 40;
+    const legendY = height - 20;
     const legendStates = ['normal', 'comparing', 'swapping', 'sorted', 'current'];
     const legendLabels = ['Normal', 'Comparing', 'Swapping', 'Sorted', 'Current'];
     
@@ -215,7 +251,7 @@ export const ModernArrayVisualization: React.FC<ModernArrayVisualizationProps> =
     ctx.font = '10px monospace';
     ctx.textAlign = 'right';
     ctx.fillText(
-      `Elements: ${data.length} | FPS: ${Math.round(1000 / 16)}`,
+      `Elements: ${data.length}`,
       width - 10,
       20
     );

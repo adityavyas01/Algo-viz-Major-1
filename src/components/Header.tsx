@@ -143,12 +143,9 @@ export const Header = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button asChild variant="ghost" className="text-white hover:bg-white/10">
-                  <Link to="/login">Sign In</Link>
-                </Button>
-                <Button asChild className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white">
-                  <Link to="/register">Sign Up</Link>
-                </Button>
+                <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 text-sm">
+                  All Access - No Login Required
+                </Badge>
               </div>
             )}
           </div>

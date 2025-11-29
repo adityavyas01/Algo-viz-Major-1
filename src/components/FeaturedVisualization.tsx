@@ -17,6 +17,7 @@ const freeAlgorithms: DemoType[] = [
   'bubble',        // Sorting - free
   'binary-search', // Search - free  
   'linkedlist',    // Data Structures - free
+  'trie',          // Trie - free
   'binarytree',    // Trees - free
   'graph',         // Graphs - free
   'dp',            // Dynamic Programming - free
@@ -28,7 +29,7 @@ const premiumAlgorithms: DemoType[] = [
   'selection', 'quick', 'merge',           // Additional Sorting
   'stack', 'queue', 'hashtable', 'heap',  // Additional Data Structures  
   'avl', 'redblack',                      // Additional Trees
-  'advanced-graph', 'trie',               // Additional Graph/Advanced
+  'advanced-graph',                       // Additional Graph/Advanced
   'advanced-dp', 'backtracking', 'number-theory', // Advanced Algorithms
   'computational-geometry', 'advanced-graph-algorithms', // More Advanced
   'spatial-structures', 'vr-classroom',   // Additional 3D
@@ -42,7 +43,7 @@ export const FeaturedVisualization = () => {
   const isAuthenticated = !!user;
 
   const currentDemo = getDemoConfiguration(activeDemo);
-  const isCurrentDemoLocked = premiumAlgorithms.includes(activeDemo) && !isAuthenticated;
+  const isCurrentDemoLocked = false; // BYPASS: All algorithms are free
 
   const features = [
     {
@@ -270,35 +271,19 @@ export const FeaturedVisualization = () => {
           <AlgorithmSelector 
             activeDemo={activeDemo} 
             onDemoChange={setActiveDemo}
-            lockedAlgorithms={isAuthenticated ? [] : premiumAlgorithms}
+            lockedAlgorithms={[]} // BYPASS: No algorithms are locked
           />
         </div>
         
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur-xl"></div>
           <div className="relative">
-            {isCurrentDemoLocked ? (
-              <AuthAwareFeature
-                requiresAuth={true}
-                featureName={currentDemo.title}
-                benefit={`Unlock ${currentDemo.title} and 30+ other premium algorithm visualizations. See step-by-step execution, complexity analysis, and interactive examples.`}
-                className="min-h-[400px]"
-              >
-                <VisualizationCard
-                  title={currentDemo.title}
-                  description={currentDemo.description}
-                  component={currentDemo.component}
-                  complexity={currentDemo.complexity}
-                />
-              </AuthAwareFeature>
-            ) : (
-              <VisualizationCard
-                title={currentDemo.title}
-                description={currentDemo.description}
-                component={currentDemo.component}
-                complexity={currentDemo.complexity}
-              />
-            )}
+            <VisualizationCard
+              title={currentDemo.title}
+              description={currentDemo.description}
+              component={currentDemo.component}
+              complexity={currentDemo.complexity}
+            />
           </div>
         </div>
 

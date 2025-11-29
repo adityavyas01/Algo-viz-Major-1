@@ -38,6 +38,7 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
       title: "Data Structures",
       algorithms: [
         { id: 'linkedlist' as DemoType, name: 'Linked List', free: true },
+        { id: 'trie' as DemoType, name: 'Trie', free: true },
         { id: 'stack' as DemoType, name: 'Stack', free: false },
         { id: 'queue' as DemoType, name: 'Queue', free: false },
         { id: 'hashtable' as DemoType, name: 'Hash Table', free: false },

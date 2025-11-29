@@ -1,96 +1,81 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-interface AnimationState {
-  isPlaying: boolean;
-  currentStep: number;
-  speed: number;
-}
-
-export const useAnimation = (totalSteps: number, initialSpeed: number = 500) => {
-  const [state, setState] = useState<AnimationState>({
-    isPlaying: false,
-    currentStep: 0,
-    speed: initialSpeed
-  });
-
+export const useAnimation = <T,>(initialSteps: T[], initialSpeed: number = 500) => {
+  const [steps, setSteps] = useState<T[]>(initialSteps);
+  const [currentStepIndex, setCurrentStepIndex] = useState(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [speed, setSpeed] = useState(initialSpeed);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const currentStep = currentStepIndex >= 0 && currentStepIndex < steps.length ? steps[currentStepIndex] : null;
+
   const play = useCallback(() => {
-    setState(prev => ({ ...prev, isPlaying: true }));
-  }, []);
+    if (steps.length === 0) return;
+    setIsPlaying(true);
+    if (currentStepIndex === -1) {
+      setCurrentStepIndex(0);
+    }
+  }, [steps, currentStepIndex]);
 
   const pause = useCallback(() => {
-    setState(prev => ({ ...prev, isPlaying: false }));
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    setIsPlaying(false);
   }, []);
 
   const reset = useCallback(() => {
-    setState(prev => ({ ...prev, isPlaying: false, currentStep: 0 }));
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    setIsPlaying(false);
+    setCurrentStepIndex(-1);
+  }, []);
+
+  const nextStep = useCallback(() => {
+    if (currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex(prev => prev + 1);
+    } else {
+      setIsPlaying(false);
     }
-  }, []);
+  }, [currentStepIndex, steps.length]);
 
-  const stepForward = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      currentStep: Math.min(prev.currentStep + 1, totalSteps - 1)
-    }));
-  }, [totalSteps]);
-
-  const stepBackward = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      currentStep: Math.max(prev.currentStep - 1, 0)
-    }));
-  }, []);
-
-  const setSpeed = useCallback((newSpeed: number) => {
-    setState(prev => ({ ...prev, speed: newSpeed }));
-  }, []);
-
-  const goToStep = useCallback((step: number) => {
-    setState(prev => ({
-      ...prev,
-      currentStep: Math.max(0, Math.min(step, totalSteps - 1))
-    }));
-  }, [totalSteps]);
+  const prevStep = useCallback(() => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(prev => prev - 1);
+    }
+  }, [currentStepIndex]);
 
   useEffect(() => {
-    if (state.isPlaying && state.currentStep < totalSteps - 1) {
-      intervalRef.current = setInterval(() => {
-        setState(prev => {
-          if (prev.currentStep >= totalSteps - 1) {
-            return { ...prev, isPlaying: false };
-          }
-          return { ...prev, currentStep: prev.currentStep + 1 };
-        });
-      }, 1000 - state.speed);
-    } else if (intervalRef.current) {
+    if (intervalRef.current) {
       clearInterval(intervalRef.current);
-      intervalRef.current = null;
     }
-
+    if (isPlaying) {
+      intervalRef.current = setInterval(() => {
+        nextStep();
+      }, speed);
+    }
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [state.isPlaying, state.speed, state.currentStep, totalSteps]);
+  }, [isPlaying, speed, nextStep]);
+  
+  useEffect(() => {
+    if (steps.length > 0 && currentStepIndex === -1 && isPlaying) {
+      setCurrentStepIndex(0);
+    }
+  }, [steps, isPlaying, currentStepIndex]);
 
   return {
-    ...state,
+    currentStep,
+    steps,
+    setSteps,
+    currentStepIndex,
+    setCurrentStepIndex,
+    isPlaying,
     play,
     pause,
     reset,
-    stepForward,
-    stepBackward,
+    nextStep,
+    prevStep,
+    speed,
     setSpeed,
-    goToStep
   };
 };

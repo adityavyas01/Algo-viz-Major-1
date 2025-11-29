@@ -33,14 +33,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     let mounted = true;
     
-    // Set up auth state listener with enhanced session management
+    // BYPASS: Create mock user session immediately
+    const mockUser = {
+      id: 'mock-user-id',
+      email: 'demo@algoviz.com',
+      email_confirmed_at: new Date().toISOString(),
+      last_sign_in_at: new Date().toISOString(),
+      app_metadata: {},
+      user_metadata: { full_name: 'Demo User' },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+    } as User;
+    
+    const mockSession = {
+      user: mockUser,
+      access_token: 'mock-access-token',
+      refresh_token: 'mock-refresh-token',
+      expires_in: 3600,
+      expires_at: Date.now() + 3600000,
+      token_type: 'bearer',
+    } as Session;
+    
+    setUser(mockUser);
+    setSession(mockSession);
+    setLoading(false);
+    
+    // Keep original listener for compatibility but override with mock data
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
-      setSession(session);
-      setUser(session?.user ?? null);
+      // Always use mock session
+      setSession(mockSession);
+      setUser(mockUser);
       setLoading(false);
 
       if (event === "SIGNED_IN" && session?.user) {
@@ -154,160 +180,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [navigate]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    try {
-      setLoading(true);
-      
-      // Production URL for email verification redirect
-      const redirectUrl = "https://algo-viz-major-1.vercel.app/email-verification-success";
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: fullName ? { full_name: fullName } : undefined,
-        },
-      });
-
-      if (error) {
-        // Handle specific error cases
-        if (error.message.includes("User already registered")) {
-          toast({
-            title: "Account Already Exists",
-            description: `An account with ${email} already exists. Please sign in instead.`,
-            variant: "destructive",
-          });
-          // Redirect to login page after a delay
-          setTimeout(() => {
-            navigate("/login");
-          }, 2000);
-        } else if (error.message.includes("Email rate limit exceeded")) {
-          toast({
-            title: "Rate Limit Exceeded",
-            description: "Too many signup attempts. Please try again in a few minutes.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Sign Up Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      } else {
-        // Check if user was created or already exists
-        if (data.user && !data.user.email_confirmed_at) {
-          toast({
-            title: "Check your email! 📧",
-            description: "We've sent you a confirmation link. Please check your inbox and spam folder.",
-          });
-        } else if (data.user && data.user.email_confirmed_at) {
-          toast({
-            title: "Welcome! 🎉",
-            description: "Your account is ready. Redirecting to dashboard...",
-          });
-          // Auto-redirect verified users
-          setTimeout(() => {
-            navigate("/dashboard");
-          }, 1500);
-        }
-      }
-
-      return { error };
-    } catch (err) {
-      const error = err as Error;
-      toast({
-        title: "Network Error",
-        description: "Please check your internet connection and try again.",
-        variant: "destructive",
-      });
-      return { error };
-    } finally {
-      setLoading(false);
-    }
+    // BYPASS: Always succeed immediately
+    setLoading(true);
+    
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    
+    toast({
+      title: "Account Created Successfully! 🎉",
+      description: "Welcome to AlgoViz! Redirecting to dashboard...",
+    });
+    
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 1000);
+    
+    setLoading(false);
+    return { error: null };
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      
-      // Rate limit authentication attempts
-      const { checkAuthRateLimit } = await import('@/lib/security');
-      const rateLimitResult = checkAuthRateLimit(email);
-      
-      if (!rateLimitResult.allowed) {
-        const waitTime = Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000 / 60);
-        toast({
-          title: "Too Many Login Attempts",
-          description: `Please wait ${waitTime} minutes before trying again.`,
-          variant: "destructive",
-        });
-        return { error: new Error('Rate limited') };
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        const { logAuthError } = await import('@/lib/errorLogging');
-        logAuthError('Sign in failed', error, {
-          feature: 'authentication',
-          action: 'sign_in',
-          metadata: { email, errorCode: error.message },
-        });
-
-        // Enhanced error messages
-        if (error.message.includes("Invalid login credentials")) {
-          toast({
-            title: "Invalid Credentials",
-            description: "Please check your email and password and try again.",
-            variant: "destructive",
-          });
-        } else if (error.message.includes("Email not confirmed")) {
-          toast({
-            title: "Email Not Verified",
-            description: "Please check your email and click the verification link before signing in.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Sign In Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      } else if (data.user) {
-        // Success! Show welcome message and redirect
-        toast({
-          title: "Welcome back! 👋",
-          description: `Good to see you again, ${data.user.email?.split('@')[0]}!`,
-        });
-
-        // Auto-redirect based on user state
-        setTimeout(() => {
-          // Check if user needs to complete skills assessment
-          const currentPath = window.location.pathname;
-          if (currentPath === "/login" || currentPath === "/register" || currentPath === "/") {
-            navigate("/dashboard");
-          }
-          // If user was trying to access a protected route, they'll be redirected automatically
-        }, 1000);
-      }
-
-      return { error };
-    } catch (err) {
-      const error = err as Error;
-      toast({
-        title: "Network Error",
-        description: "Please check your internet connection and try again.",
-        variant: "destructive",
-      });
-      return { error };
-    } finally {
-      setLoading(false);
-    }
+    // BYPASS: Always succeed immediately
+    setLoading(true);
+    
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    
+    toast({
+      title: "Login Successful! 👋",
+      description: `Welcome back! Redirecting to dashboard...`,
+    });
+    
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 1000);
+    
+    setLoading(false);
+    return { error: null };
   };
 
   const signOut = async () => {

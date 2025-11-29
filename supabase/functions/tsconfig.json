@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["esnext", "deno.ns", "deno.unstable"],
+    "paths": {
+      "https://deno.land/std@0.168.0/http/server.ts": ["./.vscode/deno/npm/deno.land/std@0.168.0/http/server.d.ts"],
+      "https://esm.sh/@supabase/supabase-js@2": ["./.vscode/deno/npm/esm.sh/@supabase/supabase-js@2/dist/module/index.d.ts"]
+    }
+  },
+  "include": [
+    "./**/*.ts"
+  ]
+}

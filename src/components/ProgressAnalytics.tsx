@@ -5,6 +5,7 @@ import { StatsCard } from '@/components/StatsCard';
 import { WeeklyProgressChart } from '@/components/WeeklyProgressChart';
 import { DifficultyBreakdown } from '@/components/DifficultyBreakdown';
 import { CategoryProgress } from '@/components/CategoryProgress';
+import { LearningAnalyticsDashboard } from '@/components/LearningAnalyticsDashboard';
 import { useUserProgress, useUserStats } from '@/hooks/useDatabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -211,6 +212,11 @@ export const ProgressAnalytics: React.FC = () => {
       </div>
 
       <CategoryProgress data={analyticsData.categoryProgress} />
+
+      {/* Advanced Analytics Dashboard */}
+      <div className="mt-8">
+        <LearningAnalyticsDashboard />
+      </div>
     </div>
   );
 };

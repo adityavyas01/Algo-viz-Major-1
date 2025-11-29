@@ -1,657 +1,391 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ModernVisualizationBase } from './ModernVisualizationBase';
-import { ModernCanvas } from './ModernCanvas';
+import { ModernArrayVisualization, ModernArrayElement } from './ModernArrayVisualization';
+import { useAnimation } from '@/hooks/useAnimation';
 import { useVisualizationTheme } from '@/contexts/EnhancedTheme';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  SkipForward, 
-  SkipBack,
+  BarChart3, 
   Shuffle,
-  BarChart3,
-  ArrowUpDown,
-  Target,
-  Eye,
-  BookOpen,
+  GitMerge,
+  Copy,
   Layers,
-  GitBranch
+  TrendingUp
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MergeSortStep {
   array: number[];
-  leftArray?: number[];
-  rightArray?: number[];
-  mergedArray?: number[];
-  currentLevel: number;
-  phase: 'divide' | 'merge' | 'complete';
-  divideIndices?: { start: number; mid: number; end: number };
-  mergeIndices?: { leftIndex: number; rightIndex: number; mergedIndex: number };
+  level: number;
+  range: [number, number];
+  left: number[];
+  right: number[];
+  merged: number[];
+  isMerging: boolean;
+  compare: [number, number] | null;
   description: string;
   comparisons: number;
   merges: number;
 }
 
-interface MergeSortMetrics {
-  totalComparisons: number;
-  totalMerges: number;
-  maxDepth: number;
-  startTime: number;
-  endTime?: number;
-  timeComplexity: string;
-  spaceComplexity: string;
-}
-
-const ModernMergeSortVisualization: React.FC = () => {
-  const { currentTheme, animationSpeed } = useVisualizationTheme();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+export const ModernMergeSortVisualization: React.FC = () => {
+  const { currentTheme } = useVisualizationTheme();
   const [originalArray, setOriginalArray] = useState([38, 27, 43, 3, 9, 82, 10]);
-  const [steps, setSteps] = useState<MergeSortStep[]>([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const [speed, setSpeed] = useState(1200);
-  const [metrics, setMetrics] = useState<MergeSortMetrics | null>(null);
-  const [showPseudocode, setShowPseudocode] = useState(false);
+  const [speed, setSpeed] = useState(800);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const animation = useAnimation<MergeSortStep>([], speed);
 
-  const generateMergeSortSteps = useCallback((arr: number[]) => {
+  const generateNewArray = () => {
+    const newArr = Array.from({ length: 7 }, () => Math.floor(Math.random() * 100) + 1);
+    setOriginalArray(newArr);
+  };
+
+  const generateSteps = async () => {
+    setIsGenerating(true);
+    animation.setSteps([]);
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    const arr = [...originalArray];
     const sortSteps: MergeSortStep[] = [];
     let comparisons = 0;
     let merges = 0;
-    let maxDepth = 0;
 
-    // Initial state
-    sortSteps.push({
-      array: [...arr],
-      currentLevel: 0,
-      phase: 'divide',
-      description: 'Starting Merge Sort. We will divide the array into smaller subarrays.',
-      comparisons,
-      merges
-    });
-
-    const startTime = performance.now();
-
-    const mergeSort = (array: number[], start: number, end: number, level: number): number[] => {
-      maxDepth = Math.max(maxDepth, level);
-      
-      if (start >= end) {
-        return [array[start]];
+    const mergeSortRecursive = async (array: number[], level: number, offset: number): Promise<number[]> => {
+      if (array.length <= 1) {
+        return array;
       }
 
-      const mid = Math.floor((start + end) / 2);
+      const mid = Math.floor(array.length / 2);
+      const left = array.slice(0, mid);
+      const right = array.slice(mid);
 
-      // Show divide phase
       sortSteps.push({
         array: [...arr],
-        currentLevel: level,
-        phase: 'divide',
-        divideIndices: { start, mid, end },
-        description: `Dividing array from index ${start} to ${end} at middle point ${mid}`,
+        level,
+        range: [offset, offset + array.length - 1],
+        left,
+        right,
+        merged: [],
+        isMerging: false,
+        compare: null,
+        description: `Divide: Splitting array into two halves.`,
         comparisons,
-        merges
+        merges,
       });
 
-      // Recursively sort left and right halves
-      const leftArray = mergeSort(array, start, mid, level + 1);
-      const rightArray = mergeSort(array, mid + 1, end, level + 1);
+      const sortedLeft = await mergeSortRecursive(left, level + 1, offset);
+      const sortedRight = await mergeSortRecursive(right, level + 1, offset + mid);
 
-      // Merge phase
+      // Merge
       const merged: number[] = [];
-      let leftIndex = 0;
-      let rightIndex = 0;
+      let i = 0, j = 0;
 
       sortSteps.push({
         array: [...arr],
-        leftArray: [...leftArray],
-        rightArray: [...rightArray],
-        mergedArray: [],
-        currentLevel: level,
-        phase: 'merge',
-        description: `Merging left [${leftArray.join(', ')}] and right [${rightArray.join(', ')}] subarrays`,
+        level,
+        range: [offset, offset + array.length - 1],
+        left: sortedLeft,
+        right: sortedRight,
+        merged: [],
+        isMerging: true,
+        compare: null,
+        description: `Merge: Preparing to merge sorted halves.`,
         comparisons,
-        merges
+        merges,
       });
 
-      while (leftIndex < leftArray.length && rightIndex < rightArray.length) {
+      while (i < sortedLeft.length && j < sortedRight.length) {
         comparisons++;
-        
-        if (leftArray[leftIndex] <= rightArray[rightIndex]) {
-          merged.push(leftArray[leftIndex]);
-          
-          sortSteps.push({
-            array: [...arr],
-            leftArray: [...leftArray],
-            rightArray: [...rightArray],
-            mergedArray: [...merged],
-            currentLevel: level,
-            phase: 'merge',
-            mergeIndices: { leftIndex, rightIndex, mergedIndex: merged.length - 1 },
-            description: `Comparing ${leftArray[leftIndex]} ≤ ${rightArray[rightIndex]}, taking ${leftArray[leftIndex]} from left`,
-            comparisons,
-            merges
-          });
-          
-          leftIndex++;
+        sortSteps.push({
+          array: [...arr],
+          level,
+          range: [offset, offset + array.length - 1],
+          left: sortedLeft,
+          right: sortedRight,
+          merged: [...merged],
+          isMerging: true,
+          compare: [sortedLeft[i], sortedRight[j]],
+          description: `Comparing ${sortedLeft[i]} and ${sortedRight[j]}.`,
+          comparisons,
+          merges,
+        });
+
+        if (sortedLeft[i] < sortedRight[j]) {
+          merged.push(sortedLeft[i]);
+          i++;
         } else {
-          merged.push(rightArray[rightIndex]);
-          
-          sortSteps.push({
-            array: [...arr],
-            leftArray: [...leftArray],
-            rightArray: [...rightArray],
-            mergedArray: [...merged],
-            currentLevel: level,
-            phase: 'merge',
-            mergeIndices: { leftIndex, rightIndex, mergedIndex: merged.length - 1 },
-            description: `Comparing ${leftArray[leftIndex]} > ${rightArray[rightIndex]}, taking ${rightArray[rightIndex]} from right`,
-            comparisons,
-            merges
-          });
-          
-          rightIndex++;
+          merged.push(sortedRight[j]);
+          j++;
         }
-      }
-
-      // Copy remaining elements
-      while (leftIndex < leftArray.length) {
-        merged.push(leftArray[leftIndex]);
+        
+        const tempArr = [...arr];
+        for(let k=0; k < merged.length; k++) {
+          tempArr[offset + k] = merged[k];
+        }
         sortSteps.push({
-          array: [...arr],
-          leftArray: [...leftArray],
-          rightArray: [...rightArray],
-          mergedArray: [...merged],
-          currentLevel: level,
-          phase: 'merge',
-          description: `Adding remaining element ${leftArray[leftIndex]} from left subarray`,
+          array: tempArr,
+          level,
+          range: [offset, offset + array.length - 1],
+          left: sortedLeft,
+          right: sortedRight,
+          merged: [...merged],
+          isMerging: true,
+          compare: null,
+          description: `Added ${merged[merged.length - 1]} to the merged result.`,
           comparisons,
-          merges
+          merges,
         });
-        leftIndex++;
       }
 
-      while (rightIndex < rightArray.length) {
-        merged.push(rightArray[rightIndex]);
+      while (i < sortedLeft.length) {
+        merged.push(sortedLeft[i]);
+        i++;
+        const tempArr = [...arr];
+        for(let k=0; k < merged.length; k++) {
+          tempArr[offset + k] = merged[k];
+        }
         sortSteps.push({
-          array: [...arr],
-          leftArray: [...leftArray],
-          rightArray: [...rightArray],
-          mergedArray: [...merged],
-          currentLevel: level,
-          phase: 'merge',
-          description: `Adding remaining element ${rightArray[rightIndex]} from right subarray`,
+          array: tempArr,
+          level,
+          range: [offset, offset + array.length - 1],
+          left: sortedLeft,
+          right: sortedRight,
+          merged: [...merged],
+          isMerging: true,
+          compare: null,
+          description: `Copying remaining ${merged[merged.length - 1]} from left.`,
           comparisons,
-          merges
+          merges,
         });
-        rightIndex++;
       }
-
-      merges++;
+      while (j < sortedRight.length) {
+        merged.push(sortedRight[j]);
+        j++;
+        const tempArr = [...arr];
+        for(let k=0; k < merged.length; k++) {
+          tempArr[offset + k] = merged[k];
+        }
+        sortSteps.push({
+          array: tempArr,
+          level,
+          range: [offset, offset + array.length - 1],
+          left: sortedLeft,
+          right: sortedRight,
+          merged: [...merged],
+          isMerging: true,
+          compare: null,
+          description: `Copying remaining ${merged[merged.length - 1]} from right.`,
+          comparisons,
+          merges,
+        });
+      }
       
-      // Show completed merge
+      merges++;
+      for(let k=0; k < merged.length; k++) {
+        arr[offset + k] = merged[k];
+      }
+
       sortSteps.push({
         array: [...arr],
-        leftArray: [...leftArray],
-        rightArray: [...rightArray],
-        mergedArray: [...merged],
-        currentLevel: level,
-        phase: 'merge',
-        description: `Merge complete: [${merged.join(', ')}]`,
+        level,
+        range: [offset, offset + array.length - 1],
+        left: [],
+        right: [],
+        merged: [],
+        isMerging: false,
+        compare: null,
+        description: `Subarray from index ${offset} to ${offset + array.length - 1} is now sorted.`,
         comparisons,
-        merges
+        merges,
       });
 
       return merged;
     };
 
-    const sortedArray = mergeSort([...arr], 0, arr.length - 1, 0);
-    const endTime = performance.now();
-
+    await mergeSortRecursive(arr, 0, 0);
+    
     sortSteps.push({
-      array: sortedArray,
-      currentLevel: 0,
-      phase: 'complete',
-      description: 'Merge Sort complete! Array is now fully sorted.',
+      array: [...arr],
+      level: 0,
+      range: [0, arr.length - 1],
+      left: [],
+      right: [],
+      merged: [],
+      isMerging: false,
+      compare: null,
+      description: '🎉 Merge Sort Complete! The array is fully sorted.',
       comparisons,
-      merges
+      merges,
     });
 
-    setMetrics({
-      totalComparisons: comparisons,
-      totalMerges: merges,
-      maxDepth,
-      startTime,
-      endTime,
-      timeComplexity: 'O(n log n)',
-      spaceComplexity: 'O(n)'
+    animation.setSteps(sortSteps);
+    setIsGenerating(false);
+  };
+
+  useEffect(() => {
+    generateSteps();
+  }, [originalArray]);
+
+  const currentStepData = useMemo(() => {
+    if (!animation.steps.length || animation.currentStepIndex >= animation.steps.length) return null;
+    return animation.steps[animation.currentStepIndex];
+  }, [animation.steps, animation.currentStepIndex]);
+
+  const arrayData = useMemo((): ModernArrayElement[] => {
+    if (!currentStepData) return [];
+    return currentStepData.array.map((val, idx) => {
+      let state: ModernArrayElement['state'] = 'normal';
+      if (currentStepData.range && idx >= currentStepData.range[0] && idx <= currentStepData.range[1]) {
+        state = 'target';
+      }
+      if (animation.currentStepIndex === animation.steps.length - 1) {
+        state = 'sorted';
+      }
+      return {
+        value: val,
+        state,
+        label: String(val),
+      };
     });
+  }, [currentStepData, animation.currentStepIndex, animation.steps.length]);
 
-    setSteps(sortSteps);
-  }, []);
-
-  const play = () => setIsPlaying(true);
-  const pause = () => setIsPlaying(false);
-  const reset = () => {
-    setCurrentStep(0);
-    setIsPlaying(false);
-    setIsComplete(false);
-  };
-  
-  const stepForward = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      setIsComplete(true);
-      setIsPlaying(false);
-    }
-  };
-  
-  const stepBackward = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-      setIsComplete(false);
-    }
-  };
-
-  const shuffleArray = () => {
-    const newArray = [...originalArray];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    setOriginalArray(newArray);
-    reset();
-  };
-
-  const drawVisualization = useCallback((context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-    if (!steps.length || !steps[currentStep]) return;
-
-    const step = steps[currentStep];
-    context.clearRect(0, 0, canvas.width, canvas.height);
-
-    const elementWidth = 50;
-    const elementHeight = 40;
-    const spacing = 8;
-    const levelHeight = 80;
-
-    // Draw main array
-    const mainArrayY = 50;
-    const mainStartX = (canvas.width - (step.array.length * (elementWidth + spacing))) / 2;
-
-    step.array.forEach((value, index) => {
-      const x = mainStartX + index * (elementWidth + spacing);
-      
-      context.fillStyle = currentTheme.colors.surface;
-      context.fillRect(x, mainArrayY, elementWidth, elementHeight);
-      
-      context.strokeStyle = currentTheme.colors.border;
-      context.lineWidth = 2;
-      context.strokeRect(x, mainArrayY, elementWidth, elementHeight);
-
-      context.fillStyle = 'white';
-      context.font = 'bold 14px Arial';
-      context.textAlign = 'center';
-      context.fillText(value.toString(), x + elementWidth / 2, mainArrayY + elementHeight / 2 + 5);
-    });
-
-    // Draw left subarray if exists
-    if (step.leftArray && step.leftArray.length > 0) {
-      const leftY = mainArrayY + levelHeight;
-      const leftStartX = (canvas.width / 2) - (step.leftArray.length * (elementWidth + spacing)) - 20;
-
-      context.fillStyle = currentTheme.colors.info;
-      context.font = 'bold 12px Arial';
-      context.textAlign = 'center';
-      context.fillText('LEFT', leftStartX + (step.leftArray.length * (elementWidth + spacing)) / 2, leftY - 10);
-
-      step.leftArray.forEach((value, index) => {
-        const x = leftStartX + index * (elementWidth + spacing);
-        
-        let fillColor = currentTheme.colors.info;
-        if (step.mergeIndices && index === step.mergeIndices.leftIndex) {
-          fillColor = currentTheme.colors.warning;
-          context.shadowColor = currentTheme.colors.warning;
-          context.shadowBlur = 10;
-        }
-
-        context.fillStyle = fillColor;
-        context.fillRect(x, leftY, elementWidth, elementHeight);
-        
-        context.shadowBlur = 0;
-        
-        context.strokeStyle = currentTheme.colors.border;
-        context.lineWidth = 2;
-        context.strokeRect(x, leftY, elementWidth, elementHeight);
-
-        context.fillStyle = 'white';
-        context.font = 'bold 14px Arial';
-        context.textAlign = 'center';
-        context.fillText(value.toString(), x + elementWidth / 2, leftY + elementHeight / 2 + 5);
-      });
-    }
-
-    // Draw right subarray if exists
-    if (step.rightArray && step.rightArray.length > 0) {
-      const rightY = mainArrayY + levelHeight;
-      const rightStartX = (canvas.width / 2) + 20;
-
-      context.fillStyle = currentTheme.colors.warning;
-      context.font = 'bold 12px Arial';
-      context.textAlign = 'center';
-      context.fillText('RIGHT', rightStartX + (step.rightArray.length * (elementWidth + spacing)) / 2, rightY - 10);
-
-      step.rightArray.forEach((value, index) => {
-        const x = rightStartX + index * (elementWidth + spacing);
-        
-        let fillColor = currentTheme.colors.warning;
-        if (step.mergeIndices && index === step.mergeIndices.rightIndex) {
-          fillColor = currentTheme.colors.error;
-          context.shadowColor = currentTheme.colors.error;
-          context.shadowBlur = 10;
-        }
-
-        context.fillStyle = fillColor;
-        context.fillRect(x, rightY, elementWidth, elementHeight);
-        
-        context.shadowBlur = 0;
-        
-        context.strokeStyle = currentTheme.colors.border;
-        context.lineWidth = 2;
-        context.strokeRect(x, rightY, elementWidth, elementHeight);
-
-        context.fillStyle = 'white';
-        context.font = 'bold 14px Arial';
-        context.textAlign = 'center';
-        context.fillText(value.toString(), x + elementWidth / 2, rightY + elementHeight / 2 + 5);
-      });
-    }
-
-    // Draw merged array if exists
-    if (step.mergedArray && step.mergedArray.length > 0) {
-      const mergedY = mainArrayY + levelHeight * 2;
-      const mergedStartX = (canvas.width - (step.mergedArray.length * (elementWidth + spacing))) / 2;
-
-      context.fillStyle = currentTheme.colors.success;
-      context.font = 'bold 12px Arial';
-      context.textAlign = 'center';
-      context.fillText('MERGED', mergedStartX + (step.mergedArray.length * (elementWidth + spacing)) / 2, mergedY - 10);
-
-      step.mergedArray.forEach((value, index) => {
-        const x = mergedStartX + index * (elementWidth + spacing);
-        
-        let fillColor = currentTheme.colors.success;
-        if (step.mergeIndices && index === step.mergeIndices.mergedIndex) {
-          fillColor = currentTheme.colors.primary;
-          context.shadowColor = currentTheme.colors.primary;
-          context.shadowBlur = 15;
-        }
-
-        context.fillStyle = fillColor;
-        context.fillRect(x, mergedY, elementWidth, elementHeight);
-        
-        context.shadowBlur = 0;
-        
-        context.strokeStyle = currentTheme.colors.border;
-        context.lineWidth = 2;
-        context.strokeRect(x, mergedY, elementWidth, elementHeight);
-
-        context.fillStyle = 'white';
-        context.font = 'bold 14px Arial';
-        context.textAlign = 'center';
-        context.fillText(value.toString(), x + elementWidth / 2, mergedY + elementHeight / 2 + 5);
-      });
-    }
-
-    // Draw phase indicator
-    context.fillStyle = currentTheme.colors.text;
-    context.font = 'bold 16px Arial';
-    context.textAlign = 'left';
-    context.fillText(`Phase: ${step.phase.toUpperCase()}`, 20, 25);
-    context.fillText(`Level: ${step.currentLevel}`, 20, 45);
-
-    // Draw legend
-    const legendY = canvas.height - 40;
-    const legendItems = [
-      { color: currentTheme.colors.info, label: 'Left Subarray' },
-      { color: currentTheme.colors.warning, label: 'Right Subarray' },
-      { color: currentTheme.colors.success, label: 'Merged Result' },
-      { color: currentTheme.colors.primary, label: 'Current Operation' }
+  const metrics = useMemo(() => {
+    if (!currentStepData) return [];
+    return [
+      { label: 'Progress', value: `${Math.round((animation.currentStepIndex / Math.max(1, animation.steps.length - 1)) * 100)}%`, icon: <TrendingUp className="w-4 h-4" />, color: currentTheme.colors.primary },
+      { label: 'Comparisons', value: currentStepData.comparisons, icon: <BarChart3 className="w-4 h-4" />, color: '#f59e0b' },
+      { label: 'Merges', value: currentStepData.merges, icon: <GitMerge className="w-4 h-4" />, color: '#8b5cf6' },
+      { label: 'Recursion Depth', value: currentStepData.level, icon: <Layers className="w-4 h-4" />, color: '#22c55e' },
     ];
+  }, [currentStepData, animation.currentStepIndex, animation.steps.length, currentTheme]);
 
-    legendItems.forEach((item, index) => {
-      const legendX = 20 + index * 150;
-      
-      context.fillStyle = item.color;
-      context.fillRect(legendX, legendY, 15, 15);
-      
-      context.fillStyle = currentTheme.colors.text;
-      context.font = '12px Arial';
-      context.textAlign = 'left';
-      context.fillText(item.label, legendX + 20, legendY + 12);
-    });
-  }, [currentStep, steps, currentTheme]);
+  const controls = {
+    isPlaying: animation.isPlaying,
+    onPlay: animation.play,
+    onPause: animation.pause,
+    onReset: () => {
+      animation.reset();
+      generateSteps();
+    },
+    onStepForward: animation.nextStep,
+    onStepBack: animation.prevStep,
+    currentStep: animation.currentStepIndex,
+    totalSteps: animation.steps.length,
+    speed,
+    onSpeedChange: setSpeed,
+    isGenerating,
+    onGenerate: generateNewArray,
+  };
 
-  useEffect(() => {
-    generateMergeSortSteps(originalArray);
-  }, [originalArray, generateMergeSortSteps]);
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    if (isPlaying && currentStep < steps.length - 1) {
-      intervalId = setInterval(() => {
-        stepForward();
-      }, speed);
-    } else if (currentStep >= steps.length - 1) {
-      setIsPlaying(false);
-      setIsComplete(true);
-    }
-    return () => clearInterval(intervalId);
-  }, [isPlaying, currentStep, steps.length, speed]);
-
-  const currentStepData = steps[currentStep];
-
-  const pseudocodeLines = [
-    'function mergeSort(array, start, end):',
-    '  if start >= end:',
-    '    return array[start..start]',
-    '  ',
-    '  mid = (start + end) / 2',
-    '  left = mergeSort(array, start, mid)',
-    '  right = mergeSort(array, mid + 1, end)',
-    '  ',
-    '  return merge(left, right)',
-    '',
-    'function merge(left, right):',
-    '  result = []',
-    '  i = 0, j = 0',
-    '  ',
-    '  while i < left.length and j < right.length:',
-    '    if left[i] <= right[j]:',
-    '      result.add(left[i++])',
-    '    else:',
-    '      result.add(right[j++])',
-    '  ',
-    '  // Add remaining elements',
-    '  result.addAll(left[i..])',
-    '  result.addAll(right[j..])',
-    '  return result'
-  ];
+  const educational = {
+    keyPoints: [
+      "Merge Sort is a classic 'divide and conquer' algorithm.",
+      "It divides the array into two halves, recursively sorts them, and then merges them back together.",
+      "The merge step is crucial: it combines two sorted subarrays into a single sorted array.",
+      "It has a stable time complexity of O(n log n) in all cases (worst, average, and best).",
+      "It's not an in-place sort, requiring O(n) additional space for the merge operation."
+    ],
+    pseudocode: [
+      "procedure mergeSort(A, start, end)",
+      "  if start < end then",
+      "    mid = floor((start + end) / 2)",
+      "    mergeSort(A, start, mid)",
+      "    mergeSort(A, mid + 1, end)",
+      "    merge(A, start, mid, end)",
+      "  end if",
+      "end procedure",
+      "",
+      "procedure merge(A, start, mid, end)",
+      "  // Merge the sorted subarrays A[start..mid] and A[mid+1..end]",
+      "end procedure"
+    ],
+    realWorldUse: [
+      "Excellent for sorting large datasets, especially when data doesn't fit into memory (external sorting).",
+      "Its stability is valuable when the original order of equal elements must be preserved.",
+      "Used in various standard library implementations of sorting functions."
+    ]
+  };
 
   return (
     <ModernVisualizationBase
-      title="Merge Sort Visualization"
-      description="Watch the divide-and-conquer approach of merge sort in action"
+      title="Merge Sort"
+      description="A divide-and-conquer algorithm that recursively splits the array, sorts the subarrays, and merges them back together."
       difficulty="Intermediate"
       category="Sorting"
       complexity={{
         time: "O(n log n)",
         space: "O(n)"
       }}
-      controls={{
-        isPlaying,
-        onPlay: play,
-        onPause: pause,
-        onReset: reset,
-        onStepForward: stepForward,
-        onStepBack: stepBackward,
-        currentStep,
-        totalSteps: steps.length,
-        speed,
-        onSpeedChange: setSpeed,
-        disabled: isComplete
-      }}
-      metrics={metrics ? [
-        { label: 'Comparisons', value: currentStepData?.comparisons || 0, icon: <BarChart3 className="w-4 h-4" /> },
-        { label: 'Merges', value: currentStepData?.merges || 0, icon: <GitBranch className="w-4 h-4" /> },
-        { label: 'Current Level', value: currentStepData?.currentLevel || 0, icon: <Layers className="w-4 h-4" /> },
-        { label: 'Max Depth', value: metrics.maxDepth, icon: <Target className="w-4 h-4" /> }
-      ] : undefined}
-      educational={{
-        keyPoints: [
-          'Divide-and-conquer algorithm approach',
-          'Recursively divides array into halves',
-          'Merges sorted subarrays back together',
-          'Guaranteed O(n log n) time complexity',
-          'Stable sorting algorithm'
-        ],
-        pseudocode: pseudocodeLines,
-        realWorldUse: [
-          'External sorting for large datasets',
-          'Stable sorting requirements',
-          'Linked list sorting',
-          'Parallel processing implementations'
-        ]
-      }}
+      controls={controls}
+      metrics={metrics}
+      educational={educational}
     >
-      {/* Progress and Step Info */}
-      <div className="text-center space-y-2">
-        {currentStepData && (
-          <div className="text-white/90 text-sm max-w-2xl mx-auto">
-            {currentStepData.description}
-          </div>
-        )}
-      </div>
-
-      {/* Main Visualization */}
-      <Card 
-        className="backdrop-blur-sm"
-        style={{ 
-          backgroundColor: currentTheme.colors.surface + '95',
-          borderColor: currentTheme.colors.border 
-        }}
-      >
-        <CardContent className="p-6">
-          <ModernCanvas
-            width={800}
-            height={300}
-            onDraw={drawVisualization}
-            className="rounded-lg border border-white/20"
-          />
-        </CardContent>
-      </Card>
-
-      {/* Additional Controls */}
-      <div className="flex justify-center gap-4">
-        <Button
-          onClick={shuffleArray}
-          variant="outline"
-          className="border-white/30 text-white hover:bg-white/10"
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <ModernArrayVisualization
+          data={arrayData}
+          useValueAsHeight={true}
+          style3D={true}
+        />
+        <div 
+          className="w-full p-4 rounded-lg text-center transition-colors duration-300"
+          style={{ 
+            backgroundColor: currentTheme.colors.surface,
+            border: `1px solid ${currentTheme.colors.border}`
+          }}
         >
-          <Shuffle className="w-4 h-4 mr-2" />
-          Shuffle Array
-        </Button>
+          <p className="text-md font-semibold" style={{ color: currentTheme.colors.text }}>
+            {currentStepData?.description || 'Generating steps...'}
+          </p>
+        </div>
         
-        <Button
-          onClick={() => setShowPseudocode(!showPseudocode)}
-          variant="outline"
-          className="border-white/30 text-white hover:bg-white/10"
-        >
-          <BookOpen className="w-4 h-4 mr-2" />
-          {showPseudocode ? 'Hide' : 'Show'} Pseudocode
-        </Button>
-      </div>
-
-      {/* Pseudocode Panel */}
-      {showPseudocode && (
-        <Card 
-          className="backdrop-blur-sm"
-          style={{ 
-            backgroundColor: currentTheme.colors.surface + '95',
-            borderColor: currentTheme.colors.border 
-          }}
-        >
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4" style={{ color: currentTheme.colors.text }}>
-              Merge Sort Pseudocode
-            </h3>
-            <div className="font-mono text-sm space-y-1" style={{ color: currentTheme.colors.textSecondary }}>
-              {pseudocodeLines.map((line, index) => (
-                <div key={index} className="leading-relaxed">
-                  {line}
+        <AnimatePresence>
+          {currentStepData && currentStepData.isMerging && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full flex flex-col items-center space-y-2"
+            >
+              <div className="flex space-x-4">
+                <div className="p-2 border rounded-lg" style={{borderColor: currentTheme.colors.border}}>
+                  <h3 className="text-sm font-semibold mb-2 text-center" style={{color: currentTheme.colors.textSecondary}}>Left Half</h3>
+                  <div className="flex gap-2">
+                    {currentStepData.left.map((val, i) => (
+                      <div key={i} className={`w-10 h-10 flex items-center justify-center rounded ${currentStepData.compare?.[0] === val ? 'bg-blue-500' : 'bg-gray-600'}`}>
+                        {val}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Algorithm Properties */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card 
-          className="backdrop-blur-sm"
-          style={{ 
-            backgroundColor: currentTheme.colors.surface + '95',
-            borderColor: currentTheme.colors.border 
-          }}
-        >
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4" style={{ color: currentTheme.colors.text }}>
-              Algorithm Properties
-            </h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Time Complexity', value: 'O(n log n)', color: currentTheme.colors.success },
-                { label: 'Space Complexity', value: 'O(n)', color: currentTheme.colors.warning },
-                { label: 'Stability', value: 'Yes', color: currentTheme.colors.success },
-                { label: 'In-Place', value: 'No', color: currentTheme.colors.error },
-                { label: 'Best Case', value: 'O(n log n)', color: currentTheme.colors.success },
-                { label: 'Worst Case', value: 'O(n log n)', color: currentTheme.colors.success }
-              ].map((prop, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span style={{ color: currentTheme.colors.textSecondary }}>{prop.label}:</span>
-                  <Badge style={{ backgroundColor: prop.color, color: 'white' }}>
-                    {prop.value}
-                  </Badge>
+                <div className="p-2 border rounded-lg" style={{borderColor: currentTheme.colors.border}}>
+                  <h3 className="text-sm font-semibold mb-2 text-center" style={{color: currentTheme.colors.textSecondary}}>Right Half</h3>
+                  <div className="flex gap-2">
+                    {currentStepData.right.map((val, i) => (
+                      <div key={i} className={`w-10 h-10 flex items-center justify-center rounded ${currentStepData.compare?.[1] === val ? 'bg-blue-500' : 'bg-gray-600'}`}>
+                        {val}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="backdrop-blur-sm"
-          style={{ 
-            backgroundColor: currentTheme.colors.surface + '95',
-            borderColor: currentTheme.colors.border 
-          }}
-        >
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4" style={{ color: currentTheme.colors.text }}>
-              How Merge Sort Works
-            </h3>
-            <div className="space-y-2 text-sm" style={{ color: currentTheme.colors.textSecondary }}>
-              <p>• <strong>Divide:</strong> Split array into two halves recursively</p>
-              <p>• <strong>Conquer:</strong> Sort each half independently</p>
-              <p>• <strong>Merge:</strong> Combine sorted halves into final result</p>
-              <p>• <strong>Guarantee:</strong> Always O(n log n) performance</p>
-              <p>• <strong>Stability:</strong> Maintains relative order of equal elements</p>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+              <div className="p-2 border rounded-lg" style={{borderColor: currentTheme.colors.border}}>
+                <h3 className="text-sm font-semibold mb-2 text-center" style={{color: currentTheme.colors.textSecondary}}>Merged</h3>
+                <div className="flex gap-2 min-h-[40px]">
+                  {currentStepData.merged.map((val, i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="w-10 h-10 flex items-center justify-center rounded bg-green-600"
+                    >
+                      {val}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </ModernVisualizationBase>
   );

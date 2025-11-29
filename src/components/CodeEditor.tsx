@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,10 @@ import { Play, Copy, Download, Clock, TrendingUp } from 'lucide-react';
 
 interface CodeEditorProps {
   algorithmName: string;
+  code: string;
+  language: string;
+  onCodeChange: (code: string) => void;
+  onLanguageChange: (language: string) => void;
   onCodeRun?: (code: string, language: string) => void;
   complexity?: {
     time: string;
@@ -24,7 +27,7 @@ const languages = [
 ];
 
 const codeSnippets: Record<string, Record<string, string>> = {
-  'bubble-sort': {
+    'bubble-sort': {
     javascript: `function bubbleSort(arr) {
   const n = arr.length;
   for (let i = 0; i < n - 1; i++) {
@@ -593,11 +596,13 @@ int main() {
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({ 
   algorithmName, 
+  code,
+  language,
+  onCodeChange,
+  onLanguageChange,
   onCodeRun, 
   complexity 
 }) => {
-  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
-  const [code, setCode] = useState('');
   const [output, setOutput] = useState('');
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const editorRef = useRef(null);
@@ -605,15 +610,16 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   const algorithmKey = algorithmName.toLowerCase().replace(/\s+/g, '-');
   const snippets = codeSnippets[algorithmKey] || {};
 
-  const handleLanguageChange = (language: string) => {
-    setSelectedLanguage(language);
-    if (snippets[language]) {
-      setCode(snippets[language]);
+  const handleLanguageChange = (newLanguage: string) => {
+    onLanguageChange(newLanguage);
+    // If the user hasn't changed the code, switch to the new language's snippet
+    if (snippets[newLanguage] && (!code || code === (snippets[language] || ''))) {
+      onCodeChange(snippets[newLanguage]);
     }
   };
 
   const handleRunCode = () => {
-    if (selectedLanguage === 'javascript') {
+    if (language === 'javascript') {
       try {
         const startTime = performance.now();
         
@@ -636,7 +642,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         console.log = originalLog;
         
         if (onCodeRun) {
-          onCodeRun(code, selectedLanguage);
+          onCodeRun(code, language);
         }
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -644,7 +650,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         setExecutionTime(null);
       }
     } else {
-      setOutput(`Code execution for ${selectedLanguage} is not supported in the browser. This would typically run on a backend server.`);
+      setOutput(`Code execution for ${language} is not supported in the browser. This would typically run on a backend server.`);
     }
   };
 
@@ -659,7 +665,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       java: 'java', 
       cpp: 'cpp' 
     };
-    const extension = extensions[selectedLanguage] || 'txt';
+    const extension = extensions[language] || 'txt';
     const blob = new Blob([code], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -681,7 +687,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         <TabsContent value="editor" className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
+              <Select value={language} onValueChange={handleLanguageChange}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
@@ -715,9 +721,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           <div className="border rounded-lg overflow-hidden">
             <Editor
               height="400px"
-              language={selectedLanguage}
-              value={code || snippets[selectedLanguage] || '// Write your code here...'}
-              onChange={(value: string | undefined) => setCode(value || '')}
+              language={language}
+              value={code}
+              onChange={(value) => onCodeChange(value || '')}
               theme="vs-dark"
               options={{
                 minimap: { enabled: false },
@@ -727,8 +733,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
               }}
               onMount={(editor) => {
                 editorRef.current = editor;
-                if (snippets[selectedLanguage]) {
-                  setCode(snippets[selectedLanguage]);
+                if (!code && snippets[language]) {
+                  onCodeChange(snippets[language]);
                 }
               }}
             />
@@ -770,8 +776,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setSelectedLanguage(lang);
-                        setCode(snippet);
+                        onLanguageChange(lang);
+                        onCodeChange(snippet);
                       }}
                     >
                       Load in Editor
@@ -829,7 +835,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Language:</span>
-                  <span className="text-sm capitalize">{selectedLanguage}</span>
+                  <span className="text-sm capitalize">{language}</span>
                 </div>
               </CardContent>
             </Card>

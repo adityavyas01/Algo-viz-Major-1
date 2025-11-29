@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { 
   Clock, 
@@ -27,6 +25,8 @@ import {
 import { challengeProblems } from '../data/challengeProblems';
 import { ChallengeExecutor, TestResult } from '../services/challengeExecutor';
 import { MonacoCodeEditor } from './MonacoCodeEditor';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 interface ChallengeModeProps {
   challengeId?: string;
@@ -40,6 +40,7 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
   onBack
 }) => {
   const challenge = challengeProblems.find(p => p.id === challengeId) || challengeProblems[0];
+  const { session } = useAuth();
   
   const [timeLeft, setTimeLeft] = useState(challenge.timeLimit * 60);
   const [timeSpent, setTimeSpent] = useState(0);
@@ -55,6 +56,20 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'running' | 'success' | 'failed'>('idle');
   const [score, setScore] = useState(0);
   const [attempts, setAttempts] = useState(0);
+
+  const trackEvent = async (eventType: string, metadata: object) => {
+    if (!session) return;
+    try {
+      await supabase.functions.invoke('track-event', {
+        body: {
+          event_type: eventType,
+          metadata,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to track event:', error);
+    }
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -75,6 +90,16 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
   }, [isRunning, timeLeft, isCompleted]);
 
   useEffect(() => {
+    // Track when a user starts a challenge
+    if (isRunning) {
+      trackEvent('challenge_started', {
+        challengeId: challenge.id,
+        challengeTitle: challenge.title,
+      });
+    }
+  }, [isRunning]);
+
+  useEffect(() => {
     // Update code template when language changes
     const template = challenge.codeTemplates?.[language as keyof typeof challenge.codeTemplates];
     if (template && !code.trim()) {
@@ -85,6 +110,11 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
   const handleTimeUp = () => {
     setIsCompleted(true);
     setSubmissionStatus('failed');
+    trackEvent('challenge_failed', {
+      challengeId: challenge.id,
+      reason: 'time_up',
+      timeSpent,
+    });
     onComplete?.(false, timeSpent, 0);
   };
 
@@ -162,9 +192,25 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
         setIsCompleted(true);
         setIsRunning(false);
         setSubmissionStatus('success');
+        trackEvent('problem_solved', {
+          challengeId: challenge.id,
+          topic: challenge.category,
+          difficulty: challenge.difficulty.toLowerCase(),
+          timeSpent,
+          attempts,
+          score: scoreResult.score,
+        });
         onComplete?.(true, timeSpent, scoreResult.score);
       } else {
         setSubmissionStatus('failed');
+        trackEvent('challenge_failed', {
+          challengeId: challenge.id,
+          reason: 'tests_failed',
+          timeSpent,
+          attempts,
+          passedTests,
+          totalTests: results.length,
+        });
         // Show hints for failed submission
         setShowHints(true);
       }
@@ -448,7 +494,13 @@ export const ChallengeMode: React.FC<ChallengeModeProps> = ({
                       {currentHintIndex + 1} / {challenge.hints.length}
                     </span>
                     <button
-                      onClick={() => setCurrentHintIndex(Math.min(challenge.hints.length - 1, currentHintIndex + 1))}
+                      onClick={() => {
+                        setCurrentHintIndex(Math.min(challenge.hints.length - 1, currentHintIndex + 1));
+                        trackEvent('hint_used', {
+                          challengeId: challenge.id,
+                          hintIndex: currentHintIndex + 1,
+                        });
+                      }}
                       disabled={currentHintIndex === challenge.hints.length - 1}
                       className="p-1 text-yellow-400 hover:text-yellow-300 disabled:opacity-50"
                     >

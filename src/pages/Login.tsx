@@ -5,31 +5,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Github } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { loginSchema, LoginForm } from '@/lib/validations';
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
-  const [formData, setFormData] = useState<LoginForm>({
-    email: '',
-    password: ''
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<Partial<LoginForm>>({});
-  const [rememberMe, setRememberMe] = useState(true); // Default to true for better UX
-  
-  const { signIn, signInWithMagicLink, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect if already logged in
+  // BYPASS: Redirect to home immediately - login page is disabled
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
+    toast({
+      title: "Login Disabled",
+      description: "All visualizations are now freely accessible! Redirecting to home...",
+    });
+    setTimeout(() => navigate('/'), 1000);
+  }, [navigate, toast]);
+
+  return null;
 
   // Load remembered email on mount
   useEffect(() => {
@@ -55,33 +49,10 @@ const Login = () => {
     setIsLoading(true);
     setErrors({});
     
-    try {
-      const validatedData = loginSchema.parse(formData);
-      
-      // Store email for "Remember Me" functionality
-      if (rememberMe) {
-        localStorage.setItem('algviz_remembered_email', validatedData.email);
-      } else {
-        localStorage.removeItem('algviz_remembered_email');
-      }
-      
-      const { error } = await signIn(validatedData.email, validatedData.password);
-      
-      if (!error) {
-        // The AuthContext will handle the redirect automatically
-        console.log('Login successful');
-      }
-    } catch (error: any) {
-      if (error.name === 'ZodError') {
-        const fieldErrors: Partial<LoginForm> = {};
-        error.errors.forEach((err: any) => {
-          fieldErrors[err.path[0] as keyof LoginForm] = err.message;
-        });
-        setErrors(fieldErrors);
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    // BYPASS: No validation, always succeed
+    await signIn('', '');
+    
+    setIsLoading(false);
   };
 
   return (
@@ -102,12 +73,11 @@ const Login = () => {
                 <Input
                   id="email"
                   name="email"
-                  type="email"
-                  placeholder="Enter your email"
+                  type="text"
+                  placeholder="Enter your email (optional)"
                   value={formData.email}
                   onChange={handleChange}
                   className={`pl-10 bg-white/10 border-white/20 text-white placeholder-white/60 ${errors.email ? 'border-red-500' : ''}`}
-                  required
                 />
                 {errors.email && (
                   <p className="text-red-400 text-sm mt-1">{errors.email}</p>
@@ -123,11 +93,10 @@ const Login = () => {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="Enter your password (optional)"
                   value={formData.password}
                   onChange={handleChange}
                   className={`pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-white/60 ${errors.password ? 'border-red-500' : ''}`}
-                  required
                 />
                 <button
                   type="button"
@@ -166,6 +135,22 @@ const Login = () => {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/20" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-slate-800 px-2 text-white/60">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <Button variant="outline" className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20">
+              <Github className="mr-2 h-4 w-4" />
+              GitHub
+            </Button>
+          </div>
 
           <div className="mt-6 text-center">
             <p className="text-white/70">

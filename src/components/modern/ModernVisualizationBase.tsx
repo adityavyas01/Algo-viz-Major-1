@@ -16,7 +16,9 @@ import {
   TrendingUp,
   Zap,
   Eye,
-  Activity
+  Activity,
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 import './ModernVisualizationBase.css';
 
@@ -52,15 +54,19 @@ interface ModernVisualizationBaseProps {
   complexity: {
     time: string;
     space: string;
+    worst?: string;
+    best?: string;
+    average?: string;
   };
   children: ReactNode;
-  controls: ModernControlsProps;
+  controls?: ModernControlsProps | null;
   metrics?: ModernMetricsProps['metrics'];
   educational?: {
     keyPoints: string[];
     pseudocode: string[];
     realWorldUse: string[];
   };
+  interactiveControls?: ReactNode;
   className?: string;
 }
 
@@ -186,8 +192,8 @@ const ModernControls: React.FC<ModernControlsProps> = ({
                 onChange={(e) => onSpeedChange(2100 - Number(e.target.value))}
                 className="w-full modern-slider"
                 style={{
-                  background: `linear-gradient(90deg, ${currentTheme.colors.primary}40 0%, ${currentTheme.colors.secondary}40 100%)`
-                }}
+                  '--thumb-gradient': `linear-gradient(135deg, ${currentTheme.colors.primary} 0%, ${currentTheme.colors.secondary} 100%)`
+                } as React.CSSProperties}
               />
             </div>
             <span className="text-xs font-mono min-w-[50px] text-right flex-shrink-0 visualization-text" style={{ color: currentTheme.colors.text }}>
@@ -259,6 +265,7 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
   controls,
   metrics,
   educational,
+  interactiveControls,
   className = ""
 }) => {
   const { currentTheme } = useVisualizationTheme();
@@ -332,13 +339,52 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
                   Space: {complexity.space}
                 </span>
               </div>
+              {complexity.worst && (
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" style={{ color: currentTheme.colors.error }} />
+                  <span className="text-sm font-medium whitespace-nowrap" style={{ color: currentTheme.colors.textSecondary }}>
+                    Worst: {complexity.worst}
+                  </span>
+                </div>
+              )}
+              {complexity.best && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" style={{ color: currentTheme.colors.success }} />
+                  <span className="text-sm font-medium whitespace-nowrap" style={{ color: currentTheme.colors.textSecondary }}>
+                    Best: {complexity.best}
+                  </span>
+                </div>
+              )}
+              {complexity.average && (
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4" style={{ color: currentTheme.colors.info }} />
+                  <span className="text-sm font-medium whitespace-nowrap" style={{ color: currentTheme.colors.textSecondary }}>
+                    Average: {complexity.average}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </CardHeader>
       </Card>
 
       {/* Controls */}
-      <ModernControls {...controls} />
+      {controls ? (
+        <ModernControls {...controls} />
+      ) : interactiveControls ? (
+        <Card 
+          className="mb-6 overflow-hidden border-0 shadow-2xl"
+          style={{ 
+            background: `linear-gradient(135deg, ${currentTheme.colors.surface}E6 0%, ${currentTheme.colors.surface}CC 100%)`,
+            backdropFilter: 'blur(20px)',
+            borderRadius: '24px'
+          }}
+        >
+          <CardContent className="p-6 flex items-center gap-4">
+            {interactiveControls}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Metrics */}
       {metrics && <ModernMetrics metrics={metrics} />}
@@ -403,7 +449,7 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
                   className="p-4 rounded-lg font-mono text-xs md:text-sm space-y-1"
                   style={{ backgroundColor: currentTheme.colors.surface + '40' }}
                 >
-                  {educational.pseudocode.map((line, index) => (
+                  {Array.isArray(educational.pseudocode) ? educational.pseudocode.map((line, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <span 
                         className="text-xs w-6 text-center flex-shrink-0"
@@ -413,7 +459,11 @@ export const ModernVisualizationBase: React.FC<ModernVisualizationBaseProps> = (
                       </span>
                       <span className="break-all" style={{ color: currentTheme.colors.text }}>{line}</span>
                     </div>
-                  ))}
+                  )) : (
+                    <div style={{ color: currentTheme.colors.text }}>
+                      {typeof educational.pseudocode === 'string' ? educational.pseudocode : 'No pseudocode available'}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               

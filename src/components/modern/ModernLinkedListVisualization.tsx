@@ -1,910 +1,215 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ModernVisualizationBase } from './ModernVisualizationBase';
-import { ModernCanvas } from './ModernCanvas';
-import { useVisualizationTheme } from '@/contexts/EnhancedTheme';
+import React, { useState, useEffect } from 'react';
+import ModernVisualizationBase from './ModernVisualizationBase';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  SkipForward, 
-  SkipBack,
-  Plus,
-  Minus,
-  Search,
-  BookOpen,
-  Target,
-  Eye,
-  Link,
-  ArrowRight,
-  BarChart3,
-  Layers
-} from 'lucide-react';
+import { ArrowRight, Search, Plus, Trash2, Play, Pause, RefreshCw, StepForward } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useAnimation } from '@/hooks/useAnimation';
+import { generateAddSteps, generateRemoveSteps, generateSearchSteps, LinkedListStep } from '@/lib/algorithms/data-structures/linked-list';
 
-interface ListNode {
+export interface Node {
   value: number;
-  next: ListNode | null;
-}
-
-interface LinkedListStep {
-  nodes: { value: number; index: number }[];
-  head: number;
-  currentNode: number;
-  targetValue?: number;
-  operation: 'traverse' | 'insert' | 'delete' | 'search' | 'complete';
-  insertPosition?: number;
-  deletePosition?: number;
-  description: string;
-  operationCount: number;
-}
-
-interface LinkedListMetrics {
-  totalOperations: number;
-  listLength: number;
-  timeComplexity: string;
-  spaceComplexity: string;
+  id: number;
 }
 
 const ModernLinkedListVisualization: React.FC = () => {
-  const { currentTheme, animationSpeed } = useVisualizationTheme();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  const [nodes, setNodes] = useState([
-    { value: 10, index: 0 },
-    { value: 20, index: 1 },
-    { value: 30, index: 2 },
-    { value: 40, index: 3 }
-  ]);
-  const [steps, setSteps] = useState<LinkedListStep[]>([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const [speed, setSpeed] = useState(1000);
-  const [metrics, setMetrics] = useState<LinkedListMetrics | null>(null);
-  const [showPseudocode, setShowPseudocode] = useState(false);
-  const [newValue, setNewValue] = useState('');
-  const [insertIndex, setInsertIndex] = useState('');
-  const [searchValue, setSearchValue] = useState('');
-  const [deleteIndex, setDeleteIndex] = useState('');
+  const [list, setList] = useState<Node[]>([{ value: 10, id: 1 }, { value: 20, id: 2 }, { value: 30, id: 3 }]);
+  const [inputValue, setInputValue] = useState('5');
+  const [indexValue, setIndexValue] = useState('1');
+  const [searchValue, setSearchValue] = useState('20');
 
-  const generateTraversalSteps = useCallback((nodeList: { value: number; index: number }[]) => {
-    const traversalSteps: LinkedListStep[] = [];
-    let operations = 0;
+  const {
+    currentStep,
+    steps,
+    setSteps,
+    isPlaying,
+    play,
+    pause,
+    reset,
+    nextStep,
+    currentStepIndex,
+  } = useAnimation<LinkedListStep>([]);
 
-    // Initial state
-    traversalSteps.push({
-      nodes: [...nodeList],
-      head: 0,
-      currentNode: -1,
-      operation: 'traverse',
-      description: 'Starting linked list traversal from head node',
-      operationCount: operations
-    });
+  useEffect(() => {
+    if (currentStep) {
+      setList(currentStep.list);
+    }
+  }, [currentStep]);
 
-    // Traverse each node
-    nodeList.forEach((node, index) => {
-      operations++;
-      traversalSteps.push({
-        nodes: [...nodeList],
-        head: 0,
-        currentNode: index,
-        operation: 'traverse',
-        description: `Visiting node ${index + 1} with value ${node.value}`,
-        operationCount: operations
-      });
-    });
+  const handleAdd = (position: 'head' | 'tail' | 'index') => {
+    const value = parseInt(inputValue, 10);
+    if (isNaN(value)) return;
 
-    // Complete
-    traversalSteps.push({
-      nodes: [...nodeList],
-      head: 0,
-      currentNode: -1,
-      operation: 'complete',
-      description: 'Traversal complete! Visited all nodes in the linked list.',
-      operationCount: operations
-    });
-
-    setMetrics({
-      totalOperations: operations,
-      listLength: nodeList.length,
-      timeComplexity: 'O(n)',
-      spaceComplexity: 'O(1)'
-    });
-
-    setSteps(traversalSteps);
-  }, []);
-
-  const generateInsertSteps = useCallback((nodeList: { value: number; index: number }[], value: number, position: number) => {
-    const insertSteps: LinkedListStep[] = [];
-    let operations = 0;
-    const newNodeList = [...nodeList];
-
-    // Initial state
-    insertSteps.push({
-      nodes: [...newNodeList],
-      head: 0,
-      currentNode: -1,
-      operation: 'insert',
-      insertPosition: position,
-      description: `Inserting value ${value} at position ${position}`,
-      operationCount: operations
-    });
-
-    // If inserting at head
-    if (position === 0) {
-      operations++;
-      const newNode = { value, index: newNodeList.length };
-      newNodeList.unshift(newNode);
-      
-      // Update indices
-      newNodeList.forEach((node, idx) => {
-        node.index = idx;
-      });
-
-      insertSteps.push({
-        nodes: [...newNodeList],
-        head: 0,
-        currentNode: 0,
-        operation: 'insert',
-        insertPosition: position,
-        description: `New node with value ${value} inserted at head`,
-        operationCount: operations
-      });
-    } else {
-      // Traverse to position - 1
-      for (let i = 0; i < position - 1 && i < newNodeList.length; i++) {
-        operations++;
-        insertSteps.push({
-          nodes: [...newNodeList],
-          head: 0,
-          currentNode: i,
-          operation: 'insert',
-          insertPosition: position,
-          description: `Traversing to position ${i + 1} to find insertion point`,
-          operationCount: operations
-        });
+    let pos: 'head' | 'tail' | number;
+    if (position === 'index') {
+      const index = parseInt(indexValue, 10);
+      if (isNaN(index)) {
+        alert('Invalid index');
+        return;
       }
-
-      // Insert the new node
-      operations++;
-      const newNode = { value, index: newNodeList.length };
-      const insertPos = Math.min(position, newNodeList.length);
-      newNodeList.splice(insertPos, 0, newNode);
-      
-      // Update indices
-      newNodeList.forEach((node, idx) => {
-        node.index = idx;
-      });
-
-      insertSteps.push({
-        nodes: [...newNodeList],
-        head: 0,
-        currentNode: insertPos,
-        operation: 'insert',
-        insertPosition: position,
-        description: `New node with value ${value} inserted at position ${insertPos}`,
-        operationCount: operations
-      });
-    }
-
-    // Complete
-    insertSteps.push({
-      nodes: [...newNodeList],
-      head: 0,
-      currentNode: -1,
-      operation: 'complete',
-      description: 'Insertion complete! New node added to the linked list.',
-      operationCount: operations
-    });
-
-    setMetrics({
-      totalOperations: operations,
-      listLength: newNodeList.length,
-      timeComplexity: position === 0 ? 'O(1)' : 'O(n)',
-      spaceComplexity: 'O(1)'
-    });
-
-    setSteps(insertSteps);
-    setNodes(newNodeList);
-  }, []);
-
-  const generateSearchSteps = useCallback((nodeList: { value: number; index: number }[], searchVal: number) => {
-    const searchSteps: LinkedListStep[] = [];
-    let operations = 0;
-    let found = false;
-
-    // Initial state
-    searchSteps.push({
-      nodes: [...nodeList],
-      head: 0,
-      currentNode: -1,
-      targetValue: searchVal,
-      operation: 'search',
-      description: `Searching for value ${searchVal} in the linked list`,
-      operationCount: operations
-    });
-
-    // Search through nodes
-    for (let i = 0; i < nodeList.length; i++) {
-      operations++;
-      
-      searchSteps.push({
-        nodes: [...nodeList],
-        head: 0,
-        currentNode: i,
-        targetValue: searchVal,
-        operation: 'search',
-        description: `Checking node ${i + 1}: ${nodeList[i].value} ${nodeList[i].value === searchVal ? '✓ Found!' : '≠ ' + searchVal}`,
-        operationCount: operations
-      });
-
-      if (nodeList[i].value === searchVal) {
-        found = true;
-        break;
-      }
-    }
-
-    // Complete
-    searchSteps.push({
-      nodes: [...nodeList],
-      head: 0,
-      currentNode: -1,
-      targetValue: searchVal,
-      operation: 'complete',
-      description: found ? `Value ${searchVal} found in the linked list!` : `Value ${searchVal} not found in the linked list.`,
-      operationCount: operations
-    });
-
-    setMetrics({
-      totalOperations: operations,
-      listLength: nodeList.length,
-      timeComplexity: 'O(n)',
-      spaceComplexity: 'O(1)'
-    });
-
-    setSteps(searchSteps);
-  }, []);
-
-  const generateDeleteSteps = useCallback((nodeList: { value: number; index: number }[], position: number) => {
-    const deleteSteps: LinkedListStep[] = [];
-    let operations = 0;
-    const newNodeList = [...nodeList];
-
-    if (position >= newNodeList.length || position < 0) {
-      deleteSteps.push({
-        nodes: [...newNodeList],
-        head: 0,
-        currentNode: -1,
-        operation: 'complete',
-        description: 'Invalid position for deletion.',
-        operationCount: operations
-      });
-      setSteps(deleteSteps);
-      return;
-    }
-
-    // Initial state
-    deleteSteps.push({
-      nodes: [...newNodeList],
-      head: 0,
-      currentNode: -1,
-      operation: 'delete',
-      deletePosition: position,
-      description: `Deleting node at position ${position}`,
-      operationCount: operations
-    });
-
-    // If deleting head
-    if (position === 0) {
-      operations++;
-      const deletedValue = newNodeList[0].value;
-      newNodeList.shift();
-      
-      // Update indices
-      newNodeList.forEach((node, idx) => {
-        node.index = idx;
-      });
-
-      deleteSteps.push({
-        nodes: [...newNodeList],
-        head: newNodeList.length > 0 ? 0 : -1,
-        currentNode: -1,
-        operation: 'delete',
-        deletePosition: position,
-        description: `Head node with value ${deletedValue} deleted`,
-        operationCount: operations
-      });
+      pos = index;
     } else {
-      // Traverse to position - 1
-      for (let i = 0; i < position - 1; i++) {
-        operations++;
-        deleteSteps.push({
-          nodes: [...newNodeList],
-          head: 0,
-          currentNode: i,
-          operation: 'delete',
-          deletePosition: position,
-          description: `Traversing to position ${i + 1} to find node before deletion point`,
-          operationCount: operations
-        });
+      pos = position;
+    }
+    
+    const newSteps = generateAddSteps(list, value, pos);
+    setSteps(newSteps);
+  };
+
+  const handleRemove = (position: 'head' | 'tail' | 'index') => {
+    let pos: 'head' | 'tail' | number;
+     if (position === 'index') {
+      const index = parseInt(indexValue, 10);
+      if (isNaN(index)) {
+        alert('Invalid index');
+        return;
       }
-
-      // Delete the node
-      operations++;
-      const deletedValue = newNodeList[position].value;
-      newNodeList.splice(position, 1);
-      
-      // Update indices
-      newNodeList.forEach((node, idx) => {
-        node.index = idx;
-      });
-
-      deleteSteps.push({
-        nodes: [...newNodeList],
-        head: 0,
-        currentNode: -1,
-        operation: 'delete',
-        deletePosition: position,
-        description: `Node with value ${deletedValue} deleted from position ${position}`,
-        operationCount: operations
-      });
-    }
-
-    // Complete
-    deleteSteps.push({
-      nodes: [...newNodeList],
-      head: newNodeList.length > 0 ? 0 : -1,
-      currentNode: -1,
-      operation: 'complete',
-      description: 'Deletion complete! Node removed from the linked list.',
-      operationCount: operations
-    });
-
-    setMetrics({
-      totalOperations: operations,
-      listLength: newNodeList.length,
-      timeComplexity: position === 0 ? 'O(1)' : 'O(n)',
-      spaceComplexity: 'O(1)'
-    });
-
-    setSteps(deleteSteps);
-    setNodes(newNodeList);
-  }, []);
-
-  const play = () => setIsPlaying(true);
-  const pause = () => setIsPlaying(false);
-  const reset = () => {
-    setCurrentStep(0);
-    setIsPlaying(false);
-    setIsComplete(false);
-  };
-  
-  const stepForward = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      pos = index;
     } else {
-      setIsComplete(true);
-      setIsPlaying(false);
+      pos = position;
     }
-  };
-  
-  const stepBackward = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-      setIsComplete(false);
-    }
-  };
-
-  const handleTraverse = () => {
-    generateTraversalSteps(nodes);
-    reset();
-  };
-
-  const handleInsert = () => {
-    const value = parseInt(newValue);
-    const position = parseInt(insertIndex);
-    if (!isNaN(value) && !isNaN(position) && position >= 0) {
-      generateInsertSteps(nodes, value, position);
-      reset();
-      setNewValue('');
-      setInsertIndex('');
-    }
+    const newSteps = generateRemoveSteps(list, pos);
+    setSteps(newSteps);
   };
 
   const handleSearch = () => {
-    const value = parseInt(searchValue);
-    if (!isNaN(value)) {
-      generateSearchSteps(nodes, value);
-      reset();
-      setSearchValue('');
-    }
+    const value = parseInt(searchValue, 10);
+    if (isNaN(value)) return;
+    const newSteps = generateSearchSteps(list, value);
+    setSteps(newSteps);
   };
+  
+  const handleReset = () => {
+    reset();
+    setList([{ value: 10, id: 1 }, { value: 20, id: 2 }, { value: 30, id: 3 }]);
+    setSteps([]);
+  }
 
-  const handleDelete = () => {
-    const position = parseInt(deleteIndex);
-    if (!isNaN(position) && position >= 0) {
-      generateDeleteSteps(nodes, position);
-      reset();
-      setDeleteIndex('');
-    }
-  };
+  const displayedList = currentStep ? currentStep.list : list;
+  const highlightedIndices = currentStep ? currentStep.highlightedIndices : [];
+  const description = currentStep ? currentStep.description : "Perform an action to start the visualization.";
 
-  const drawVisualization = useCallback((context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-    if (!steps.length || !steps[currentStep]) return;
-
-    const step = steps[currentStep];
-    context.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (step.nodes.length === 0) {
-      context.fillStyle = currentTheme.colors.text;
-      context.font = '18px Arial';
-      context.textAlign = 'center';
-      context.fillText('Empty List', canvas.width / 2, canvas.height / 2);
-      return;
-    }
-
-    const nodeWidth = 80;
-    const nodeHeight = 50;
-    const arrowLength = 40;
-    const spacing = nodeWidth + arrowLength;
-    const startX = (canvas.width - (step.nodes.length * spacing - arrowLength)) / 2;
-    const nodeY = (canvas.height - nodeHeight) / 2;
-
-    // Draw nodes and arrows
-    step.nodes.forEach((node, index) => {
-      const x = startX + index * spacing;
-      let fillColor = currentTheme.colors.surface;
-      let borderColor = currentTheme.colors.border;
-      let glowColor = '';
-
-      // Color coding based on state
-      if (index === step.head && step.operation !== 'complete') {
-        fillColor = currentTheme.colors.primary;
-        if (index === step.currentNode) {
-          glowColor = currentTheme.colors.primary;
-        }
-      } else if (index === step.currentNode) {
-        fillColor = currentTheme.colors.warning;
-        glowColor = currentTheme.colors.warning;
-      } else if (step.targetValue !== undefined && node.value === step.targetValue) {
-        fillColor = currentTheme.colors.success;
-        glowColor = currentTheme.colors.success;
-      } else if (step.insertPosition === index || step.deletePosition === index) {
-        fillColor = currentTheme.colors.info;
-        glowColor = currentTheme.colors.info;
-      }
-
-      // Draw glow effect
-      if (glowColor) {
-        context.shadowColor = glowColor;
-        context.shadowBlur = 15;
-      }
-
-      // Node background
-      context.fillStyle = fillColor;
-      context.fillRect(x, nodeY, nodeWidth, nodeHeight);
-      
-      context.shadowBlur = 0;
-
-      // Node border
-      context.strokeStyle = borderColor;
-      context.lineWidth = 2;
-      context.strokeRect(x, nodeY, nodeWidth, nodeHeight);
-
-      // Value text
-      context.fillStyle = 'white';
-      context.font = 'bold 16px Arial';
-      context.textAlign = 'center';
-      context.fillText(node.value.toString(), x + nodeWidth / 2, nodeY + nodeHeight / 2 + 6);
-
-      // Index label
-      context.fillStyle = currentTheme.colors.textSecondary;
-      context.font = '12px Arial';
-      context.fillText(`[${index}]`, x + nodeWidth / 2, nodeY - 10);
-
-      // Draw arrow to next node
-      if (index < step.nodes.length - 1) {
-        const arrowStartX = x + nodeWidth;
-        const arrowEndX = arrowStartX + arrowLength;
-        const arrowY = nodeY + nodeHeight / 2;
-
-        context.strokeStyle = currentTheme.colors.border;
-        context.lineWidth = 2;
-        context.beginPath();
-        context.moveTo(arrowStartX, arrowY);
-        context.lineTo(arrowEndX, arrowY);
-        context.stroke();
-
-        // Arrowhead
-        context.beginPath();
-        context.moveTo(arrowEndX - 8, arrowY - 5);
-        context.lineTo(arrowEndX, arrowY);
-        context.lineTo(arrowEndX - 8, arrowY + 5);
-        context.stroke();
-      } else {
-        // NULL pointer
-        const nullX = x + nodeWidth + 20;
-        const nullY = nodeY + nodeHeight / 2;
-        
-        context.fillStyle = currentTheme.colors.textSecondary;
-        context.font = '14px Arial';
-        context.textAlign = 'left';
-        context.fillText('NULL', nullX, nullY + 5);
-      }
-    });
-
-    // Head pointer
-    if (step.head >= 0 && step.head < step.nodes.length) {
-      const headX = startX + step.head * spacing + nodeWidth / 2;
-      const headY = nodeY - 40;
-
-      context.fillStyle = currentTheme.colors.primary;
-      context.font = 'bold 14px Arial';
-      context.textAlign = 'center';
-      context.fillText('HEAD', headX, headY);
-
-      // Arrow pointing to head
-      context.strokeStyle = currentTheme.colors.primary;
-      context.lineWidth = 2;
-      context.beginPath();
-      context.moveTo(headX, headY + 10);
-      context.lineTo(headX, nodeY - 5);
-      context.stroke();
-
-      // Arrowhead
-      context.beginPath();
-      context.moveTo(headX - 5, nodeY - 10);
-      context.lineTo(headX, nodeY - 5);
-      context.lineTo(headX + 5, nodeY - 10);
-      context.stroke();
-    }
-
-    // Current pointer
-    if (step.currentNode >= 0 && step.currentNode < step.nodes.length) {
-      const currentX = startX + step.currentNode * spacing + nodeWidth / 2;
-      const currentY = nodeY + nodeHeight + 40;
-
-      context.fillStyle = currentTheme.colors.warning;
-      context.font = 'bold 14px Arial';
-      context.textAlign = 'center';
-      context.fillText('CURRENT', currentX, currentY);
-
-      // Arrow pointing to current
-      context.strokeStyle = currentTheme.colors.warning;
-      context.lineWidth = 2;
-      context.beginPath();
-      context.moveTo(currentX, currentY - 10);
-      context.lineTo(currentX, nodeY + nodeHeight + 5);
-      context.stroke();
-
-      // Arrowhead
-      context.beginPath();
-      context.moveTo(currentX - 5, nodeY + nodeHeight + 10);
-      context.lineTo(currentX, nodeY + nodeHeight + 5);
-      context.lineTo(currentX + 5, nodeY + nodeHeight + 10);
-      context.stroke();
-    }
-
-    // Legend
-    const legendY = canvas.height - 30;
-    const legendItems = [
-      { color: currentTheme.colors.primary, label: 'Head' },
-      { color: currentTheme.colors.warning, label: 'Current' },
-      { color: currentTheme.colors.success, label: 'Found' },
-      { color: currentTheme.colors.info, label: 'Operation Target' }
-    ];
-
-    legendItems.forEach((item, index) => {
-      const legendX = 20 + index * 140;
-      
-      context.fillStyle = item.color;
-      context.fillRect(legendX, legendY, 15, 15);
-      
-      context.fillStyle = currentTheme.colors.text;
-      context.font = '12px Arial';
-      context.textAlign = 'left';
-      context.fillText(item.label, legendX + 20, legendY + 12);
-    });
-  }, [currentStep, steps, currentTheme]);
-
-  useEffect(() => {
-    if (nodes.length > 0) {
-      generateTraversalSteps(nodes);
-    }
-  }, [nodes, generateTraversalSteps]);
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    if (isPlaying && currentStep < steps.length - 1) {
-      intervalId = setInterval(() => {
-        stepForward();
-      }, speed);
-    } else if (currentStep >= steps.length - 1) {
-      setIsPlaying(false);
-      setIsComplete(true);
-    }
-    return () => clearInterval(intervalId);
-  }, [isPlaying, currentStep, steps.length, speed]);
-
-  const currentStepData = steps[currentStep];
-
-  const pseudocodeLines = [
-    '// Traversal',
-    'function traverse(head):',
-    '  current = head',
-    '  while current != null:',
-    '    visit(current)',
-    '    current = current.next',
-    '',
-    '// Search',
-    'function search(head, value):',
-    '  current = head',
-    '  while current != null:',
-    '    if current.value == value:',
-    '      return current',
-    '    current = current.next',
-    '  return null',
-    '',
-    '// Insert at position',
-    'function insert(head, value, pos):',
-    '  newNode = createNode(value)',
-    '  if pos == 0:',
-    '    newNode.next = head',
-    '    return newNode',
-    '  current = head',
-    '  for i = 0 to pos-2:',
-    '    current = current.next',
-    '  newNode.next = current.next',
-    '  current.next = newNode'
-  ];
-
-  return (
-    <ModernVisualizationBase
-      title="Linked List Visualization"
-      description="Explore linked list operations: traversal, insertion, deletion, and search"
-      difficulty="Beginner"
-      category="Data Structures"
-      complexity={{
-        time: "O(n)",
-        space: "O(1)"
-      }}
-      controls={{
-        isPlaying,
-        onPlay: play,
-        onPause: pause,
-        onReset: reset,
-        onStepForward: stepForward,
-        onStepBack: stepBackward,
-        currentStep,
-        totalSteps: steps.length,
-        speed,
-        onSpeedChange: setSpeed,
-        disabled: isComplete
-      }}
-      metrics={metrics ? [
-        { label: 'Operations', value: currentStepData?.operationCount || 0, icon: <BarChart3 className="w-4 h-4" /> },
-        { label: 'List Length', value: currentStepData?.nodes.length || 0, icon: <Layers className="w-4 h-4" /> },
-        { label: 'Current Operation', value: currentStepData?.operation || '-', icon: <Eye className="w-4 h-4" /> },
-        { label: 'Head Index', value: currentStepData?.head >= 0 ? currentStepData.head : '-', icon: <Target className="w-4 h-4" /> }
-      ] : undefined}
-      educational={{
-        keyPoints: [
-          'Dynamic size - grows and shrinks at runtime',
-          'Efficient insertion and deletion at head',
-          'Sequential access - must traverse from head',
-          'Each node contains data and pointer to next',
-          'Memory allocated as needed'
-        ],
-        pseudocode: pseudocodeLines,
-        realWorldUse: [
-          'Undo functionality in applications',
-          'Music playlist implementation',
-          'Browser history navigation',
-          'Memory management in operating systems'
-        ]
-      }}
-    >
-      {/* Progress and Step Info */}
-      <div className="text-center space-y-2">
-        {currentStepData && (
-          <div className="text-white/90 text-sm max-w-2xl mx-auto">
-            {currentStepData.description}
-          </div>
-        )}
-      </div>
-
-      {/* Operation Controls */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="backdrop-blur-sm bg-white/10 border-white/20">
-          <CardContent className="p-4">
-            <h4 className="text-white font-semibold mb-2 flex items-center">
-              <Link className="w-4 h-4 mr-2" />
-              Traverse
-            </h4>
-            <Button onClick={handleTraverse} className="w-full">
-              Start Traversal
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="backdrop-blur-sm bg-white/10 border-white/20">
-          <CardContent className="p-4">
-            <h4 className="text-white font-semibold mb-2 flex items-center">
-              <Plus className="w-4 h-4 mr-2" />
-              Insert
-            </h4>
-            <div className="space-y-2">
-              <Input
-                placeholder="Value"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-                className="bg-white/10 border-white/20 text-white"
-              />
-              <Input
-                placeholder="Position"
-                value={insertIndex}
-                onChange={(e) => setInsertIndex(e.target.value)}
-                className="bg-white/10 border-white/20 text-white"
-              />
-              <Button onClick={handleInsert} className="w-full">
-                Insert
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="backdrop-blur-sm bg-white/10 border-white/20">
-          <CardContent className="p-4">
-            <h4 className="text-white font-semibold mb-2 flex items-center">
-              <Search className="w-4 h-4 mr-2" />
-              Search
-            </h4>
-            <div className="space-y-2">
-              <Input
-                placeholder="Search value"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="bg-white/10 border-white/20 text-white"
-              />
-              <Button onClick={handleSearch} className="w-full">
-                Search
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="backdrop-blur-sm bg-white/10 border-white/20">
-          <CardContent className="p-4">
-            <h4 className="text-white font-semibold mb-2 flex items-center">
-              <Minus className="w-4 h-4 mr-2" />
-              Delete
-            </h4>
-            <div className="space-y-2">
-              <Input
-                placeholder="Position"
-                value={deleteIndex}
-                onChange={(e) => setDeleteIndex(e.target.value)}
-                className="bg-white/10 border-white/20 text-white"
-              />
-              <Button onClick={handleDelete} className="w-full">
-                Delete
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Visualization */}
-      <Card 
-        className="backdrop-blur-sm"
-        style={{ 
-          backgroundColor: currentTheme.colors.surface + '95',
-          borderColor: currentTheme.colors.border 
-        }}
-      >
-        <CardContent className="p-6">
-          <ModernCanvas
-            width={800}
-            height={200}
-            onDraw={drawVisualization}
-            className="rounded-lg border border-white/20"
+  const interactiveControls = (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+      <Card className="bg-gray-800/50">
+        <CardHeader><CardTitle className="text-base">Add Node</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Enter a number"
+            className="bg-gray-900"
+            disabled={isPlaying}
           />
+          <div className="flex gap-2">
+            <Button onClick={() => handleAdd('head')} className="flex-1" disabled={isPlaying}>Add Head</Button>
+            <Button onClick={() => handleAdd('tail')} className="flex-1" disabled={isPlaying}>Add Tail</Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Additional Controls */}
-      <div className="flex justify-center gap-4">
-        <Button
-          onClick={() => setShowPseudocode(!showPseudocode)}
-          variant="outline"
-          className="border-white/30 text-white hover:bg-white/10"
-        >
-          <BookOpen className="w-4 h-4 mr-2" />
-          {showPseudocode ? 'Hide' : 'Show'} Pseudocode
-        </Button>
-      </div>
+      <Card className="bg-gray-800/50">
+        <CardHeader><CardTitle className="text-base">Modify by Index</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <Input
+            value={indexValue}
+            onChange={(e) => setIndexValue(e.target.value)}
+            placeholder="Enter index"
+            className="bg-gray-900"
+            disabled={isPlaying}
+          />
+          <div className="flex gap-2">
+            <Button onClick={() => handleAdd('index')} variant="outline" className="flex-1" disabled={isPlaying}><Plus className="w-4 h-4 mr-2"/>Add</Button>
+            <Button onClick={() => handleRemove('index')} variant="destructive" className="flex-1" disabled={isPlaying}><Trash2 className="w-4 h-4 mr-2"/>Remove</Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-gray-800/50">
+        <CardHeader><CardTitle className="text-base">Search</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <Input
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            placeholder="Enter value to find"
+            className="bg-gray-900"
+            disabled={isPlaying}
+          />
+          <Button onClick={handleSearch} className="w-full" disabled={isPlaying}><Search className="w-4 h-4 mr-2"/>Find</Button>
+        </CardContent>
+      </Card>
 
-      {/* Pseudocode Panel */}
-      {showPseudocode && (
-        <Card 
-          className="backdrop-blur-sm"
-          style={{ 
-            backgroundColor: currentTheme.colors.surface + '95',
-            borderColor: currentTheme.colors.border 
-          }}
-        >
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4" style={{ color: currentTheme.colors.text }}>
-              Linked List Operations Pseudocode
-            </h3>
-            <div className="font-mono text-sm space-y-1" style={{ color: currentTheme.colors.textSecondary }}>
-              {pseudocodeLines.map((line, index) => (
-                <div key={index} className="leading-relaxed">
-                  {line}
+      <Card className="bg-gray-800/50">
+        <CardHeader><CardTitle className="text-base">Controls</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex gap-2">
+            <Button onClick={isPlaying ? pause : play} className="w-full" disabled={steps.length === 0 || currentStepIndex === steps.length - 1}>
+              {isPlaying ? <Pause className="w-4 h-4 mr-2"/> : <Play className="w-4 h-4 mr-2"/>}
+              {isPlaying ? 'Pause' : 'Play'}
+            </Button>
+            <Button onClick={nextStep} className="w-full" disabled={isPlaying || steps.length === 0 || currentStepIndex === steps.length - 1}><StepForward className="w-4 h-4 mr-2"/>Next</Button>
+          </div>
+          <Button onClick={handleReset} className="w-full" variant="secondary"><RefreshCw className="w-4 h-4 mr-2"/>Reset</Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const visualization = (
+    <div className="h-64 p-4 flex flex-col justify-center">
+      <div className="flex items-center justify-center min-h-[100px] bg-gray-900/50 rounded-lg p-4 border border-gray-700 overflow-x-auto relative">
+        <AnimatePresence>
+          {displayedList.map((node, index) => (
+            <motion.div
+              key={node.id}
+              layout
+              initial={{ opacity: 0, y: -50, scale: 0.5 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 50, scale: 0.5 }}
+              transition={{ duration: 0.5, type: 'spring' }}
+              className="flex items-center"
+            >
+              <div className={`flex items-center bg-gray-800 p-2 rounded-lg transition-all duration-300 ${highlightedIndices.includes(index) ? 'ring-2 ring-yellow-400 shadow-lg' : ''}`}>
+                <div className="w-16 h-16 bg-green-600 rounded-l-md flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  {node.value}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Data Structure Properties */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card 
-          className="backdrop-blur-sm"
-          style={{ 
-            backgroundColor: currentTheme.colors.surface + '95',
-            borderColor: currentTheme.colors.border 
-          }}
-        >
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4" style={{ color: currentTheme.colors.text }}>
-              Operation Complexities
-            </h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Access', value: 'O(n)', color: currentTheme.colors.error },
-                { label: 'Search', value: 'O(n)', color: currentTheme.colors.error },
-                { label: 'Insert (Head)', value: 'O(1)', color: currentTheme.colors.success },
-                { label: 'Insert (Position)', value: 'O(n)', color: currentTheme.colors.error },
-                { label: 'Delete (Head)', value: 'O(1)', color: currentTheme.colors.success },
-                { label: 'Delete (Position)', value: 'O(n)', color: currentTheme.colors.error }
-              ].map((prop, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span style={{ color: currentTheme.colors.textSecondary }}>{prop.label}:</span>
-                  <Badge style={{ backgroundColor: prop.color, color: 'white' }}>
-                    {prop.value}
-                  </Badge>
+                <div className="w-8 h-16 bg-gray-700 rounded-r-md flex items-center justify-center flex-shrink-0">
+                  <ArrowRight className="text-white" />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="backdrop-blur-sm"
-          style={{ 
-            backgroundColor: currentTheme.colors.surface + '95',
-            borderColor: currentTheme.colors.border 
-          }}
-        >
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4" style={{ color: currentTheme.colors.text }}>
-              Linked List Properties
-            </h3>
-            <div className="space-y-2 text-sm" style={{ color: currentTheme.colors.textSecondary }}>
-              <p>• <strong>Dynamic Size:</strong> Can grow or shrink at runtime</p>
-              <p>• <strong>Memory Efficient:</strong> Allocates memory as needed</p>
-              <p>• <strong>Sequential Access:</strong> Must traverse from head</p>
-              <p>• <strong>Insertion/Deletion:</strong> Efficient at head position</p>
-              <p>• <strong>Cache Performance:</strong> Poor due to non-contiguous memory</p>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+              {index < displayedList.length - 1 && (
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  exit={{ opacity: 0, scaleX: 0 }}
+                  className="w-8 h-1 bg-gray-500 mx-2 origin-left"
+                />
+              )}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {displayedList.length === 0 && <div className="text-gray-500 w-full text-center">List is empty</div>}
       </div>
+      <div className="mt-4 text-center text-sm text-gray-400 h-6">{description}</div>
+    </div>
+  );
+
+  return (
+    <ModernVisualizationBase
+      title="Linked List"
+      description="A linear collection of data elements where each element points to the next. Unlike arrays, linked lists do not have a fixed size."
+      difficulty="Beginner"
+      category="Data Structures"
+      complexity={{
+        time: "Access: O(n), Search: O(n)",
+        space: "O(n)",
+        best: "Insert/Delete at Head: O(1)"
+      }}
+      interactiveControls={interactiveControls}
+    >
+      {visualization}
     </ModernVisualizationBase>
   );
 };

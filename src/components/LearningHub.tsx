@@ -3,13 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Code, TrendingUp, Bookmark, MapPin, GraduationCap } from 'lucide-react';
+import { BookOpen, Code, TrendingUp, Bookmark, MapPin, GraduationCap, Users, Brain, Award, Building2, Settings, Target, Trophy, ShoppingBag, Gamepad2, Users2, Star, Rocket } from 'lucide-react';
 import { TutorialSystem } from '@/components/TutorialSystem';
 import { PracticeProblems } from '@/components/PracticeProblems';
 import { LearningPathComponent } from '@/components/LearningPath';
 import { ProgressAnalytics } from '@/components/ProgressAnalytics';
 import { BookmarkSystem } from '@/components/BookmarkSystem';
 import { AuthAwareFeature } from '@/components/AuthAwareFeature';
+import { SessionManagement } from '@/components/SessionManagement';
+import { AILearningAssistant } from '@/components/AILearningAssistant';
+import { AdvancedAssessmentSystem } from '@/components/AdvancedAssessmentSystem';
+import { EnterpriseIntegrationHub } from '@/components/EnterpriseIntegrationHub';
+import { GroupManagementSystem } from '@/components/GroupManagementSystem';
+import { CurriculumIntegration } from '@/components/CurriculumIntegration';
+import { AdvancedGamificationSystem } from '@/components/AdvancedGamificationSystem';
+import { SocialLearningHub } from '@/components/SocialLearningHub';
+import { VirtualRewardsStore } from '@/components/VirtualRewardsStore';
+import { PlatformOverview } from '@/components/PlatformOverview';
 import { useSearchParams } from 'react-router-dom';
 
 export const LearningHub: React.FC = () => {
@@ -18,7 +28,7 @@ export const LearningHub: React.FC = () => {
   const tabParam = searchParams.get('tab');
   
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<string>(algorithmParam || 'bubble-sort');
-  const [activeTab, setActiveTab] = useState<string>(tabParam || 'learning-paths');
+  const [activeTab, setActiveTab] = useState<string>(tabParam || 'platform-overview');
 
   // Update selected algorithm when URL parameter changes
   useEffect(() => {
@@ -58,7 +68,11 @@ export const LearningHub: React.FC = () => {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full animate-fade-in delay-200">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-4 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg p-0.5 h-auto">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-16 mb-4 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg p-0.5 h-auto">
+            <TabsTrigger value="platform-overview" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-indigo-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Rocket className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Overview</span>
+            </TabsTrigger>
             <TabsTrigger value="learning-paths" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:text-cyan-300 rounded-md transition-all duration-300 text-xs p-1.5">
               <MapPin className="w-3 h-3" />
               <span className="hidden sm:inline text-xs">Paths</span>
@@ -71,6 +85,30 @@ export const LearningHub: React.FC = () => {
               <Code className="w-3 h-3" />
               <span className="hidden sm:inline text-xs">Practice</span>
             </TabsTrigger>
+            <TabsTrigger value="gamification" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:text-yellow-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Trophy className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Rewards</span>
+            </TabsTrigger>
+            <TabsTrigger value="social-learning" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500/20 data-[state=active]:to-rose-500/20 data-[state=active]:text-pink-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Users2 className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Social</span>
+            </TabsTrigger>
+            <TabsTrigger value="rewards-store" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-green-500/20 data-[state=active]:text-emerald-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <ShoppingBag className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Store</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai-assistant" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-violet-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Brain className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">AI Tutor</span>
+            </TabsTrigger>
+            <TabsTrigger value="assessments" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-teal-500/20 data-[state=active]:text-emerald-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Award className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Assess</span>
+            </TabsTrigger>
+            <TabsTrigger value="collaborate" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500/20 data-[state=active]:to-rose-500/20 data-[state=active]:text-pink-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Users className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Collaborate</span>
+            </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500/20 data-[state=active]:to-red-500/20 data-[state=active]:text-orange-300 rounded-md transition-all duration-300 text-xs p-1.5">
               <TrendingUp className="w-3 h-3" />
               <span className="hidden sm:inline text-xs">Analytics</span>
@@ -79,11 +117,27 @@ export const LearningHub: React.FC = () => {
               <Bookmark className="w-3 h-3" />
               <span className="hidden sm:inline text-xs">Bookmarks</span>
             </TabsTrigger>
+            <TabsTrigger value="enterprise" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500/20 data-[state=active]:to-gray-500/20 data-[state=active]:text-slate-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Building2 className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Enterprise</span>
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500/20 data-[state=active]:to-cyan-500/20 data-[state=active]:text-teal-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Users className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Groups</span>
+            </TabsTrigger>
+            <TabsTrigger value="curriculum" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/20 data-[state=active]:to-indigo-500/20 data-[state=active]:text-blue-300 rounded-md transition-all duration-300 text-xs p-1.5">
+              <Target className="w-3 h-3" />
+              <span className="hidden sm:inline text-xs">Curriculum</span>
+            </TabsTrigger>
             <TabsTrigger value="explanations" className="flex items-center justify-center gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-indigo-300 rounded-lg transition-all duration-300 text-xs p-2">
               <GraduationCap className="w-3 h-3" />
               <span className="hidden sm:inline text-xs">Database</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="platform-overview">
+            <PlatformOverview />
+          </TabsContent>
 
           <TabsContent value="learning-paths">
             <AuthAwareFeature
@@ -137,6 +191,66 @@ export const LearningHub: React.FC = () => {
             </AuthAwareFeature>
           </TabsContent>
 
+          <TabsContent value="gamification">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="Advanced Gamification System"
+              benefit="Earn achievement badges, climb skill trees, compete on leaderboards, and take on daily challenges. Gamify your learning journey with rewards and recognition."
+            >
+              <AdvancedGamificationSystem />
+            </AuthAwareFeature>
+          </TabsContent>
+
+          <TabsContent value="social-learning">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="Social Learning Hub"
+              benefit="Connect with peers, join study groups, participate in community discussions, and learn collaboratively in a supportive environment."
+            >
+              <SocialLearningHub />
+            </AuthAwareFeature>
+          </TabsContent>
+
+          <TabsContent value="rewards-store">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="Virtual Rewards Store"
+              benefit="Spend your earned coins and gems on exclusive themes, power-ups, cosmetics, and premium features. Customize your learning experience."
+            >
+              <VirtualRewardsStore />
+            </AuthAwareFeature>
+          </TabsContent>
+
+          <TabsContent value="ai-assistant">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="AI-Powered Learning Assistant"
+              benefit="Get personalized algorithm explanations, code optimization suggestions, intelligent hints, and adaptive learning recommendations tailored to your progress and learning style."
+            >
+              <AILearningAssistant currentAlgorithm={selectedAlgorithm} />
+            </AuthAwareFeature>
+          </TabsContent>
+
+          <TabsContent value="assessments">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="Advanced Assessment System"
+              benefit="Take adaptive skill assessments, track performance analytics, earn certifications, and get detailed learning reports with personalized recommendations for improvement."
+            >
+              <AdvancedAssessmentSystem />
+            </AuthAwareFeature>
+          </TabsContent>
+
+          <TabsContent value="collaborate">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="Real-time Collaboration"
+              benefit="Join live algorithm visualization sessions with peers. Share insights, learn together, and solve problems collaboratively in real-time with live cursors, chat, and synchronized visualizations."
+            >
+              <SessionManagement />
+            </AuthAwareFeature>
+          </TabsContent>
+
           <TabsContent value="analytics">
             <AuthAwareFeature
               requiresAuth={true}
@@ -154,6 +268,36 @@ export const LearningHub: React.FC = () => {
               benefit="Save important concepts, create personal notes, and organize your learning materials. Never lose track of key algorithms and insights."
             >
               <BookmarkSystem />
+            </AuthAwareFeature>
+          </TabsContent>
+
+          <TabsContent value="enterprise">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="Enterprise Integration Hub"
+              benefit="Advanced enterprise features including SSO integration, institutional analytics, user management, and comprehensive reporting for educational institutions."
+            >
+              <EnterpriseIntegrationHub />
+            </AuthAwareFeature>
+          </TabsContent>
+
+          <TabsContent value="groups">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="Group Management System"
+              benefit="Create and manage learning groups with role-based permissions, member analytics, and collaborative learning features for enhanced educational experiences."
+            >
+              <GroupManagementSystem />
+            </AuthAwareFeature>
+          </TabsContent>
+
+          <TabsContent value="curriculum">
+            <AuthAwareFeature
+              requiresAuth={true}
+              featureName="Curriculum Integration Platform"
+              benefit="Comprehensive curriculum management with structured learning paths, interactive modules, assessments, and performance tracking for educational institutions."
+            >
+              <CurriculumIntegration />
             </AuthAwareFeature>
           </TabsContent>
 
