@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MotionWrapper } from '@/components/motion/MotionWrapper';
 import { 
   Brain, 
-  Cube, 
+  Box, 
   Zap,
   Target
 } from 'lucide-react';
@@ -47,7 +47,7 @@ const AdvancedFeatures = () => {
                   value="3d-visualization" 
                   className="flex items-center gap-2 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400"
                 >
-                  <Cube className="w-4 h-4" />
+                  <Box className="w-4 h-4" />
                   3D Visualizations
                 </TabsTrigger>
               </TabsList>
@@ -87,7 +87,7 @@ const AdvancedFeatures = () => {
               <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-                    <Cube className="w-6 h-6 text-white" />
+                    <Box className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <h3 className="text-white font-semibold">3D Visualizations</h3>
