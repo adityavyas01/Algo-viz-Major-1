@@ -81,9 +81,10 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('Learning') || id.includes('Tutorial') || id.includes('Adaptive')) {
               return 'learning-components';
             }
-            if (id.includes('Challenge') || id.includes('LeetCode') || id.includes('Daily')) {
-              return 'challenge-components';
-            }
+            // Skip challenge components chunking - let Vite handle it to avoid circular deps
+            // if (id.includes('Challenge') || id.includes('LeetCode') || id.includes('Daily')) {
+            //   return 'challenge-components';
+            // }
             if (id.includes('Analytics') || id.includes('Progress') || id.includes('Behavior') || id.includes('Report')) {
               return 'analytics-components';
             }
