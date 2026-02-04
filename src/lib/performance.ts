@@ -431,7 +431,7 @@ class PerformanceMonitor {
 // Create singleton instance
 export const performanceMonitor = new PerformanceMonitor({
   enableConsoleLogging: process.env.NODE_ENV === 'development',
-  reportingEndpoint: process.env.NODE_ENV === 'production' ? '/api/performance' : undefined,
+  reportingEndpoint: undefined, // Disabled - no backend endpoint available
   sampleRate: process.env.NODE_ENV === 'development' ? 1 : 0.1
 });
 

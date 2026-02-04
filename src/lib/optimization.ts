@@ -349,27 +349,28 @@ export class ResourcePriority {
       NetworkOptimizer.preloadResource(`/js/${js}`, 'script');
     });
 
+    // Disabled - Vite bundles CSS into JS, no separate CSS files exist
     // Load important resources after a short delay
-    setTimeout(() => {
-      this.important.css.forEach(css => {
-        NetworkOptimizer.preloadResource(`/css/${css}`, 'style');
-      });
-      
-      this.important.js.forEach(js => {
-        NetworkOptimizer.preloadResource(`/js/${js}`, 'script');
-      });
-    }, 100);
+    // setTimeout(() => {
+    //   this.important.css.forEach(css => {
+    //     NetworkOptimizer.preloadResource(`/css/${css}`, 'style');
+    //   });
+    //   
+    //   this.important.js.forEach(js => {
+    //     NetworkOptimizer.preloadResource(`/js/${js}`, 'script');
+    //   });
+    // }, 100);
 
     // Load low priority resources when idle
-    requestIdleCallback(() => {
-      this.low.css.forEach(css => {
-        NetworkOptimizer.preloadResource(`/css/${css}`, 'style');
-      });
-      
-      this.low.js.forEach(js => {
-        NetworkOptimizer.preloadResource(`/js/${js}`, 'script');
-      });
-    });
+    // requestIdleCallback(() => {
+    //   this.low.css.forEach(css => {
+    //     NetworkOptimizer.preloadResource(`/css/${css}`, 'style');
+    //   });
+    //   
+    //   this.low.js.forEach(js => {
+    //     NetworkOptimizer.preloadResource(`/js/${js}`, 'script');
+    //   });
+    // });
   }
 }
 
