@@ -441,6 +441,11 @@ export const usePerformanceMonitor = () => {
   const [warnings, setWarnings] = React.useState<Array<{ metric: string; value: number }>>([]);
 
   React.useEffect(() => {
+    // DISABLED: Performance monitoring completely disabled in production
+    if (process.env.NODE_ENV === 'production') {
+      return;
+    }
+
     performanceMonitor.initialize();
 
     const handleWarning = (event: CustomEvent) => {

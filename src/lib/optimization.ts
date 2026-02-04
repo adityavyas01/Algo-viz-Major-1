@@ -377,9 +377,14 @@ export class ResourcePriority {
 // Performance hooks
 export function usePerformanceOptimization() {
   React.useEffect(() => {
-    // Initialize optimizations
+    // DISABLED: Resource preloading disabled (Vite handles optimization)
+    if (process.env.NODE_ENV === 'production') {
+      return;
+    }
+
+    // Initialize optimizations (development only)
     ImageOptimizer.initializeLazyLoading();
-    ResourcePriority.loadByPriority();
+    // ResourcePriority.loadByPriority(); // Disabled - causes 404 errors
     
     // Cleanup expired cache periodically
     const cacheCleanup = setInterval(() => {

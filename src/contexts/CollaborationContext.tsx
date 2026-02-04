@@ -113,14 +113,13 @@ export const CollaborationProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Initialize WebSocket connection
   useEffect(() => {
-    // Skip WebSocket in production if no server URL configured
-    if (!WEBSOCKET_URL) {
-      setConnectionStatus('disconnected');
-      return;
-    }
+    // DISABLED: WebSocket completely disabled until backend server is deployed
+    setConnectionStatus('disconnected');
+    return;
 
     // For development, we'll simulate WebSocket behavior
     // In production, you would connect to your actual WebSocket server
+    /* eslint-disable no-unreachable */
     if (process.env.NODE_ENV === 'development') {
       // Simulate connection for development
       setConnectionStatus('connecting');
