@@ -49,15 +49,13 @@ export default defineConfig(({ mode }) => ({
       external: [],
       output: {
         manualChunks: (id) => {
-          // Node modules chunking
+          // Critical: React must be in vendor chunk to load first
           if (id.includes('node_modules')) {
-            // React ecosystem
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react/jsx-runtime')) {
+              return 'vendor';
             }
-            // Routing
             if (id.includes('react-router')) {
-              return 'router-vendor';
+              return 'vendor';
             }
             // UI libraries
             if (id.includes('lucide-react') || id.includes('@radix-ui') || id.includes('cmdk')) {
