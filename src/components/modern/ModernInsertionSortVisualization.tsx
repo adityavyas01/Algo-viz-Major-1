@@ -22,7 +22,7 @@ interface InsertionSortStep {
   shifts: number;
 }
 
-export const ModernInsertionSortVisualization: React.FC = () => {
+const ModernInsertionSortVisualization: React.FC = () => {
   const { currentTheme } = useVisualizationTheme();
   const [originalArray, setOriginalArray] = useState([64, 25, 12, 22, 11, 90, 88, 76, 50, 42]);
   const [speed, setSpeed] = useState(500);

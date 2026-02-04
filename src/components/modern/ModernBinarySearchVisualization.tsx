@@ -24,7 +24,7 @@ interface BinarySearchStep {
   comparisons: number;
 }
 
-export const ModernBinarySearchVisualization: React.FC = () => {
+const ModernBinarySearchVisualization: React.FC = () => {
   const { currentTheme } = useVisualizationTheme();
   const [originalArray, setOriginalArray] = useState([2, 5, 8, 12, 16, 23, 38, 45, 56, 67, 78, 89, 94]);
   const [target, setTarget] = useState('23');

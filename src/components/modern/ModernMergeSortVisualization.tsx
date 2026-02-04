@@ -27,7 +27,7 @@ interface MergeSortStep {
   merges: number;
 }
 
-export const ModernMergeSortVisualization: React.FC = () => {
+const ModernMergeSortVisualization: React.FC = () => {
   const { currentTheme } = useVisualizationTheme();
   const [originalArray, setOriginalArray] = useState([38, 27, 43, 3, 9, 82, 10]);
   const [speed, setSpeed] = useState(800);

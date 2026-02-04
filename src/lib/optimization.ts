@@ -335,6 +335,11 @@ export class ResourcePriority {
   };
 
   static loadByPriority(): void {
+    // Skip preloading in development - Vite handles this
+    if (import.meta.env.DEV) {
+      return;
+    }
+
     // Load critical resources immediately
     this.critical.css.forEach(css => {
       NetworkOptimizer.preloadResource(`/css/${css}`, 'style');

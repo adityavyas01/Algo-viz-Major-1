@@ -99,7 +99,7 @@ const sampleGraph = {
   }
 };
 
-export const ModernGraphTraversalVisualization: React.FC = () => {
+const ModernGraphTraversalVisualization: React.FC = () => {
   const { currentTheme } = useVisualizationTheme();
   const [graph, setGraph] = useState(sampleGraph);
   const [algorithm, setAlgorithm] = useState<TraversalAlgorithm>('bfs');

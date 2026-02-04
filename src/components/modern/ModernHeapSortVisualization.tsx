@@ -26,7 +26,7 @@ interface HeapSortStep {
   sortedIndices: number[];
 }
 
-export const ModernHeapSortVisualization: React.FC = () => {
+const ModernHeapSortVisualization: React.FC = () => {
   const { currentTheme } = useVisualizationTheme();
   const [originalArray, setOriginalArray] = useState([64, 25, 12, 22, 11, 90, 88, 76, 50, 42]);
   const [steps, setSteps] = useState<HeapSortStep[]>([]);

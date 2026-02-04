@@ -25,7 +25,7 @@ interface BubbleSortStep {
   description: string;
 }
 
-export const ModernBubbleSortVisualization: React.FC = () => {
+const ModernBubbleSortVisualization: React.FC = () => {
   const { currentTheme } = useVisualizationTheme();
   const [originalArray, setOriginalArray] = useState([64, 34, 25, 12, 22, 11, 90, 88, 76, 50]);
   const [steps, setSteps] = useState<BubbleSortStep[]>([]);

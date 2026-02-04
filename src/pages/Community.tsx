@@ -1,43 +1,28 @@
 import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { SocialHub } from "@/components/SocialHub";
+import { SocialLearningHub } from "@/components/SocialLearningHub";
 import { CollaborativeLearning } from "@/components/CollaborativeLearning";
 import { CommunityChallenges } from "@/components/CommunityChallenges";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { AdvancedCollaborativeFeatures } from "@/components/AdvancedCollaborativeFeatures";
 import { CommunityChallenge } from "@/types/learning";
-import { mockActivityFeed, mockTournaments } from "@/data/socialData";
 import { mockDailyChallenges } from "@/data/gamificationData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { MotionWrapper } from "@/components/motion/MotionWrapper";
 import { Button } from "@/components/ui/button";
 import { Users, Trophy, MessageSquare, Activity, ArrowRight } from "lucide-react";
+import { useActivityFeed } from "@/hooks/useCommunity";
 
 const Community: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [likedActivities, setLikedActivities] = useState<Set<string>>(new Set());
   
-  const communityChallenge: CommunityChallenge[] = mockTournaments.map(tournament => ({
-    id: tournament.id,
-    title: tournament.name,
-    description: tournament.description,
-    type: 'hackathon' as const,
-    startDate: tournament.startDate,
-    endDate: tournament.endDate,
-    status: tournament.status as 'active' | 'upcoming' | 'completed',
-    participants: tournament.participants,
-    maxParticipants: tournament.maxParticipants,
-    rewards: [tournament.prize, 'Community Recognition', 'Leaderboard Position'],
-    requirements: tournament.rules.slice(0, 2),
-    rules: tournament.rules,
-    tags: ['tournament', 'competition', 'algorithms'],
-    difficulty: 'intermediate' as const,
-    bannerImage: tournament.bannerImage
-  }));
-
+  // Fetch real activity feed from database
+  const { activities: realActivities, isLoading: activitiesLoading } = useActivityFeed();
+  
   const dailyChallengesCommunity: CommunityChallenge[] = mockDailyChallenges.map(challenge => ({
     id: `daily-${challenge.id}`,
     title: challenge.title,
@@ -55,8 +40,6 @@ const Community: React.FC = () => {
     difficulty: challenge.difficulty === 'easy' ? 'beginner' : challenge.difficulty === 'medium' ? 'intermediate' : 'advanced',
     bannerImage: '🎯'
   }));
-
-  const allChallenges = [...communityChallenge, ...dailyChallengesCommunity];
 
   const handleJoinChallenge = (challengeId: string) => {
     if (!user) {
@@ -123,8 +106,8 @@ const Community: React.FC = () => {
           <div className="lg:col-span-2 space-y-8">
             <MotionWrapper variant="fadeInUp" delay={0.2}>
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-                <h2 className="text-2xl font-bold mb-4 flex items-center gap-3 text-cyan-300"><Users /> Social Hub</h2>
-                <SocialHub />
+                <h2 className="text-2xl font-bold mb-4 flex items-center gap-3 text-cyan-300"><Users /> Social Learning Hub</h2>
+                <SocialLearningHub />
               </div>
             </MotionWrapper>
             <MotionWrapper variant="fadeInUp" delay={0.3}>
@@ -147,7 +130,7 @@ const Community: React.FC = () => {
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
                 <h2 className="text-2xl font-bold mb-4 flex items-center gap-3 text-yellow-300"><Trophy /> Community Challenges</h2>
                 <CommunityChallenges 
-                  challenges={allChallenges.slice(0, 3)} // Show a few featured challenges
+                  challenges={dailyChallengesCommunity.slice(0, 3)} // Show a few featured challenges
                   onJoinChallenge={handleJoinChallenge}
                 />
                  <Button variant="link" className="text-cyan-400 mt-4" onClick={() => navigate('/challenges')}>

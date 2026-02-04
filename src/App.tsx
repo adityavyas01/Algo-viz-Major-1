@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -45,6 +45,13 @@ const NotFound = React.lazy(() => import("@/pages/NotFound"));
 const CollaborativeSessionPage = React.lazy(() => import("@/pages/CollaborativeSessionPage"));
 const MyCertificatesPage = React.lazy(() => import("@/pages/Profile/MyCertificatesPage"));
 const VerifyCertificatePage = React.lazy(() => import("@/pages/VerifyCertificatePage"));
+const CodeRunner = React.lazy(() => import("@/pages/CodeRunner"));
+const ProblemsPage = React.lazy(() => import("@/pages/ProblemsPage"));
+const ProblemView = React.lazy(() => import("@/components/ProblemView"));
+const ContestsPage = React.lazy(() => import("@/pages/ContestsPage"));
+const ContestView = React.lazy(() => import("@/components/ContestView"));
+const StudyRoomsPage = React.lazy(() => import("@/pages/StudyRoomsPage"));
+const RoomView = React.lazy(() => import("@/components/RoomView"));
 
 // Create a client
 const queryClient = new QueryClient({
@@ -64,6 +71,12 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Wrapper component for ProblemView to handle route params
+const ProblemViewWrapper = () => {
+  const { problemId } = useParams<{ problemId: string }>();
+  return <ProblemView problemId={problemId || ""} />;
+};
 
 // Animated Routes wrapper component
 const AnimatedRoutes = () => {
@@ -212,6 +225,42 @@ const AnimatedRoutes = () => {
                 <CollaborativeSessionPage />
               </ProtectedRoute>
             } 
+          />
+
+          {/* Code Runner Demo - Multi-Language Execution */}
+          <Route 
+            path="/code-runner" 
+            element={<CodeRunner />} 
+          />
+
+          {/* Problems - LeetCode style problem solving */}
+          <Route 
+            path="/problems" 
+            element={<ProblemsPage />} 
+          />
+          <Route 
+            path="/problem/:problemId" 
+            element={<ProblemViewWrapper />} 
+          />
+
+          {/* Contests - Competitive Programming */}
+          <Route 
+            path="/contests" 
+            element={<ContestsPage />} 
+          />
+          <Route 
+            path="/contest/:contestId" 
+            element={<ContestView />} 
+          />
+
+          {/* Study Rooms - Collaborative Learning */}
+          <Route 
+            path="/rooms" 
+            element={<StudyRoomsPage />} 
+          />
+          <Route 
+            path="/room/:roomId" 
+            element={<RoomView />} 
           />
 
           {/* Catch all route */}

@@ -24,7 +24,7 @@ interface RadixSortStep {
   movements: number;
 }
 
-export const ModernRadixSortVisualization: React.FC = () => {
+const ModernRadixSortVisualization: React.FC = () => {
   const { currentTheme } = useVisualizationTheme();
   const [originalArray, setOriginalArray] = useState([170, 45, 75, 90, 802, 24, 2, 66]);
   const [steps, setSteps] = useState<RadixSortStep[]>([]);

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Shield, BookOpen, Users, Zap, Home, Trophy } from 'lucide-react';
+import { User, LogOut, Settings, Shield, BookOpen, Users, Zap, Home, Trophy, Code2, Swords, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -28,8 +28,11 @@ export const Header = () => {
   const navigationItems = [
     { path: '/', label: 'Home', icon: Home, description: 'Homepage and demos' },
     { path: '/learning', label: 'Learning', icon: BookOpen, description: 'Tutorials and learning paths', isNew: false },
+    { path: '/problems', label: 'Problems', icon: Code2, description: 'Practice coding problems', badge: 'New' },
+    { path: '/contests', label: 'Contests', icon: Swords, description: 'Competitive programming contests', isNew: true },
+    { path: '/rooms', label: 'Study Rooms', icon: MessageSquare, description: 'Collaborative learning spaces', isNew: true },
     { path: '/community', label: 'Community', icon: Users, description: 'Social features and groups', badge: 'Popular' },
-    { path: '/challenges', label: 'Challenges', icon: Zap, description: 'Coding challenges and competitions', isNew: true },
+    { path: '/challenges', label: 'Challenges', icon: Zap, description: 'Coding challenges and competitions', isNew: false },
   ];
 
   if (user) {
@@ -56,7 +59,7 @@ export const Header = () => {
           </div>
 
           <nav className="hidden lg:flex items-center space-x-2">
-            {navigationItems.slice(1, 4).map((item) => {
+            {navigationItems.slice(1, 6).map((item) => {
               const Icon = item.icon;
               const isActive = isActivePath(item.path);
               
