@@ -88,9 +88,9 @@ interface CollaborationContextType {
 
 const CollaborationContext = createContext<CollaborationContextType | null>(null);
 
-// Mock WebSocket server URL - in production, this would be your actual server
+// Mock WebSocket - disabled in production until real server is deployed
 const WEBSOCKET_URL = process.env.NODE_ENV === 'production' 
-  ? 'wss://your-websocket-server.com'  
+  ? null  // Disable WebSocket in production (no server deployed yet)
   : 'ws://localhost:3001'; // Mock server for development
 
 export const CollaborationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -113,6 +113,12 @@ export const CollaborationProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Initialize WebSocket connection
   useEffect(() => {
+    // Skip WebSocket in production if no server URL configured
+    if (!WEBSOCKET_URL) {
+      setConnectionStatus('disconnected');
+      return;
+    }
+
     // For development, we'll simulate WebSocket behavior
     // In production, you would connect to your actual WebSocket server
     if (process.env.NODE_ENV === 'development') {
