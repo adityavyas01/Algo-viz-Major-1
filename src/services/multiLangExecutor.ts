@@ -96,6 +96,18 @@ export async function executeBatch(
 ): Promise<BatchExecutionResult> {
   const startTime = performance.now();
 
+  // Safety check for undefined or empty testcases
+  if (!testcases || testcases.length === 0) {
+    return {
+      totalTests: 0,
+      passedTests: 0,
+      failedTests: 0,
+      testcases: [],
+      totalRuntime: 0,
+      verdict: 'Accepted'
+    };
+  }
+
   // Execute all testcases in parallel (with rate limiting handled by piston service)
   const results = await Promise.all(
     testcases.map(testcase => executeTestcase(code, language, testcase))

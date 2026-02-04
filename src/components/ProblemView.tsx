@@ -253,8 +253,8 @@ export function ProblemView({ problemId }: ProblemViewProps) {
               <div className="flex items-center justify-between">
                 <CardTitle>Code Editor</CardTitle>
                 <LanguageSelector
-                  selectedLanguage={selectedLanguage}
-                  onLanguageChange={(lang) => setSelectedLanguage(lang as LanguageId)}
+                  value={selectedLanguage}
+                  onChange={(lang) => setSelectedLanguage(lang)}
                 />
               </div>
             </CardHeader>
