@@ -90,13 +90,18 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('Activity') || id.includes('Social') || id.includes('Collaborative') || id.includes('Leaderboard') || id.includes('Community')) {
               return 'social-components';
             }
-            if (id.includes('Admin') || id.includes('Management')) {
-              return 'admin-components';
-            }
+            // Skip admin components chunking - let Vite handle it to avoid circular deps
+            // if (id.includes('Admin') || id.includes('Management')) {
+            //   return 'admin-components';
+            // }
           }
           
           // Page chunking
           if (id.includes('src/pages/')) {
+            // Skip Admin pages to avoid circular dependency issues
+            if (id.includes('Admin')) {
+              return undefined; // Let Vite decide
+            }
             return 'pages';
           }
         },
