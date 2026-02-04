@@ -49,62 +49,28 @@ export default defineConfig(({ mode }) => ({
       external: [],
       output: {
         manualChunks: (id) => {
-          // Critical: React must be in vendor chunk to load first
+          // Only chunk node_modules to avoid circular dependency issues
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react/jsx-runtime')) {
+            // Core React - must load first
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react/jsx-runtime') || id.includes('react-router')) {
               return 'vendor';
             }
-            if (id.includes('react-router')) {
-              return 'vendor';
-            }
-            // UI libraries
-            if (id.includes('lucide-react') || id.includes('@radix-ui') || id.includes('cmdk')) {
+            // Large UI libraries
+            if (id.includes('lucide-react') || id.includes('@radix-ui')) {
               return 'ui-vendor';
             }
             // Supabase
             if (id.includes('@supabase')) {
               return 'supabase-vendor';
             }
-            // Query libraries
-            if (id.includes('@tanstack/react-query')) {
-              return 'query-vendor';
+            // Other large libraries
+            if (id.includes('@tanstack') || id.includes('three') || id.includes('framer-motion')) {
+              return 'libs-vendor';
             }
-            // Other node modules
+            // Everything else
             return 'vendor';
           }
-          
-          // Component chunking by feature
-          if (id.includes('src/components/')) {
-            if (id.includes('Visualization') || id.includes('Sort') || id.includes('Search') || id.includes('Tree') || id.includes('Graph') || id.includes('Heap') || id.includes('Hash')) {
-              return 'visualization-components';
-            }
-            if (id.includes('Learning') || id.includes('Tutorial') || id.includes('Adaptive')) {
-              return 'learning-components';
-            }
-            // Skip challenge components chunking - let Vite handle it to avoid circular deps
-            // if (id.includes('Challenge') || id.includes('LeetCode') || id.includes('Daily')) {
-            //   return 'challenge-components';
-            // }
-            if (id.includes('Analytics') || id.includes('Progress') || id.includes('Behavior') || id.includes('Report')) {
-              return 'analytics-components';
-            }
-            if (id.includes('Activity') || id.includes('Social') || id.includes('Collaborative') || id.includes('Leaderboard') || id.includes('Community')) {
-              return 'social-components';
-            }
-            // Skip admin components chunking - let Vite handle it to avoid circular deps
-            // if (id.includes('Admin') || id.includes('Management')) {
-            //   return 'admin-components';
-            // }
-          }
-          
-          // Page chunking
-          if (id.includes('src/pages/')) {
-            // Skip Admin pages to avoid circular dependency issues
-            if (id.includes('Admin')) {
-              return undefined; // Let Vite decide
-            }
-            return 'pages';
-          }
+          // Let Vite automatically chunk components and pages to avoid circular deps
         },
         globals: {}
       },
