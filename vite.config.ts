@@ -48,30 +48,7 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       external: [],
       output: {
-        manualChunks: (id) => {
-          // Only chunk node_modules to avoid circular dependency issues
-          if (id.includes('node_modules')) {
-            // Core React - must load first
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react/jsx-runtime') || id.includes('react-router')) {
-              return 'vendor';
-            }
-            // Large UI libraries
-            if (id.includes('lucide-react') || id.includes('@radix-ui')) {
-              return 'ui-vendor';
-            }
-            // Supabase
-            if (id.includes('@supabase')) {
-              return 'supabase-vendor';
-            }
-            // Other large libraries
-            if (id.includes('@tanstack') || id.includes('three') || id.includes('framer-motion')) {
-              return 'libs-vendor';
-            }
-            // Everything else
-            return 'vendor';
-          }
-          // Let Vite automatically chunk components and pages to avoid circular deps
-        },
+        manualChunks: undefined, // Let Vite handle all chunking automatically
         globals: {}
       },
     },
