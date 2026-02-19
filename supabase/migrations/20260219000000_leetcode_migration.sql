@@ -35,7 +35,7 @@ CREATE TABLE public.problems (
     related_topics JSONB DEFAULT '[]'::jsonb,
     likes INTEGER DEFAULT 0,
     dislikes INTEGER DEFAULT 0,
-    rating DECIMAL(5,4) DEFAULT 0.0000,
+    rating DECIMAL(10,6) DEFAULT 0.000000,
     asked_by_faang BOOLEAN DEFAULT FALSE,
     similar_questions JSONB DEFAULT '[]'::jsonb,
     is_active BOOLEAN DEFAULT TRUE,
