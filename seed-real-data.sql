@@ -1,8 +1,13 @@
--- Comprehensive Real Data Seeding for AlgoViz+ Platform
--- Based on popular problems from LeetCode, HackerRank, CodeForces
--- Date: January 28, 2026
+-- ============================================
+-- LeetCode Dataset Seed Data
+-- This file is deprecated - use migrations instead
+-- Data is now imported via:
+-- - supabase/migrations/20260219000000_leetcode_migration.sql (schema)
+-- - supabase/migrations/20260219000001_leetcode_data.sql (1,825 problems)
+-- ============================================
 
-BEGIN;
+-- No data to seed - all LeetCode problems are in migration files
+
 
 -- ============================================
 -- CLEAR EXISTING TEST DATA

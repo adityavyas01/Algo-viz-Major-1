@@ -1,9 +1,13 @@
--- Real Problem Data Seeding for AlgoViz+
--- Inspired by LeetCode, HackerRank, Codeforces problems
+-- ============================================
+-- LeetCode Dataset Seed Data
+-- This file is deprecated - use migrations instead
+-- Data is now imported via:
+-- - supabase/migrations/20260219000000_leetcode_migration.sql (schema)
+-- - supabase/migrations/20260219000001_leetcode_data.sql (1,825 problems)
+-- ============================================
 
--- ============================================
--- REAL CODING PROBLEMS
--- ============================================
+-- No data to seed - all LeetCode problems are in migration files
+
 
 -- Problem 1: Two Sum (LeetCode #1)
 INSERT INTO public.problems (id, title, description, difficulty, category, points, time_limit, memory_limit, is_active)

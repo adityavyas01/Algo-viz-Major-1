@@ -9,7 +9,7 @@ import { executeTestcase, executeBatch } from "./multiLangExecutor";
 
 export interface Testcase {
   id: string;
-  problem_id: string;
+  problem_id: number;
   input: string;
   expected_output: string;
   is_hidden: boolean;
@@ -21,18 +21,42 @@ export interface Testcase {
   updated_at: string;
 }
 
+export interface Company {
+  name: string;
+  frequency?: number;
+}
+
+export interface Topic {
+  name: string;
+  slug?: string;
+}
+
+export interface SimilarQuestion {
+  title: string;
+  slug: string;
+  difficulty: string;
+}
+
 export interface Problem {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  difficulty: "easy" | "medium" | "hard";
-  category: string;
-  points: number;
-  time_limit: number;
-  memory_limit: number;
+  is_premium: boolean;
+  difficulty: "Easy" | "Medium" | "Hard";
+  solution_link?: string;
   acceptance_rate: number;
-  total_submissions: number;
-  total_accepted: number;
+  frequency: number;
+  url?: string;
+  discuss_count: number;
+  accepted: number;
+  submissions: number;
+  companies: Company[] | string[];
+  related_topics: Topic[] | string[];
+  likes: number;
+  dislikes: number;
+  rating: number;
+  asked_by_faang: boolean;
+  similar_questions: SimilarQuestion[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -41,7 +65,7 @@ export interface Problem {
 export interface Submission {
   id: string;
   user_id: string;
-  problem_id: string;
+  problem_id: number;
   code: string;
   language: string;
   status: "pending" | "running" | "accepted" | "wrong_answer" | "runtime_error" | "time_limit_exceeded" | "compilation_error" | "memory_limit_exceeded";

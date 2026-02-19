@@ -1,11 +1,11 @@
 /**
  * ProblemsPage
- * Browse and filter coding problems
+ * Browse and filter LeetCode-style problems
  */
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, Trophy, Clock, TrendingUp } from "lucide-react";
+import { Search, Filter, Trophy, Clock, TrendingUp, Star, ThumbsUp, Building2, Tag, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -66,16 +66,28 @@ export default function ProblemsPage() {
   });
 
   const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
+    switch (difficulty?.toLowerCase()) {
       case "easy":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300";
       case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300";
       case "hard":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300";
     }
+  };
+
+  const formatCompanies = (companies: any) => {
+    if (!companies || (Array.isArray(companies) && companies.length === 0)) return [];
+    if (typeof companies === 'string') return [companies];
+    return Array.isArray(companies) ? companies.slice(0, 3) : [];
+  };
+
+  const formatTopics = (topics: any) => {
+    if (!topics || (Array.isArray(topics) && topics.length === 0)) return [];
+    if (typeof topics === 'string') return [topics];
+    return Array.isArray(topics) ? topics.slice(0, 4) : [];
   };
 
   const categories = Array.from(new Set(problems.map((p) => p.category))).filter(Boolean);
@@ -199,38 +211,84 @@ export default function ProblemsPage() {
           {filteredProblems.map((problem) => (
             <Card
               key={problem.id}
-              className="hover:shadow-lg transition-all cursor-pointer"
+              className="hover:shadow-lg transition-all cursor-pointer group"
               onClick={() => navigate(`/problem/${problem.id}`)}
             >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <CardTitle className="text-xl mb-2">{problem.title}</CardTitle>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {problem.is_premium && (
+                        <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/20">
+                          <Crown className="h-3 w-3 mr-1" />
+                          Premium
+                        </Badge>
+                      )}
+                      {problem.asked_by_faang && (
+                        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/20">
+                          <Star className="h-3 w-3 mr-1" />
+                          FAANG
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className={getDifficultyColor(problem.difficulty)}>
+                        {problem.difficulty?.toUpperCase()}
+                      </Badge>
+                    </div>
+                    
+                    <CardTitle className="text-xl group-hover:text-primary transition-colors">
+                      {problem.title}
+                    </CardTitle>
+                    
                     <CardDescription className="line-clamp-2">
-                      {problem.description}
+                      {problem.description?.substring(0, 200)}...
                     </CardDescription>
                   </div>
-                  <Badge variant="outline" className={getDifficultyColor(problem.difficulty)}>
-                    {problem.difficulty.toUpperCase()}
-                  </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              
+              <CardContent className="space-y-3">
+                {/* Stats Row */}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                  {problem.likes > 0 && (
+                    <span className="flex items-center gap-1">
+                      <ThumbsUp className="h-4 w-4 text-green-600" />
+                      {problem.likes.toLocaleString()}
+                    </span>
+                  )}
                   <span className="flex items-center gap-1">
-                    <Trophy className="h-4 w-4" />
-                    {problem.points} pts
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {problem.time_limit}ms
-                  </span>
-                  <Badge variant="outline">{problem.category}</Badge>
-                  <span className="flex items-center gap-1 ml-auto">
                     <TrendingUp className="h-4 w-4" />
-                    {problem.acceptance_rate.toFixed(1)}% acceptance
+                    {problem.acceptance_rate?.toFixed(1)}% accepted
                   </span>
+                  {problem.frequency > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      Frequency: {(problem.frequency * 100).toFixed(1)}%
+                    </Badge>
+                  )}
                 </div>
+
+                {/* Topics */}
+                {formatTopics(problem.related_topics).length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    {formatTopics(problem.related_topics).map((topic: any, idx: number) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {typeof topic === 'string' ? topic : topic.name || topic}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Companies */}
+                {formatCompanies(problem.companies).length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    {formatCompanies(problem.companies).map((company: any, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {typeof company === 'string' ? company : company.name || company}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
