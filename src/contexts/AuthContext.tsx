@@ -33,40 +33,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     let mounted = true;
     
-    // BYPASS: Create mock user session immediately
-    const mockUser = {
-      id: 'mock-user-id',
-      email: 'demo@algoviz.com',
-      email_confirmed_at: new Date().toISOString(),
-      last_sign_in_at: new Date().toISOString(),
-      app_metadata: {},
-      user_metadata: { full_name: 'Demo User' },
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-    } as User;
-    
-    const mockSession = {
-      user: mockUser,
-      access_token: 'mock-access-token',
-      refresh_token: 'mock-refresh-token',
-      expires_in: 3600,
-      expires_at: Date.now() + 3600000,
-      token_type: 'bearer',
-    } as Session;
-    
-    setUser(mockUser);
-    setSession(mockSession);
-    setLoading(false);
-    
-    // Keep original listener for compatibility but override with mock data
+    // Set up real auth state listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
-      // Always use mock session
-      setSession(mockSession);
-      setUser(mockUser);
+      setSession(session);
+      setUser(session?.user ?? null);
       setLoading(false);
 
       if (event === "SIGNED_IN" && session?.user) {
@@ -180,41 +154,94 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [navigate]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    // BYPASS: Always succeed immediately
     setLoading(true);
     
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-    
-    toast({
-      title: "Account Created Successfully! 🎉",
-      description: "Welcome to AlgoViz! Redirecting to dashboard...",
-    });
-    
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1000);
-    
-    setLoading(false);
-    return { error: null };
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+          emailRedirectTo: `${window.location.origin}/email-verification-success`,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Registration Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return { error };
+      }
+
+      // Check if email confirmation is required
+      if (data.user && !data.session) {
+        toast({
+          title: "Verification Email Sent! 📧",
+          description: "Please check your email to verify your account.",
+        });
+        navigate("/email-verification");
+      } else {
+        toast({
+          title: "Account Created Successfully! 🎉",
+          description: "Welcome to AlgoViz!",
+        });
+      }
+
+      setLoading(false);
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Registration Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return { error };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    // BYPASS: Always succeed immediately
     setLoading(true);
     
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-    
-    toast({
-      title: "Login Successful! 👋",
-      description: `Welcome back! Redirecting to dashboard...`,
-    });
-    
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1000);
-    
-    setLoading(false);
-    return { error: null };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return { error };
+      }
+
+      if (data.user) {
+        toast({
+          title: "Login Successful! 👋",
+          description: `Welcome back, ${data.user.email}!`,
+        });
+      }
+
+      setLoading(false);
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Login Error",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return { error };
+    }
   };
 
   const signOut = async () => {

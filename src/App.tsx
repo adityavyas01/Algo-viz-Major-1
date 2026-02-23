@@ -74,8 +74,8 @@ const queryClient = new QueryClient({
 
 // Wrapper component for ProblemView to handle route params
 const ProblemViewWrapper = () => {
-  const { problemId } = useParams<{ problemId: string }>();
-  return <ProblemView problemId={problemId || ""} />;
+  const { slug } = useParams<{ slug: string }>();
+  return <ProblemView slug={slug || ""} />;
 };
 
 // Animated Routes wrapper component
@@ -239,7 +239,7 @@ const AnimatedRoutes = () => {
             element={<ProblemsPage />} 
           />
           <Route 
-            path="/problem/:problemId" 
+            path="/problem/:slug" 
             element={<ProblemViewWrapper />} 
           />
 

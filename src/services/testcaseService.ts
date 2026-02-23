@@ -9,16 +9,15 @@ import { executeTestcase, executeBatch } from "./multiLangExecutor";
 
 export interface Testcase {
   id: string;
-  problem_id: number;
+  problem_id: number;  // INTEGER FK to problems(id)
   input: string;
   expected_output: string;
   is_hidden: boolean;
-  type: "standard" | "edge" | "performance" | "stress";
+  type: "example" | "edge" | "performance" | "stress";
   time_limit: number;
   memory_limit: number;
   order_index: number;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Company {
@@ -38,25 +37,28 @@ export interface SimilarQuestion {
 }
 
 export interface Problem {
-  id: number;
+  id: number;  // LeetCode QID
   title: string;
-  description: string;
+  slug: string;  // URL slug (palindrome-number)
+  description: string;  // HTML content
   is_premium: boolean;
+  is_premium_blocked: boolean;  // Admin toggle for premium gating
   difficulty: "Easy" | "Medium" | "Hard";
+  topics: string[];  // Array of topic slugs
+  acceptance_rate?: number;
   solution_link?: string;
-  acceptance_rate: number;
-  frequency: number;
+  frequency?: number;
   url?: string;
-  discuss_count: number;
-  accepted: number;
-  submissions: number;
-  companies: Company[] | string[];
-  related_topics: Topic[] | string[];
-  likes: number;
-  dislikes: number;
-  rating: number;
-  asked_by_faang: boolean;
-  similar_questions: SimilarQuestion[];
+  discuss_count?: number;
+  accepted?: number;
+  submissions?: number;
+  companies?: Company[] | string[];
+  related_topics?: Topic[] | string[];
+  likes?: number;
+  dislikes?: number;
+  rating?: number;
+  asked_by_faang?: boolean;
+  similar_questions?: SimilarQuestion[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -120,7 +122,7 @@ export async function getTestcasesForProblem(problemId: string, includeHidden: b
 /**
  * Fetch a single problem by ID
  */
-export async function getProblemById(problemId: string): Promise<Problem | null> {
+export async function getProblemById(problemId: string | number): Promise<Problem | null> {
   const { data, error } = await supabase
     .from("problems")
     .select("*")
@@ -136,16 +138,40 @@ export async function getProblemById(problemId: string): Promise<Problem | null>
 }
 
 /**
+ * Fetch a single problem by slug
+ */
+export async function getProblemBySlug(slug: string): Promise<Problem | null> {
+  const { data, error } = await supabase
+    .from("problems")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+
+  if (error) {
+    console.error("Error fetching problem by slug:", error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
  * Fetch all active problems with pagination
  */
 export async function getProblems(
   page: number = 1,
   pageSize: number = 20,
-  filters?: { difficulty?: string; category?: string }
+  filters?: { 
+    difficulty?: string; 
+    category?: string; 
+    status?: string; 
+    topics?: string[];
+    userId?: string;
+  }
 ): Promise<{ problems: Problem[]; total: number }> {
   let query = supabase
     .from("problems")
-    .select("*", { count: "exact" })
+    .select("id, title, slug, difficulty, topics, acceptance_rate, is_premium, is_premium_blocked", { count: "exact" })
     .eq("is_active", true);
 
   if (filters?.difficulty) {
@@ -156,16 +182,83 @@ export async function getProblems(
     query = query.eq("category", filters.category);
   }
 
+  // Topic filtering - check if problem topics contain any of the selected topics
+  if (filters?.topics && filters.topics.length > 0) {
+    query = query.overlaps("topics", filters.topics);
+  }
+
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
   const { data, error, count } = await query
-    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })  // Order by ID (LeetCode question number)
     .range(from, to);
 
   if (error) {
     console.error("Error fetching problems:", error);
     throw new Error(`Failed to fetch problems: ${error.message}`);
+  }
+
+  let problems = data || [];
+
+  // If status filter is applied, fetch user progress and filter
+  if (filters?.status && filters?.status !== "all" && filters?.userId) {
+    const problemIds = problems.map(p => p.id);
+    
+    const { data: progressData } = await supabase
+      .from("user_problem_progress")
+      .select("problem_id, status")
+      .eq("user_id", filters.userId)
+      .in("problem_id", problemIds);
+
+    const progressMap = new Map(progressData?.map(p => [p.problem_id, p.status]) || []);
+
+    problems = problems.filter(problem => {
+      const userStatus = progressMap.get(problem.id) || "not_attempted";
+      return userStatus === filters.status;
+    });
+  }
+
+  return {
+    problems,
+    total: count || 0,
+  };
+}
+
+/**
+ * Search problems by title or ID
+ * @param query Search term (can be title text or numeric ID)
+ * @param limit Maximum number of results
+ * @returns Array of matching problems
+ */
+export async function searchProblems(
+  query: string,
+  limit: number = 100
+): Promise<{ problems: Problem[]; total: number }> {
+  const trimmedQuery = query.trim();
+  
+  // Check if query is numeric (searching by ID)
+  const isNumeric = /^\d+$/.test(trimmedQuery);
+  
+  let supabaseQuery = supabase
+    .from("problems")
+    .select("id, title, slug, difficulty, topics, acceptance_rate, is_premium, is_premium_blocked", { count: "exact" })
+    .eq("is_active", true)
+    .limit(limit);
+
+  if (isNumeric) {
+    // Search by ID
+    supabaseQuery = supabaseQuery.eq("id", parseInt(trimmedQuery));
+  } else {
+    // Search by title (case-insensitive)
+    supabaseQuery = supabaseQuery.ilike("title", `%${trimmedQuery}%`);
+  }
+
+  const { data, error, count } = await supabaseQuery.order("id", { ascending: true });
+
+  if (error) {
+    console.error("Error searching problems:", error);
+    throw new Error(`Failed to search problems: ${error.message}`);
   }
 
   return {
@@ -227,14 +320,7 @@ export async function createSubmission(
 
   // Execute code against all testcases
   try {
-    const executionRequests: ExecutionRequest[] = testcases.map((tc) => ({
-      code,
-      language,
-      input: tc.input,
-      expectedOutput: tc.expected_output,
-    }));
-
-    const results = await executeBatch(executionRequests);
+    const results = await executeBatch(code, language, testcases);
 
     // Calculate statistics
     const passedCount = results.results.filter((r) => r.verdict === "Accepted").length;
@@ -297,6 +383,14 @@ export async function createSubmission(
 
     if (resultsError) {
       console.error("Error saving submission results:", resultsError);
+    }
+
+    // Update user_problem_progress if all testcases passed
+    if (status === "accepted") {
+      await updateUserProgress(user.id, problemId, "solved", submission.id);
+    } else {
+      // Mark as attempted even if not all tests passed
+      await updateUserProgress(user.id, problemId, "attempted", submission.id);
     }
 
     return {
@@ -405,8 +499,67 @@ export async function getSubmissionDetails(
   };
 }
 
-/**
- * Get user's problem progress summary
+/** * Update user's progress for a problem
+ */
+async function updateUserProgress(
+  userId: string,
+  problemId: string,
+  status: 'not_attempted' | 'attempted' | 'solved',
+  submissionId?: string
+): Promise<void> {
+  try {
+    // Check if progress record exists
+    const { data: existing } = await supabase
+      .from("user_problem_progress")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("problem_id", problemId)
+      .single();
+
+    const now = new Date().toISOString();
+
+    if (existing) {
+      // Update existing record
+      const updates: any = {
+        status,
+        attempts: existing.attempts + 1,
+        last_attempted_at: now,
+        updated_at: now,
+      };
+
+      if (status === 'solved' && !existing.solved_at) {
+        updates.solved_at = now;
+      }
+
+      if (submissionId && status === 'solved') {
+        updates.best_submission_id = submissionId;
+      }
+
+      await supabase
+        .from("user_problem_progress")
+        .update(updates)
+        .eq("id", existing.id);
+    } else {
+      // Create new record
+      await supabase
+        .from("user_problem_progress")
+        .insert({
+          user_id: userId,
+          problem_id: problemId,
+          status,
+          attempts: 1,
+          best_submission_id: status === 'solved' ? submissionId : null,
+          last_attempted_at: now,
+          solved_at: status === 'solved' ? now : null,
+        });
+    }
+  } catch (error) {
+    console.error("Error updating user progress:", error);
+    // Don't throw - progress update failure shouldn't break submission
+  }
+}
+
+/** * Get user's problem progress summary
  */
 export async function getUserProgress() {
   const { data: { user } } = await supabase.auth.getUser();

@@ -64,6 +64,21 @@ def solution():
 
 solution()`
   },
+  python3: {
+    id: 'python3',
+    name: 'Python3',
+    version: '3.10.0',
+    pistonId: 'python',  // Piston uses 'python' for Python 3
+    monacoId: 'python',
+    extension: 'py',
+    comment: '#',
+    template: `# Write your code here
+def solution():
+    # Your solution
+    pass
+
+solution()`
+  },
   java: {
     id: 'java',
     name: 'Java',

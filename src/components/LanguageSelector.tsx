@@ -15,7 +15,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { getAllLanguages, getLanguage } from '@/services/piston';
+import { getAllLanguages, getLanguage } from '@/services/judge0';
 import type { LanguageId } from '@/types/execution';
 
 interface LanguageSelectorProps {

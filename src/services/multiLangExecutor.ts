@@ -10,7 +10,8 @@ import type {
   BatchExecutionResult,
   LanguageId
 } from '@/types/execution';
-import { executeCode, validateExecutionRequest } from './piston';
+import { executeCode, validateExecutionRequest } from './judge0';
+import { wrapCode } from './codeWrapper';
 
 export interface Testcase {
   id: string;
@@ -31,10 +32,17 @@ export async function executeTestcase(
   const startTime = performance.now();
 
   try {
+    // Wrap user code with testcase execution boilerplate
+    const wrappedCode = wrapCode({
+      userCode: code,
+      testcaseInput: testcase.input,
+      language,
+    });
+    
     const request: ExecutionRequest = {
       language,
-      code,
-      stdin: testcase.input,
+      code: wrappedCode,
+      stdin: '',
       runTimeout: testcase.timeLimit || 3000
     };
 
@@ -55,18 +63,24 @@ export async function executeTestcase(
     const result = await executeCode(request);
     const runtime = performance.now() - startTime;
 
-    // Normalize outputs (trim whitespace)
-    const actualOutput = result.output.trim();
-    const expectedOutput = testcase.expectedOutput.trim();
+    // Normalize outputs with safety checks
+    // Handle both camelCase and snake_case from database
+    const actualOutput = (result.output || result.stdout || '').trim();
+    const expectedOutput = (testcase.expectedOutput || (testcase as any).expected_output || '').trim();
+
+    // Normalize for comparison (handles JSON formatting differences)
+    const actualNormalized = normalizeOutput(actualOutput);
+    const expectedNormalized = normalizeOutput(expectedOutput);
+
 
     // Check if outputs match
-    const passed = result.success && actualOutput === expectedOutput;
+    const passed = result.success && actualNormalized === expectedNormalized;
 
     return {
       testcaseId: testcase.id,
       input: testcase.input,
-      expectedOutput: testcase.expectedOutput,
-      actualOutput: result.output,
+      expectedOutput: expectedOutput,
+      actualOutput: actualOutput,
       passed,
       runtime,
       memory: result.memory,
@@ -181,23 +195,152 @@ export async function quickTest(
 }
 
 /**
- * Compare outputs (handles multiple output formats)
+ * Enhanced output normalization with epsilon comparison
+ */
+function normalizeOutput(output: string, strict: boolean = true): string {
+  const trimmed = output.trim();
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    return normalizeValue(parsed, strict);
+  } catch {
+    // Not JSON, try language-specific normalization
+    let normalized = trimmed;
+
+    // Python booleans
+    normalized = normalized
+      .replace(/\bTrue\b/g, 'true')
+      .replace(/\bFalse\b/g, 'false')
+      .replace(/\bNone\b/g, 'null');
+
+    // Ruby symbols
+    normalized = normalized.replace(/:(\w+)/g, '"$1"');
+
+    // C++ vector output
+    normalized = normalized.replace(/std::vector|vector/g, '');
+
+    // Rust Debug format
+    normalized = normalized.replace(/Vec\s*/g, '');
+
+    if (!strict) {
+      normalized = normalized.replace(/\s+/g, ' ');
+    }
+
+    return normalized;
+  }
+}
+
+/**
+ * Normalize parsed value recursively
+ */
+function normalizeValue(value: unknown, strict: boolean): string {
+  if (value === null || value === undefined) {
+    return 'null';
+  }
+
+  if (typeof value === 'number') {
+    // Handle special values
+    if (!isFinite(value)) {
+      return String(value);
+    }
+    
+    // Epsilon comparison for floats
+    const EPSILON = 1e-9;
+    if (Math.abs(value - Math.round(value)) < EPSILON) {
+      return String(Math.round(value));
+    }
+    
+    // Round to 5 decimal places for floats
+    return String(Math.round(value * 100000) / 100000);
+  }
+
+  if (typeof value === 'boolean') {
+    return String(value);
+  }
+
+  if (typeof value === 'string') {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    const normalized = value.map(item => normalizeValue(item, strict));
+    return `[${normalized.join(',')}]`;
+  }
+
+  if (typeof value === 'object') {
+    // Sort object keys for consistent comparison
+    const sorted: Record<string, unknown> = {};
+    Object.keys(value).sort().forEach(key => {
+      sorted[key] = (value as Record<string, unknown>)[key];
+    });
+    return JSON.stringify(sorted, null, strict ? 0 : 2);
+  }
+
+  return JSON.stringify(value);
+}
+
+/**
+ * Compare outputs with flexible matching
  */
 export function compareOutputs(
   actual: string,
   expected: string,
-  strict: boolean = true
+  epsilon: number = 1e-6
 ): boolean {
-  if (strict) {
-    // Exact match after trimming
-    return actual.trim() === expected.trim();
-  } else {
-    // Flexible matching (normalize whitespace)
-    const normalizeWhitespace = (str: string) =>
-      str.trim().replace(/\s+/g, ' ');
+  // Try strict equality first
+  if (actual === expected) return true;
+
+  // Normalize and try again
+  const normalizedActual = normalizeOutput(actual, true);
+  const normalizedExpected = normalizeOutput(expected, true);
+  
+  if (normalizedActual === normalizedExpected) return true;
+
+  // Try flexible comparison
+  try {
+    const actualValue = JSON.parse(normalizedActual);
+    const expectedValue = JSON.parse(normalizedExpected);
     
-    return normalizeWhitespace(actual) === normalizeWhitespace(expected);
+    return deepCompare(actualValue, expectedValue, epsilon);
+  } catch {
+    // Fallback to whitespace-normalized comparison
+    const flexibleActual = normalizeOutput(actual, false);
+    const flexibleExpected = normalizeOutput(expected, false);
+    return flexibleActual === flexibleExpected;
   }
+}
+
+/**
+ * Deep comparison with epsilon for numbers
+ */
+function deepCompare(a: unknown, b: unknown, epsilon: number): boolean {
+  if (a === b) return true;
+
+  if (typeof a === 'number' && typeof b === 'number') {
+    if (!isFinite(a) || !isFinite(b)) {
+      return a === b;
+    }
+    return Math.abs(a - b) < epsilon;
+  }
+
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    return a.every((item, index) => deepCompare(item, b[index], epsilon));
+  }
+
+  if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
+    const aKeys = Object.keys(a).sort();
+    const bKeys = Object.keys(b).sort();
+    
+    if (aKeys.length !== bKeys.length) return false;
+    if (aKeys.some((key, i) => key !== bKeys[i])) return false;
+    
+    return aKeys.every(key => 
+      deepCompare((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key], epsilon)
+    );
+  }
+
+  return false;
 }
 
 /**

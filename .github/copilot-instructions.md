@@ -1,562 +1,469 @@
-# AlgoViz - Complete AI Coding Agent Instructions
+AlgoViz - AI Coding Agent Instructions (Updated 2026 Architecture)
+Project Overview
 
-## Project Overview
-AlgoViz is a comprehensive algorithm visualization and competitive programming platform combining:
-- **LeetCode/HackerRank**: Multi-language code execution (15+ languages via Piston API), 500+ problems with testcases, submissions tracking
-- **Codeforces**: Rating system, live contests, leaderboards, user statistics
-- **Discord**: Study rooms, real-time chat, collaborative coding sessions
+AlgoViz is a production-grade algorithm learning and competitive programming platform combining:
 
-**Tech Stack**: React 18.3, TypeScript 5.5, Vite 5.4, Supabase (PostgreSQL), shadcn/ui, TanStack Query, Monaco Editor, Framer Motion, React Three Fiber
+LeetCode-style System
+3,800+ problems, 60,000+ code templates (16 languages), hidden testcases, submission history, verdict engine
 
-## Complete Route Structure
+Codeforces-style Contests
+Weekly/monthly/special contests, leaderboard ranking (score DESC → penalty ASC), real-time updates
 
-### Public Routes
-- `/` - Home page with Hero and featured visualizations
-- `/login`, `/register` - Authentication (bypassed with mock user)
-- `/forgot-password`, `/reset-password` - Password recovery
-- `/email-verification`, `/email-verification-success` - Email verification flow
+Collaborative Learning Platform
+Study rooms, shared code editing, chat, algorithm state sync
 
-### Protected Routes (Require Auth)
-- `/dashboard` - Main dashboard with tabs: Overview, Learning Hub, Recommendations, Learning Paths
-- `/learning` - Algorithm learning page router
-- `/learn/:algorithmId` - Individual algorithm article page
-- `/profile` - User profile with stats and settings
-- `/profile/certificates` - User certificates page
-- `/verify-certificate/:verificationKey` - Certificate verification
-- `/community` - Community features
-- `/challenges` - Daily challenges panel
-- `/practice` - Practice problems listing
-- `/skills-assessment` - Skills assessment quiz
-- `/leaderboard` - Global/category leaderboards
-- `/advanced-features` - Advanced platform features
+Gamified Learning System
+XP, levels, streaks, achievements, certifications
 
-### Problem Solving Routes
-- `/problems` - Browse all coding problems (LeetCode-style)
-- `/problem/:problemId` - Full problem view with Monaco editor, testcases, submissions
-- `/code-runner` - Multi-language code execution demo
+Tech Stack
 
-### Contest Routes
-- `/contests` - Browse upcoming/active/finished contests
-- `/contest/:contestId` - Contest view with problems, timer, leaderboard
+Frontend
 
-### Collaboration Routes
-- `/rooms` - Study rooms listing
-- `/room/:roomId` - Study room with chat and collaboration
-- `/session/:sessionId` - Collaborative coding session
-- `/collaborate/:sessionId` - Real-time collaboration interface
+React 18.3
 
-### Admin Routes (Require Admin Role)
-- `/admin` - Redirects to `/admin/categories`
-- `/admin/categories` - Manage algorithm categories
-- `/admin/algorithms` - Manage algorithms
-- `/admin/articles` - Manage learning articles
+TypeScript 5.5 (relaxed strict mode)
 
-## Architecture Patterns
+Vite 5.4
 
-### Path Aliases (CRITICAL)
-**ALWAYS use `@/` imports - never relative paths across directories**:
-```typescript
+TanStack Query
+
+shadcn/ui (50+ components)
+
+Framer Motion
+
+Monaco Editor
+
+React Three Fiber
+
+Backend
+
+Supabase (PostgreSQL + RLS + Realtime)
+
+39+ migrations
+
+35+ tables
+
+Extensive triggers & indexes
+
+Code Execution
+
+Piston API (primary free execution)
+
+Judge0 CE (self-hosted optional)
+
+RapidAPI Judge0 fallback (paid optional)
+
+CRITICAL RULES FOR AI AGENTS
+1️⃣ ALWAYS Use Path Aliases
+
+NEVER use relative cross-directory imports.
+
+Correct:
+
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { executeCode } from "@/services/piston";
-```
-Configured in [tsconfig.json](tsconfig.json) (`baseUrl: ".", paths: { "@/*": ["./src/*"] }`) and [vite.config.ts](vite.config.ts) (`alias: { "@": path.resolve(__dirname, "./src") }`).
 
-### Component Architecture
+Wrong:
 
-#### 1. UI Components ([src/components/ui](src/components/ui/))
-**shadcn/ui components** - 50+ components including:
-- Core: `button`, `card`, `input`, `label`, `textarea`, `select`, `dialog`, `sheet`
-- Data: `table`, `tabs`, `accordion`, `badge`, `progress`, `slider`
-- Overlays: `toast`, `popover`, `tooltip`, `dropdown-menu`, `context-menu`
-- Navigation: `navigation-menu`, `breadcrumb`, `pagination`
-- Charts: `chart` (Recharts wrapper)
+import { Button } from "../../components/ui/button";
 
-**Pattern**: All use `React.forwardRef`, styled with Tailwind + `cn()` utility:
-```typescript
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
-    return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
-  }
-)
-```
+Alias config:
 
-#### 2. Modern Visualizations ([src/components/modern](src/components/modern/))
-**40+ interactive algorithm visualizations**:
-- **Sorting**: BubbleSort, QuickSort, MergeSort, InsertionSort, SelectionSort, HeapSort, RadixSort
-- **Trees**: BinaryTree, AVLTree, BTree, BPlusTree, RedBlackTree, SegmentTree, Trie
-- **Heaps**: Heap, BinomialHeap, FibonacciHeap
-- **Graphs**: Graph, GraphTraversal (BFS/DFS), Dijkstra, AdvancedGraphAlgorithms
-- **Data Structures**: Stack, Queue, LinkedList, HashTable, UnionFind, BloomFilter
-- **Advanced**: DynamicProgramming, Backtracking, StringMatching, NumberTheory, ComputationalGeometry
+tsconfig.json
 
-**Export pattern**: All export both named and default:
-```typescript
-export const ModernMergeSortVisualization = () => { ... }
+vite.config.ts
+
+2️⃣ Respect Provider Hierarchy (Do Not Change Order)
+
+In App.tsx:
+
+<ErrorBoundary>
+  <QueryClientProvider>
+    <ThemeProvider>
+      <EnhancedThemeProvider>
+        <Router>
+          <AuthProvider>
+            <AdminProvider>
+              <CollaborationProvider>
+                <PWAProvider>
+                  {children}
+                </PWAProvider>
+              </CollaborationProvider>
+            </AdminProvider>
+          </AuthProvider>
+        </Router>
+      </EnhancedThemeProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
+</ErrorBoundary>
+
+Breaking this order will cause runtime failures.
+
+3️⃣ Auth Is Mocked (Development Mode)
+
+In AuthContext.tsx, a mock user is injected automatically.
+
+This is intentional for demo/dev mode.
+
+Do NOT:
+
+Attempt to reimplement auth randomly
+
+Add auth guards outside ProtectedRoute
+
+If production auth is required, remove mock override first.
+
+4️⃣ All Pages Must Be Lazy-Loaded
+
+Except core pages (Home, Login, Register).
+
+Correct:
+
+const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+5️⃣ Visualization Components
+
+All modern visualizations must:
+
+Export both named AND default
+
+Use shared base patterns
+
+Avoid direct DOM manipulation outside canvas wrapper
+
+Correct pattern:
+
+export const ModernMergeSortVisualization = () => { ... };
 export default ModernMergeSortVisualization;
-```
+Architecture Overview
+Route Structure
+Public
 
-#### 3. Feature Components ([src/components](src/components/))
-**100+ specialized components**:
-- **Auth**: `AuthGuard`, `AuthAwareFeature`, `AdminGuard`
-- **Gamification**: `GamificationWidget`, `AchievementBadge`, `DailyChallengesPanel`, `Leaderboard`
-- **Learning**: `PersonalizedRecommendations`, `InteractiveLearningPaths`, `LearningHub`, `CurriculumIntegration`
-- **Code Editing**: `CodeEditor`, `EnhancedCodeEditor`, `ProfessionalCodeEditor`, `LanguageSelector`, `ExecutionResult`
-- **Collaboration**: `CollaborativeSession`, `RealTimeCollaboration`, `SharedWorkspace`, `SessionManagement`
-- **Problems**: `ProblemView`, `SubmissionHistory`, `LeetCodeQuestions`
-- **Contests**: `ContestView`, `TournamentManagement`
-- **Analytics**: `BehaviorAnalytics`, `ProgressTracker`, `ActivityFeed`
-- **UI Enhancement**: `ErrorBoundary`, `PWAProvider`, `PageLoader`, `MotionWrapper`, `PageTransition`
+/
 
-### State Management Deep Dive
+/login
 
-#### Global Context Providers (Must Wrap in This Order)
-```tsx
-<ThemeProvider>
-  <EnhancedThemeProvider>
-    <Router>
-      <AuthProvider>        {/* CRITICAL: Bypassed with mock user */}
-        <AdminProvider>      {/* Checks admin role */}
-          <CollaborationProvider>  {/* WebSocket/real-time */}
-            <PWAProvider>
-              {children}
-            </PWAProvider>
-          </CollaborationProvider>
-        </AdminProvider>
-      </AuthProvider>
-    </Router>
-  </EnhancedThemeProvider>
-</ThemeProvider>
-```
+/register
 
-#### AuthContext ([src/contexts/AuthContext.tsx](src/contexts/AuthContext.tsx))
-**CRITICAL**: Auth is **BYPASSED** - all users auto-authenticated as mock user:
-```typescript
-// Lines 38-58: Mock user created immediately
-const mockUser = {
-  id: 'mock-user-id',
-  email: 'demo@algoviz.com',
-  email_confirmed_at: new Date().toISOString(),
-  user_metadata: { full_name: 'Demo User' },
-  ...
-} as User;
-setUser(mockUser);
-setSession(mockSession);
-```
-**Functions available**: `signUp`, `signIn`, `signOut`, `resetPassword`, `signInWithMagicLink` (all work with mock auth)
+/forgot-password
 
-#### CollaborationContext ([src/contexts/CollaborationContext.tsx](src/contexts/CollaborationContext.tsx))
-Provides real-time collaboration features:
-- **Connection**: Socket.io client (mock in dev, real WebSocket in prod)
-- **Sessions**: `createSession`, `joinSession`, `leaveSession`
-- **Users**: `connectedUsers`, `userCursors`, `updateCursorPosition`
-- **Chat**: `messages[]`, `sendMessage`
-- **Algorithms**: `algorithmState`, `algorithmActions`, `executeAlgorithmAction`, `syncAlgorithmStep`
-- **Code**: `sharedCode`, `updateSharedCode`
+/reset-password
 
-#### AdminContext
-Checks user role against `admin_roles` table. Provides `isAdmin` boolean.
+/email-verification
 
-### Server State (TanStack Query)
-Configured in [App.tsx](src/App.tsx):
-```typescript
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: (failureCount, error: unknown) => {
-        // Don't retry on 4xx errors
-        if (httpError.status >= 400 && httpError.status < 500) return false;
-        return failureCount < 3;
-      },
-    },
-  },
-});
-```
+/email-verification-success
 
-### Database Integration
+Protected
 
-#### Supabase Client ([src/integrations/supabase/client.ts](src/integrations/supabase/client.ts))
-```typescript
-export const supabase = createClient<Database>(
-  env.SUPABASE_URL, 
-  env.SUPABASE_ANON_KEY,
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce'  // PKCE flow for security
-    }
-  }
-);
-```
+/dashboard
 
-#### Database Schema (19 Migrations)
-**Key tables**:
-1. **`problems`** - Coding problems (title, description, difficulty, category, time_limit, memory_limit, acceptance_rate)
-2. **`testcases`** - Test inputs/outputs (input, expected_output, is_hidden, type, time_limit, memory_limit)
-3. **`submissions`** - User code submissions (code, language, status, verdict, passed_testcases, runtime, memory, score)
-4. **`submission_results`** - Per-testcase results (testcase_id, passed, actual_output, error_message, runtime)
-5. **`user_problem_progress`** - User progress tracking (status: not_attempted/attempted/solved, attempts, best_submission_id)
-6. **`contests`** - Contest metadata (title, description, start_time, duration, type, status, total_participants)
-7. **`contest_problems`** - Contest-problem mapping (contest_id, problem_id, order_index, points)
-8. **`contest_submissions`** - Contest-specific submissions
-9. **`contest_participants`** - User contest registrations (rank, score, penalty)
-10. **`study_rooms`** - Collaborative study rooms (name, algorithm_topic, max_participants, is_private, password_hash)
-11. **`room_participants`** - Room membership
-12. **`room_messages`** - Room chat messages
-13. **`user_stats`** - User statistics (level, experience, total_points, current_streak, algorithms_completed, rank)
-14. **`user_progress`** - Algorithm learning progress
-15. **`user_bookmarks`** - Saved algorithms
-16. **`certifications`** - User certificates
-17. **`admin_roles`** - Admin permissions
+/learning
 
-**Row Level Security**: Enabled on all tables with policies for user access control.
+/learn/:algorithmId
 
-### Custom Hooks Deep Dive
+/profile
 
-#### useCodeExecution ([src/hooks/useCodeExecution.ts](src/hooks/useCodeExecution.ts))
-Manages code execution state:
-```typescript
-const {
-  isExecuting,           // Boolean loading state
-  executionResult,       // ExecutionResult | null
-  batchResult,          // BatchExecutionResult | null
-  error,                // string | null
-  executeCode,          // (code, language, stdin) => Promise<ExecutionResult>
-  executeTestcases,     // (code, language, testcases[]) => Promise<BatchExecutionResult>
-  clearResults,         // () => void
-  getLanguageTemplate   // (language) => string
-} = useCodeExecution();
-```
+/profile/certificates
 
-#### useSubmission ([src/hooks/useSubmission.ts](src/hooks/useSubmission.ts))
-Handles problem submissions:
-```typescript
-const {
-  submission,           // Submission metadata
-  results,             // Testcase results
-  isSubmitting,        // Loading state
-  submitCode,          // (problemId, code, language) => Promise<void>
-  clearResults
-} = useSubmission();
-```
+/community
 
-#### useContest ([src/hooks/useContest.ts](src/hooks/useContest.ts))
-```typescript
-const { contests, isLoading } = useContests({ status, type });
-const { contest, problems, isLoading } = useContest(contestId);
-const { leaderboard, isLoading } = useContestLeaderboard(contestId);
-const { announcements } = useContestAnnouncements(contestId);
-const { timeLeft, status } = useContestTimer(contest);
-```
+/challenges
 
-#### useDatabase ([src/hooks/useDatabase.ts](src/hooks/useDatabase.ts))
-```typescript
-const { data: progress, loading, error, refetch } = useUserProgress();
-const { data: bookmarks } = useUserBookmarks();
-const { data: stats } = useUserStats();
-```
+/practice
 
-#### useRoom ([src/hooks/useRoom.ts](src/hooks/useRoom.ts))
-```typescript
-const { rooms, isLoading } = useRooms();
-const { room, participants, messages, isLoading } = useRoom(roomId);
-```
+/skills-assessment
 
-### Services Layer
+/leaderboard
 
-#### Piston API Service ([src/services/piston.ts](src/services/piston.ts))
-Multi-language code execution via free Piston API (https://emkc.org/api/v2/piston):
-```typescript
-export const SUPPORTED_LANGUAGES: Record<LanguageId, Language> = {
-  javascript, typescript, python, java, cpp, c, csharp, go, rust, kotlin,
-  swift, ruby, php, scala, haskell, dart, lua, perl, r
-};
+/advanced-features
 
-export async function executeCode(request: ExecutionRequest): Promise<ExecutionResult>
-export function getTemplate(language: LanguageId): string
-export function validateExecutionRequest(request: ExecutionRequest): ValidationResult
-```
+Problems
 
-**Rate limit**: 5 requests/second. **No API key required**.
+/problems
 
-#### Multi-Language Executor ([src/services/multiLangExecutor.ts](src/services/multiLangExecutor.ts))
-Handles testcase execution:
-```typescript
-export async function executeTestcase(code, language, testcase): Promise<TestcaseExecution>
-export async function executeBatch(code, language, testcases[]): Promise<BatchExecutionResult>
-export async function quickTest(code, language, stdin): Promise<ExecutionResult>
-export function compareOutputs(actual, expected, strict): boolean
-```
+/problem/:slug
 
-**Verdict types**: `Accepted`, `Wrong Answer`, `Runtime Error`, `Time Limit Exceeded`, `Compilation Error`, `Memory Limit Exceeded`
+/code-runner
 
-#### Other Services
-- **testcaseService.ts** - CRUD for problems/testcases
-- **contestService.ts** - Contest management
-- **roomService.ts** - Study room operations
-- **challengeExecutor.ts** - Challenge validation
+Contests
 
-### Styling System
+/contests
 
-#### Tailwind + CSS Variables
-Theme colors defined as CSS variables in [src/index.css](src/index.css):
-```css
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --secondary: 210 40% 96.1%;
-  --accent: 210 40% 96.1%;
-  --destructive: 0 84.2% 60.2%;
-  ...
+/contest/:contestId
+
+Collaboration
+
+/rooms
+
+/room/:roomId
+
+/session/:sessionId
+
+/collaborate/:sessionId
+
+Admin
+
+/admin/categories
+
+/admin/algorithms
+
+/admin/articles
+
+All admin routes must use:
+
+<ProtectedRoute requireAdmin>
+Database Architecture (39+ Migrations)
+Core Tables
+Problems System
+
+problems (3,800+ rows, integer ID = LeetCode-style ID)
+
+code_templates (16 languages × problems)
+
+hints
+
+testcases (hidden + visible)
+
+submissions
+
+submission_results
+
+user_problem_progress
+
+Contest System
+
+contests
+
+contest_problems
+
+contest_participants
+
+contest_submissions
+
+contest_announcements
+
+Collaboration
+
+study_rooms
+
+room_members
+
+room_messages
+
+room_shared_code
+
+Community
+
+community_groups
+
+community_group_members
+
+community_group_discussions
+
+shared_visualizations
+
+visualization_likes
+
+activity_feed
+
+user_connections
+
+Gamification
+
+user_stats
+
+achievements
+
+certificates
+
+user_quiz_progress
+
+All tables use:
+
+Row Level Security
+
+Proper foreign keys
+
+Indexed performance queries
+
+Never bypass RLS.
+
+Code Execution System
+Execution Flow
+
+User writes code (Monaco)
+
+Selects language
+
+Clicks Run → quickTest()
+
+Clicks Submit → executeBatch() on ALL testcases
+
+Store submission
+
+Store per-testcase results
+
+Update progress via triggers
+
+Verdict Types
+
+Accepted
+
+Wrong Answer
+
+Runtime Error
+
+Time Limit Exceeded
+
+Compilation Error
+
+Memory Limit Exceeded
+
+Output normalization is required:
+
+Floating point epsilon (1e-9)
+
+JSON deep comparison
+
+Language-specific normalization
+
+Never compare raw strings blindly.
+
+Custom Hooks Pattern
+
+All hooks must return:
+
+{
+  data,
+  loading,
+  error,
+  ...actions
 }
-```
 
-#### cn() Utility ([src/lib/utils.ts](src/lib/utils.ts))
-**ALWAYS use for className merging**:
-```typescript
-import { cn } from "@/lib/utils"
+Standardized structure across:
 
-<div className={cn(
-  "base-classes",
-  condition && "conditional-classes",
-  className  // Allow prop override
-)} />
-```
-Combines `clsx` + `tailwind-merge` to handle Tailwind class conflicts.
+useCodeExecution
 
-#### Animation System
-- **Framer Motion**: Page transitions via `AnimatePresence` + `PageTransition` wrapper
-- **Motion components**: `MotionWrapper` for stagger animations
-- **Tailwind animations**: `tailwindcss-animate` plugin for built-in animations
+useSubmission
 
-## Development Workflows
+useContest
 
-### Commands
-```powershell
-npm run dev              # Dev server → http://localhost:8080
-npm run build            # Production build (Vite)
-npm run preview          # Preview production build
-npm run type-check       # TypeScript validation (noEmit)
-npm test                 # Vitest tests
-npm run test:ui          # Vitest UI
-npm run lint             # ESLint
-npm run lint:fix         # ESLint auto-fix
-```
+useRoom
 
-### Testing
-- **Framework**: Vitest with jsdom environment
-- **Setup**: [vitest.config.ts](vitest.config.ts), setup file: [src/test/setup.ts](src/test/setup.ts)
-- **Libraries**: `@testing-library/react`, `@testing-library/jest-dom`
-- **Example tests**: [src/components/__tests__/](src/components/__tests__/)
+useDatabase
 
-### Code Quality
-- **ESLint**: TypeScript ESLint with React hooks plugin
-- **Config**: [eslint.config.js](eslint.config.js)
-- **Disabled rules**: `@typescript-eslint/no-unused-vars` (intentionally off)
+useCommunity
 
-## Project-Specific Conventions
+TanStack Query Rules
 
-### Import Order (Strictly Follow)
-```typescript
-// 1. External libraries
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+Always:
 
-// 2. UI components (shadcn/ui)
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+useQuery({
+  queryKey: ['entity', params],
+  queryFn: fetchFunction,
+  staleTime: 1000 * 60 * 5
+});
 
-// 3. Feature components
-import { AlgorithmSelector } from "@/components/AlgorithmSelector";
-import { ExecutionResult } from "@/components/ExecutionResult";
+Never:
 
-// 4. Contexts and hooks
-import { useAuth } from "@/contexts/AuthContext";
-import { useCodeExecution } from "@/hooks/useCodeExecution";
+Use fetch directly inside components for server state
 
-// 5. Services and utilities
-import { supabase } from "@/integrations/supabase/client";
-import { executeCode } from "@/services/piston";
-import { cn } from "@/lib/utils";
+Forget query keys
 
-// 6. Types
-import type { Problem, Testcase } from "@/services/testcaseService";
-```
+Styling Rules
+Always use cn() for class merging
+className={cn("base", condition && "conditional", className)}
 
-### TypeScript Configuration
-**Relaxed strict mode** ([tsconfig.json](tsconfig.json)):
-```json
+Never manually concatenate Tailwind classes.
+
+Performance Rules
+
+All pages lazy-loaded
+
+Infinite scroll must be throttled
+
+Search must be debounced (500ms)
+
+Use memoization in heavy visualizations
+
+Prefetch on hover where applicable
+
+Do not remove performanceMonitor
+
+TypeScript Configuration
+
+Strict mode is relaxed intentionally:
+
 {
   "noImplicitAny": false,
-  "strictNullChecks": false,
-  "noUnusedParameters": false,
-  "noUnusedLocals": false
+  "strictNullChecks": false
 }
-```
-**Why**: Legacy codebase prioritizing rapid development over strict type safety.
 
-### Component Patterns
+Do NOT refactor entire project to strict mode unless explicitly instructed.
 
-#### Page Components
-```typescript
-// Lazy-load all pages except core (Home, Login, Register)
-const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+Common Mistakes to Avoid
 
-// Page structure
-const PageName = () => {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/50 to-slate-900">
-      <Header />
-      <main className="container mx-auto px-6 py-8">
-        {/* Content */}
-      </main>
-    </div>
-  );
-};
-export default PageName;
-```
+Using relative imports instead of @/
 
-#### Visualization Components
-```typescript
-// Export both named and default
-export const ModernAlgoVisualization = () => {
-  const [array, setArray] = useState<number[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-  
-  return (
-    <div className="visualization-container">
-      <canvas ref={canvasRef} />
-      <Controls onPlay={handlePlay} />
-    </div>
-  );
-};
-export default ModernAlgoVisualization;
-```
+Breaking provider hierarchy
 
-### Route Protection Pattern
-```typescript
-<Route 
-  path="/admin/categories" 
-  element={
-    <ProtectedRoute requireAdmin>
-      <ManageCategoriesPage />
-    </ProtectedRoute>
-  } 
-/>
-```
+Removing mock auth without handling flows
 
-## Critical Implementation Details
+Comparing outputs without normalization
 
-### Multi-Language Execution Flow
-1. User writes code in Monaco Editor
-2. Selects language via `<LanguageSelector>`
-3. Clicks "Run" or "Submit"
-4. **Run**: `executeCode()` → Piston API → Display output
-5. **Submit**: `submitCode()` → Execute against all testcases (hidden + visible) → Store in `submissions` table → Display verdict
+Adding new pages without lazy loading
 
-### Problem Submission Flow
-```typescript
-// 1. Load problem + testcases
-const problem = await getProblemById(problemId);
-const testcases = await getTestcasesForProblem(problemId, false); // visible only
+Skipping RLS checks
 
-// 2. Execute code
-const result = await executeBatch(code, language, testcases);
+Bypassing services and calling Supabase directly in components
 
-// 3. Submit to database
-await submitCode(problemId, code, language); // Executes ALL testcases server-side
+Forgetting to export both named + default in visualizations
 
-// 4. Update user progress
-// Automatic via database triggers
-```
+Ignoring performance optimizations
 
-### Contest System Flow
-1. User browses `/contests` - filtered by status (upcoming/active/finished) and type (weekly/monthly/special)
-2. Joins contest → Creates `contest_participants` record
-3. Accesses contest → `/contest/:contestId` - Shows problems, timer, leaderboard
-4. Solves problems → Submissions tracked in `contest_submissions`
-5. Leaderboard updates in real-time → Sorted by score, then penalty (time-based)
+Introducing blocking synchronous loops in visualizations
 
-### Study Room Collaboration
-1. User creates/joins room → `/rooms`
-2. Room interface → `/room/:roomId`
-3. Features: Live chat (`room_messages`), participant list, code sharing, algorithm selection
-4. Real-time sync via `CollaborationContext` (WebSocket in prod, mock in dev)
+Required Reading Before Modifying
 
-## Common Pitfalls & Solutions
+src/App.tsx
 
-1. **Mock Auth Bypass**: Don't try to implement real auth without removing the mock user override in [AuthContext.tsx](src/contexts/AuthContext.tsx#L38-L58).
+src/contexts/AuthContext.tsx
 
-2. **Path Aliases**: Never use `../../components/ui/button`. Always use `@/components/ui/button`.
+src/contexts/CollaborationContext.tsx
 
-3. **Lazy Loading**: All new pages must use `React.lazy()` to maintain code-splitting:
-   ```typescript
-   const NewPage = React.lazy(() => import("@/pages/NewPage"));
-   ```
+src/services/multiLangExecutor.ts
 
-4. **Context Order**: Provider hierarchy is critical. `AuthProvider` must be inside `Router` but outside other providers.
+src/services/testcaseService.ts
 
-5. **Environment Variables**: Access via `import.meta.env.VITE_*`. Use [src/lib/env.ts](src/lib/env.ts) for validated access with defaults.
+src/services/contestService.ts
 
-6. **Supabase Queries**: Always check auth status before queries:
-   ```typescript
-   if (!user) return;
-   const { data } = await supabase.from('table').select('*').eq('user_id', user.id);
-   ```
+src/components/ProblemView.tsx
 
-7. **TypeScript Errors**: Project has relaxed TS config. Don't add strict type checks - follow existing patterns.
+Development Commands
+npm run dev
+npm run build
+npm run preview
+npm run type-check
+npm test
+npm run lint
+Architectural Principle
 
-8. **Visualization Exports**: Always export both named AND default:
-   ```typescript
-   export const MyVisualization = () => { ... };
-   export default MyVisualization;
-   ```
+All features must follow:
 
-9. **Monaco Editor**: Import via `@monaco-editor/react`, not `monaco-editor` directly.
+UI → Hook → Service → Database
 
-10. **TanStack Query**: Always provide `queryKey` and use proper stale time:
-    ```typescript
-    const { data } = useQuery({
-      queryKey: ['problems', filters],
-      queryFn: () => getProblems(page, limit, filters),
-      staleTime: 1000 * 60 * 5
-    });
-    ```
+Never collapse layers.
 
-## Performance Optimizations
+This is a large-scale, production-ready system.
 
-- **Code Splitting**: All pages lazy-loaded via `React.lazy()`
-- **Query Caching**: TanStack Query with 5-min stale time
-- **Memoization**: `useCallback`, `useMemo` in heavy components
-- **Performance Monitor**: [src/lib/performance.ts](src/lib/performance.ts) tracks metrics
-- **PWA**: Offline support via service worker ([public/sw.js](public/sw.js))
-- **Bundle Analysis**: Available via npm scripts
+AI agents must prioritize:
 
-## Key Files Reference
+Structural consistency
 
-### Must-Read Files
-- [src/App.tsx](src/App.tsx) - Route structure, provider hierarchy, lazy loading
-- [src/contexts/AuthContext.tsx](src/contexts/AuthContext.tsx) - Mock auth system
-- [src/contexts/CollaborationContext.tsx](src/contexts/CollaborationContext.tsx) - Real-time features
-- [src/integrations/supabase/client.ts](src/integrations/supabase/client.ts) - Database client
-- [src/services/piston.ts](src/services/piston.ts) - Code execution API
-- [src/hooks/useCodeExecution.ts](src/hooks/useCodeExecution.ts) - Code execution logic
-- [src/components/ProblemView.tsx](src/components/ProblemView.tsx) - Full problem solving interface
+Performance safety
 
-### Database Migrations
-- [supabase/migrations/20260124000000_advanced_testcases.sql](supabase/migrations/20260124000000_advanced_testcases.sql) - Problems, testcases, submissions
-- [supabase/migrations/20260124010000_contests.sql](supabase/migrations/20260124010000_contests.sql) - Contest system
-- [supabase/migrations/20260124020000_study_rooms.sql](supabase/migrations/20260124020000_study_rooms.sql) - Collaboration rooms
+RLS compliance
 
-This is a mature, feature-rich platform with complex data flows. Always trace data from UI → Hook → Service → Database to understand implementation.
+Code-splitting discipline
+
+Execution correctness
+
+Do not introduce shortcuts.

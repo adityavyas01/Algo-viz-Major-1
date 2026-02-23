@@ -1,8 +1,10 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield } from 'lucide-react';
+import { Shield, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,11 +17,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true,
   requireAdmin = false 
 }) => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const location = useLocation();
 
   // Show loading state
-  if (loading) {
+  if (authLoading || (requireAdmin && adminLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
         <Card className="bg-white/10 backdrop-blur-sm border-white/20">
@@ -39,12 +42,26 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check admin requirement
-  if (requireAdmin) {
-    // This would need to be implemented based on your admin role checking logic
-    // For now, we'll just check if user exists
-    if (!user) {
-      return <Navigate to="/login" state={{ from: location }} replace />;
-    }
+  if (requireAdmin && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20 max-w-md">
+          <CardContent className="p-8 text-center">
+            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
+            <p className="text-white/70 mb-6">
+              You don't have permission to access this page. Admin privileges are required.
+            </p>
+            <Button 
+              onClick={() => window.history.back()}
+              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+            >
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return <>{children}</>;

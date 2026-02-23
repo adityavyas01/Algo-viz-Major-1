@@ -13,16 +13,29 @@ import {
 import { Mail, Lock, User, Eye, EyeOff, Github } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerSchema, RegisterForm } from "@/lib/validations";
+import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { signUp, user } = useAuth();
+  
+  const [formData, setFormData] = useState<RegisterForm>({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState<Partial<Record<keyof RegisterForm, string>>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // BYPASS: Redirect to home immediately - signup page is disabled
+  // Redirect if already logged in
   useEffect(() => {
-    navigate('/');
-  }, [navigate]);
-
-  return null;
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -39,8 +52,21 @@ const Register = () => {
     setIsLoading(true);
     setErrors({});
 
-    // BYPASS: No validation, always succeed
-    await signUp('', '', '');
+    // Validate form data
+    const validation = registerSchema.safeParse(formData);
+    if (!validation.success) {
+      const fieldErrors: Partial<Record<keyof RegisterForm, string>> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as keyof RegisterForm] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await signUp(formData.email, formData.password, formData.name);
     
     setIsLoading(false);
   };
@@ -68,7 +94,7 @@ const Register = () => {
                   id="name"
                   name="name"
                   type="text"
-                  placeholder="Enter your full name (optional)"
+                  placeholder="Enter your full name"
                   value={formData.name}
                   onChange={handleChange}
                   className={`pl-10 bg-white/10 border-white/20 text-white placeholder-white/60 ${
@@ -91,7 +117,7 @@ const Register = () => {
                   id="email"
                   name="email"
                   type="text"
-                  placeholder="Enter your email (optional)"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
                   className={`pl-10 bg-white/10 border-white/20 text-white placeholder-white/60 ${
@@ -114,7 +140,7 @@ const Register = () => {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Create a password (optional)"
+                  placeholder="Create a password"
                   value={formData.password}
                   onChange={handleChange}
                   className={`pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-white/60 ${
@@ -148,7 +174,7 @@ const Register = () => {
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
-                  placeholder="Confirm your password (optional)"
+                  placeholder="Confirm your password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className={`pl-10 bg-white/10 border-white/20 text-white placeholder-white/60 ${

@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ExecutionResult } from '@/components/ExecutionResult';
 import { useCodeExecution } from '@/hooks/useCodeExecution';
-import { getTemplate } from '@/services/piston';
+import { getTemplate } from '@/services/judge0';
 import type { LanguageId } from '@/types/execution';
 import type { Testcase } from '@/services/multiLangExecutor';
 import { toast } from 'sonner';

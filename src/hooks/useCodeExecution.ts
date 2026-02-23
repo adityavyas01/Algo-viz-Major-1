@@ -7,7 +7,7 @@ import { useState, useCallback } from 'react';
 import type { LanguageId, ExecutionResult, BatchExecutionResult } from '@/types/execution';
 import type { Testcase } from '@/services/multiLangExecutor';
 import { quickTest, executeBatch } from '@/services/multiLangExecutor';
-import { getTemplate } from '@/services/piston';
+import { getTemplate } from '@/services/judge0';
 
 export function useCodeExecution() {
   const [isExecuting, setIsExecuting] = useState(false);

@@ -32,13 +32,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       return false;
     }
 
-    // Skip Supabase queries for mock user
-    if (user.id === 'mock-user-id') {
-      setIsAdmin(false);
-      setAdminRole(null);
-      return false;
-    }
-
     try {
       const { data, error } = await supabase
         .from('admin_roles')

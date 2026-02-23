@@ -18,13 +18,6 @@ export const NotificationBell: React.FC = () => {
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
 
-    // Skip Supabase queries for mock user
-    if (user.id === 'mock-user-id') {
-      setNotifications([]);
-      setUnreadCount(0);
-      return;
-    }
-
     try {
       const { data, error } = await supabase
         .from('notifications')
@@ -131,10 +124,7 @@ export const NotificationBell: React.FC = () => {
   useEffect(() => {
     fetchNotifications();
 
-    // Skip real-time subscription for mock user
-    if (user?.id === 'mock-user-id') {
-      return;
-    }
+    if (!user) return;
 
     // Set up real-time subscription
     const channel = supabase

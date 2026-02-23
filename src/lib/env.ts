@@ -13,6 +13,9 @@ interface EnvConfig {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
   
+  // Code Execution API (Judge0 via RapidAPI)
+  RAPIDAPI_KEY: string;
+  
   // Analytics Configuration (optional)
   VERCEL_ANALYTICS: boolean;
   
@@ -64,6 +67,10 @@ export const env: EnvConfig = {
   // Supabase Configuration
   SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || "https://lctytebgxakcztdijbxu.supabase.co",
   SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdHl0ZWJneGFrY3p0ZGlqYnh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5MjQ0NDgsImV4cCI6MjA2NjUwMDQ0OH0.I3cf-X6MUw4E7t6NMI-p7QiiLcvLjjNm72sePZGuUU8",
+  
+  // Code Execution API (Judge0 via RapidAPI)
+  // Get your free API key at: https://rapidapi.com/judge0-official/api/judge0-ce
+  RAPIDAPI_KEY: import.meta.env.VITE_RAPIDAPI_KEY || 'self-hosted',
   
   // Analytics Configuration
   VERCEL_ANALYTICS: import.meta.env.VITE_VERCEL_ANALYTICS === 'true',

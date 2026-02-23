@@ -13,17 +13,23 @@ import { useToast } from '@/hooks/use-toast';
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn, signInWithMagicLink, user } = useAuth();
+  
+  const [formData, setFormData] = useState<LoginForm>({
+    email: '',
+    password: '',
+  });
+  const [errors, setErrors] = useState<Partial<Record<keyof LoginForm, string>>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  // BYPASS: Redirect to home immediately - login page is disabled
+  // Redirect if already logged in
   useEffect(() => {
-    toast({
-      title: "Login Disabled",
-      description: "All visualizations are now freely accessible! Redirecting to home...",
-    });
-    setTimeout(() => navigate('/'), 1000);
-  }, [navigate, toast]);
-
-  return null;
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   // Load remembered email on mount
   useEffect(() => {
@@ -49,8 +55,30 @@ const Login = () => {
     setIsLoading(true);
     setErrors({});
     
-    // BYPASS: No validation, always succeed
-    await signIn('', '');
+    // Validate form data
+    const validation = loginSchema.safeParse(formData);
+    if (!validation.success) {
+      const fieldErrors: Partial<Record<keyof LoginForm, string>> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as keyof LoginForm] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await signIn(formData.email, formData.password);
+    
+    if (!error) {
+      // Save email if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem('algviz_remembered_email', formData.email);
+      } else {
+        localStorage.removeItem('algviz_remembered_email');
+      }
+    }
     
     setIsLoading(false);
   };
@@ -74,7 +102,7 @@ const Login = () => {
                   id="email"
                   name="email"
                   type="text"
-                  placeholder="Enter your email (optional)"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
                   className={`pl-10 bg-white/10 border-white/20 text-white placeholder-white/60 ${errors.email ? 'border-red-500' : ''}`}
@@ -93,7 +121,7 @@ const Login = () => {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password (optional)"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
                   className={`pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-white/60 ${errors.password ? 'border-red-500' : ''}`}
