@@ -208,6 +208,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     
+    // HARDCODED FALLBACK ADMIN ACCOUNT (Emergency Access)
+    // Credentials: admin@algoviz.com / Admin@123
+    if (email === "admin@algoviz.com" && password === "Admin@123") {
+      const mockUser = {
+        id: "00000000-0000-0000-0000-000000000001",
+        email: "admin@algoviz.com",
+        email_confirmed_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        aud: "authenticated",
+        role: "authenticated",
+        app_metadata: { provider: "email", is_admin: true },
+        user_metadata: { full_name: "AlgoViz Admin", is_admin: true },
+      } as User;
+
+      const mockSession = {
+        access_token: "mock-admin-token",
+        token_type: "bearer",
+        expires_in: 3600,
+        expires_at: Date.now() + 3600000,
+        refresh_token: "mock-refresh-token",
+        user: mockUser,
+      } as Session;
+
+      setUser(mockUser);
+      setSession(mockSession);
+      localStorage.setItem('algviz_fallback_admin', 'true');
+      
+      // Create/update user stats for fallback admin
+      await supabase.from("user_stats").upsert(
+        {
+          user_id: mockUser.id,
+          level: 99,
+          experience: 999999,
+          total_points: 999999,
+          current_streak: 365,
+          total_study_time: 10000,
+          rank: 1,
+          algorithms_completed: 2157,
+          challenges_completed: 500,
+        },
+        { onConflict: "user_id" }
+      );
+
+      toast({
+        title: "🔑 Admin Access Granted",
+        description: "Logged in with fallback admin account",
+      });
+      
+      setLoading(false);
+      navigate("/dashboard");
+      return { error: null };
+    }
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -245,6 +299,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const signOut = async () => {
+    // Check if it's a fallback admin session
+    const isFallbackAdmin = localStorage.getItem('algviz_fallback_admin') === 'true';
+    
+    if (isFallbackAdmin) {
+      // Handle fallback admin logout without calling Supabase
+      setUser(null);
+      setSession(null);
+      localStorage.removeItem('algviz_fallback_admin');
+      localStorage.removeItem('algviz_remember_session');
+      
+      toast({
+        title: "Signed out successfully",
+        description: "Come back soon!",
+      });
+      navigate("/login");
+      return;
+    }
+    
+    // Normal Supabase sign out
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
