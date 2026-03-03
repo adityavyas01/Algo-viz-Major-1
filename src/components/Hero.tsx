@@ -148,6 +148,26 @@ export const Hero = () => {
                   </Button>
                 </MicroInteraction>
               </a>
+              <Link to="/login" className="group">
+                <MicroInteraction type="button">
+                  <Button size="lg" className="relative bg-gradient-to-r from-purple-500 via-pink-600 to-fuchsia-600 hover:from-purple-400 hover:via-pink-500 hover:to-fuchsia-500 text-white px-10 py-4 text-lg font-semibold rounded-xl shadow-2xl shadow-purple-500/25 transition-all duration-300">
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-r from-purple-600/50 to-pink-600/50 rounded-xl blur opacity-75"
+                      whileHover={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                    <div className="relative flex items-center">
+                      <motion.div
+                        animate={{ rotate: [0, 15, -15, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Zap className="w-6 h-6 mr-3" />
+                      </motion.div>
+                      Quick Demo
+                    </div>
+                  </Button>
+                </MicroInteraction>
+              </Link>
               <Link to="/learning" className="group">
                 <MicroInteraction type="button">
                   <Button size="lg" className="relative bg-white/5 hover:bg-white/10 text-white border-2 border-white/20 hover:border-white/40 px-10 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm transition-all duration-300">

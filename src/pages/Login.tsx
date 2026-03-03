@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Lock, Eye, EyeOff, Github } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Mail, Lock, Eye, EyeOff, Github, Zap, ShieldCheck, Info } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { loginSchema, LoginForm } from '@/lib/validations';
 import { useToast } from '@/hooks/use-toast';
@@ -83,9 +84,48 @@ const Login = () => {
     setIsLoading(false);
   };
 
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    setErrors({});
+    
+    // Auto-fill and submit with demo credentials
+    const demoEmail = 'admin@algoviz.com';
+    const demoPassword = 'Admin@123';
+    
+    setFormData({ email: demoEmail, password: demoPassword });
+    
+    const { error } = await signIn(demoEmail, demoPassword);
+    
+    if (!error) {
+      toast({
+        title: "🚀 Demo Mode Activated",
+        description: "Exploring AlgoViz with full admin access!",
+      });
+    }
+    
+    setIsLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white/10 backdrop-blur-sm border-white/20">
+      <div className="w-full max-w-md space-y-4">
+        {/* Demo Access Banner */}
+        <Alert className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-400/50 backdrop-blur-sm">
+          <ShieldCheck className="h-4 w-4 text-cyan-400" />
+          <AlertDescription className="text-white/90 text-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <strong className="text-cyan-300">Demo Access Available</strong>
+                <p className="text-white/70 mt-1">
+                  Try AlgoViz instantly with full admin access - no email verification needed!
+                </p>
+              </div>
+              <Info className="h-4 w-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+            </div>
+          </AlertDescription>
+        </Alert>
+
+      <Card className="w-full bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-white">Welcome Back</CardTitle>
           <CardDescription className="text-white/70">
@@ -155,13 +195,42 @@ const Login = () => {
               </Label>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+
+              {/* Quick Demo Login Button */}
+              <Button 
+                type="button"
+                onClick={handleDemoLogin}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 relative overflow-hidden group"
+                disabled={isLoading}
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 opacity-0 group-hover:opacity-20 transition-opacity" />
+                <Zap className="mr-2 h-4 w-4" />
+                {isLoading ? 'Loading Demo...' : '⚡ Quick Demo Login'}
+              </Button>
+
+              {/* Demo Credentials Display */}
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-400/30 rounded-lg p-3 space-y-1">
+                <p className="text-xs text-cyan-300 font-semibold flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3" />
+                  Demo Credentials
+                </p>
+                <div className="text-xs text-white/70 space-y-0.5 font-mono">
+                  <p>📧 admin@algoviz.com</p>
+                  <p>🔑 Admin@123</p>
+                </div>
+                <p className="text-xs text-white/50 pt-1">
+                  Level 99 • Full Access • 2,157 Problems
+                </p>
+              </div>
+            </div>
           </form>
 
           <div className="relative my-6">

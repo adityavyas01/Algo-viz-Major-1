@@ -10,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, Lock, User, Eye, EyeOff, Github } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, Lock, User, Eye, EyeOff, Github, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerSchema, RegisterForm } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +74,30 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white/10 backdrop-blur-sm border-white/20">
+      <div className="w-full max-w-md space-y-4">
+        {/* Try Demo Banner */}
+        <Alert className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-400/50 backdrop-blur-sm">
+          <Zap className="h-4 w-4 text-purple-400" />
+          <AlertDescription className="text-white/90 text-sm">
+            <div className="flex items-center justify-between">
+              <span>
+                <strong className="text-purple-300">Want to try first?</strong>
+                <span className="text-white/70 ml-2">Explore with demo access</span>
+              </span>
+              <Link to="/login">
+                <Button 
+                  size="sm" 
+                  className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 h-7 text-xs"
+                >
+                  <Zap className="h-3 w-3 mr-1" />
+                  Demo
+                </Button>
+              </Link>
+            </div>
+          </AlertDescription>
+        </Alert>
+
+      <Card className="w-full bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-white">
             Create Account
@@ -214,7 +238,7 @@ const Register = () => {
             </Button>
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-3">
             <p className="text-white/70">
               Already have an account?{" "}
               <Link
@@ -224,9 +248,31 @@ const Register = () => {
                 Sign in
               </Link>
             </p>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-white/20" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-slate-800 px-2 text-white/60">
+                  Or try without signup
+                </span>
+              </div>
+            </div>
+
+            <Link to="/login">
+              <Button 
+                variant="outline"
+                className="w-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-400/50 text-white hover:bg-purple-500/30"
+              >
+                <Zap className="mr-2 h-4 w-4 text-purple-400" />
+                Access Demo Account
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
