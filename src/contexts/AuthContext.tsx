@@ -62,41 +62,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // Store session preference for "Remember Me" functionality
         localStorage.setItem('algviz_remember_session', 'true');
 
-        // Create user stats if they don't exist
-        setTimeout(async () => {
-          const { error } = await supabase.from("user_stats").upsert(
-            {
-              user_id: session.user.id,
-              level: 1,
-              experience: 0,
-              total_points: 0,
-              current_streak: 0,
-              total_study_time: 0,
-              rank: 0,
-              algorithms_completed: 0,
-              challenges_completed: 0,
-            },
-            { onConflict: "user_id" }
-          );
+        // Create user stats if they don't exist (SKIP for fallback admin)
+        const isFallbackAdmin = session.user.id === '00000000-0000-0000-0000-000000000001' && 
+                                localStorage.getItem('algviz_fallback_admin') === 'true';
+        
+        if (!isFallbackAdmin) {
+          setTimeout(async () => {
+            const { error } = await supabase.from("user_stats").upsert(
+              {
+                user_id: session.user.id,
+                level: 1,
+                experience: 0,
+                total_points: 0,
+                current_streak: 0,
+                total_study_time: 0,
+                rank: 0,
+                algorithms_completed: 0,
+                challenges_completed: 0,
+              },
+              { onConflict: "user_id" }
+            );
 
-          if (error && error.code !== "23505") {
-            // Ignore unique constraint violations
-            console.error("Error creating user stats:", error);
-            import('@/lib/errorLogging').then(({ logDatabaseError }) => {
-              logDatabaseError('Failed to create user stats', error, {
-                userId: session.user.id,
-                feature: 'user_onboarding',
+            if (error && error.code !== "23505") {
+              // Ignore unique constraint violations
+              console.error("Error creating user stats:", error);
+              import('@/lib/errorLogging').then(({ logDatabaseError }) => {
+                logDatabaseError('Failed to create user stats', error, {
+                  userId: session.user.id,
+                  feature: 'user_onboarding',
+                });
               });
-            });
-          }
+            }
 
-          // Only auto-redirect if not on email verification pages and this is an actual sign-in event
-          if (!window.location.pathname.includes('email-verification') && (event === "SIGNED_IN" || isFirstTimeUser)) {
-            const currentPath = window.location.pathname;
-            
-            // Don't redirect if user is already on a valid authenticated page
-            const authenticatedPaths = ['/dashboard', '/learning', '/community', '/challenges', '/profile', '/skills-assessment', '/practice', '/advanced-features', '/leaderboard'];
-            const isOnAuthenticatedPage = authenticatedPaths.some(path => currentPath.startsWith(path));
+            // Only auto-redirect if not on email verification pages and this is an actual sign-in event
+            if (!window.location.pathname.includes('email-verification') && (event === "SIGNED_IN" || isFirstTimeUser)) {
+              const currentPath = window.location.pathname;
+              
+              // Don't redirect if user is already on a valid authenticated page
+              const authenticatedPaths = ['/dashboard', '/learning', '/community', '/challenges', '/profile', '/skills-assessment', '/practice', '/advanced-features', '/leaderboard'];
+              const isOnAuthenticatedPage = authenticatedPaths.some(path => currentPath.startsWith(path));
             
             if (!isOnAuthenticatedPage) {
               // Check if user has completed skills assessment
@@ -118,7 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               }
             }
           }
-        }, 500);
+          }, 500);
+        } // End of !isFallbackAdmin check
       }
 
       if (event === "SIGNED_OUT") {

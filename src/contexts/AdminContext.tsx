@@ -32,6 +32,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       return false;
     }
 
+    // CHECK FOR FALLBACK ADMIN (Hardcoded emergency access)
+    if (user.id === '00000000-0000-0000-0000-000000000001') {
+      const isFallbackAdmin = localStorage.getItem('algviz_fallback_admin') === 'true';
+      if (isFallbackAdmin) {
+        setIsAdmin(true);
+        setAdminRole({
+          id: 'fallback-admin-role',
+          user_id: user.id,
+          role: 'super_admin',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        return true;
+      }
+    }
+
     try {
       const { data, error } = await supabase
         .from('admin_roles')

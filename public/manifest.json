@@ -18,15 +18,15 @@
       "purpose": "any"
     },
     {
-      "src": "/placeholder.svg",
+      "src": "/apple-touch-icon.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "/placeholder.svg",
+      "src": "/apple-touch-icon.png",
       "sizes": "512x512", 
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable any"
     }
   ],
@@ -36,35 +36,35 @@
       "short_name": "Learn",
       "description": "Begin algorithm learning journey",
       "url": "/learning",
-      "icons": [{ "src": "/placeholder.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
     },
     {
       "name": "Practice Challenges",
       "short_name": "Practice", 
       "description": "Solve coding challenges",
       "url": "/challenges",
-      "icons": [{ "src": "/placeholder.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "View your progress and analytics", 
       "url": "/dashboard",
-      "icons": [{ "src": "/placeholder.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
     }
   ],
   "screenshots": [
     {
-      "src": "/placeholder.svg",
+      "src": "/apple-touch-icon.png",
       "sizes": "1280x720",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "form_factor": "wide",
       "label": "Algorithm Visualization Dashboard"
     },
     {
-      "src": "/placeholder.svg", 
+      "src": "/apple-touch-icon.png", 
       "sizes": "375x812",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "Mobile Learning Interface"
     }
