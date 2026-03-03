@@ -376,6 +376,10 @@ export class ResourcePriority {
 
 // Performance hooks
 export function usePerformanceOptimization() {
+  // TEMPORARILY DISABLED: Causing React hook errors
+  // Will re-enable after fixing React version conflicts
+  return;
+  /*
   React.useEffect(() => {
     // DISABLED: Resource preloading disabled (Vite handles optimization)
     if (process.env.NODE_ENV === 'production') {
@@ -411,6 +415,7 @@ export function usePerformanceOptimization() {
 
     return () => clearInterval(monitor);
   }, []);
+  */
 }
 
 export default {

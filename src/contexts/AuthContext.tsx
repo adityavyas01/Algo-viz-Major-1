@@ -33,7 +33,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     let mounted = true;
     
-    // Set up real auth state listener
+    // CHECK FOR FALLBACK ADMIN FIRST (synchronous check)
+    const isFallbackAdmin = localStorage.getItem('algviz_fallback_admin') === 'true';
+    
+    if (isFallbackAdmin) {
+      // Restore fallback admin session immediately (no async needed)
+      const mockUser = {
+        id: "00000000-0000-0000-0000-000000000001",
+        email: "admin@algoviz.com",
+        email_confirmed_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        aud: "authenticated",
+        role: "authenticated",
+        app_metadata: { provider: "email", is_admin: true },
+        user_metadata: { full_name: "AlgoViz Admin", is_admin: true },
+      } as User;
+
+      const mockSession = {
+        access_token: "mock-admin-token",
+        token_type: "bearer",
+        expires_in: 3600,
+        expires_at: Date.now() + 3600000,
+        refresh_token: "mock-refresh-token",
+        user: mockUser,
+      } as Session;
+
+      setUser(mockUser);
+      setSession(mockSession);
+      setLoading(false);
+      console.log("✅ Fallback admin session restored from localStorage");
+      
+      // No need to set up Supabase listener for fallback admin
+      return () => { mounted = false; };
+    }
+    
+    // For real Supabase users: Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        
+        // Store last visit for analytics
+        if (session) {
+          localStorage.setItem('algviz_last_visit', new Date().toISOString());
+        }
+      }
+    });
+    
+    // For real Supabase users: Set up auth listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -135,20 +184,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           title: "Signed out successfully",
           description: "Come back soon!",
         });
-      }
-    });
-
-    // Get initial session with persistence check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-        
-        // Store last visit for analytics
-        if (session) {
-          localStorage.setItem('algviz_last_visit', new Date().toISOString());
-        }
       }
     });
 
