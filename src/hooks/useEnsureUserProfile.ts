@@ -18,6 +18,13 @@ export function useEnsureUserProfile() {
         return;
       }
 
+      // Skip DB operations for fallback admin
+      if (user.id === '00000000-0000-0000-0000-000000000001' && 
+          localStorage.getItem('algviz_fallback_admin') === 'true') {
+        setIsReady(true);
+        return;
+      }
+
       try {
         // Check if profile exists
         const { data: existingProfile, error: fetchError } = await supabase

@@ -241,25 +241,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setSession(mockSession);
       localStorage.setItem('algviz_fallback_admin', 'true');
       
-      // Create/update user stats for fallback admin
-      await supabase.from("user_stats").upsert(
-        {
-          user_id: mockUser.id,
-          level: 99,
-          experience: 999999,
-          total_points: 999999,
-          current_streak: 365,
-          total_study_time: 10000,
-          rank: 1,
-          algorithms_completed: 2157,
-          challenges_completed: 500,
-        },
-        { onConflict: "user_id" }
-      );
-
+      // No DB operations for fallback admin - it should work offline
+      
       toast({
         title: "🔑 Admin Access Granted",
-        description: "Logged in with fallback admin account",
+        description: "Logged in with fallback admin account (offline mode)",
       });
       
       setLoading(false);

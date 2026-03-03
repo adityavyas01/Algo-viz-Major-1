@@ -37,6 +37,12 @@ export function useCollaborativeSession() {
       if (!currentUser) return;
       setUser(currentUser);
 
+      // Skip DB operations for fallback admin
+      if (currentUser.id === '00000000-0000-0000-0000-000000000001' && 
+          localStorage.getItem('algviz_fallback_admin') === 'true') {
+        return; // Fallback admin doesn't use collaborative sessions
+      }
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('username, avatar_url')

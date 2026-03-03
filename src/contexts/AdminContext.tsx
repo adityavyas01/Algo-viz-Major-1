@@ -95,6 +95,20 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchAdminStats = async () => {
     if (!isAdmin) return;
 
+    // Return mock stats for fallback admin without DB queries
+    if (user?.id === '00000000-0000-0000-0000-000000000001' && 
+        localStorage.getItem('algviz_fallback_admin') === 'true') {
+      setAdminStats({
+        totalUsers: 50000,
+        totalTournaments: 120,
+        activeTournaments: 8,
+        totalChallenges: 2157,
+        recentSignups: 342,
+        averageScore: 85.5,
+      });
+      return;
+    }
+
     try {
       // Fetch total users
       const { count: totalUsers } = await supabase
