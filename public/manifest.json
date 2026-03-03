@@ -18,15 +18,15 @@
       "purpose": "any"
     },
     {
-      "src": "/apple-touch-icon.png",
+      "src": "/favicon.ico",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/x-icon",
       "purpose": "maskable any"
     },
     {
-      "src": "/apple-touch-icon.png",
+      "src": "/favicon.ico",
       "sizes": "512x512", 
-      "type": "image/png",
+      "type": "image/x-icon",
       "purpose": "maskable any"
     }
   ],
@@ -55,16 +55,16 @@
   ],
   "screenshots": [
     {
-      "src": "/apple-touch-icon.png",
+      "src": "/favicon.ico",
       "sizes": "1280x720",
-      "type": "image/png",
+      "type": "image/x-icon",
       "form_factor": "wide",
       "label": "Algorithm Visualization Dashboard"
     },
     {
-      "src": "/apple-touch-icon.png", 
+      "src": "/favicon.ico", 
       "sizes": "375x812",
-      "type": "image/png",
+      "type": "image/x-icon",
       "form_factor": "narrow",
       "label": "Mobile Learning Interface"
     }
