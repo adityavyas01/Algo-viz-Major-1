@@ -14,6 +14,7 @@ import { MotionWrapper } from "@/components/motion/MotionWrapper";
 import { Button } from "@/components/ui/button";
 import { Users, Trophy, MessageSquare, Activity, ArrowRight } from "lucide-react";
 import { useActivityFeed } from "@/hooks/useCommunity";
+import { toast } from "sonner";
 
 const Community: React.FC = () => {
   const { user } = useAuth();
@@ -91,10 +92,22 @@ const Community: React.FC = () => {
               Connect, collaborate, and compete with a global community of algorithm enthusiasts.
             </p>
             <div className="mt-8 flex justify-center gap-4">
-              <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
+              <Button 
+                className="bg-cyan-500 hover:bg-cyan-600 text-white"
+                onClick={() => {
+                  toast({
+                    title: "Coming Soon",
+                    description: "Discussion forums will be available in the next update!",
+                  });
+                }}
+              >
                 Join a Discussion <MessageSquare className="ml-2 w-4 h-4" />
               </Button>
-              <Button variant="outline" className="border-purple-500 text-purple-300 hover:bg-purple-500/20 hover:text-purple-200">
+              <Button 
+                variant="outline" 
+                className="border-purple-500 text-purple-300 hover:bg-purple-500/20 hover:text-purple-200"
+                onClick={() => navigate('/challenges')}
+              >
                 View Challenges <Trophy className="ml-2 w-4 h-4" />
               </Button>
             </div>

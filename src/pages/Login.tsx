@@ -243,7 +243,16 @@ const Login = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <Button variant="outline" className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20">
+            <Button 
+              variant="outline" 
+              className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+              onClick={() => {
+                toast({
+                  title: "OAuth Coming Soon",
+                  description: "GitHub authentication will be available in the next update. Use email/password or demo login for now.",
+                });
+              }}
+            >
               <Github className="mr-2 h-4 w-4" />
               GitHub
             </Button>

@@ -24,6 +24,7 @@ const Challenges: React.FC = () => {
   const navigate = useNavigate();
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'problems' | 'contests' | 'interview'>('problems');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Show professional challenge interface if a challenge is selected
   if (selectedChallenge) {
@@ -116,11 +117,53 @@ const Challenges: React.FC = () => {
                         className="w-full bg-white/5 border-2 border-white/10 rounded-full pl-12 pr-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-colors"
                       />
                     </div>
-                    <button className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-3 text-white/80 hover:bg-white/20 transition-colors">
+                    <button 
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-3 text-white/80 hover:bg-white/20 transition-colors ${
+                        showFilters ? 'ring-2 ring-cyan-500' : ''
+                      }`}
+                    >
                       <Filter className="w-5 h-5" />
                       <span>Filter</span>
                     </button>
                   </div>
+                  
+                  {showFilters && (
+                    <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-lg space-y-4">
+                      <div>
+                        <label className="text-white/80 text-sm font-medium mb-2 block">Difficulty</label>
+                        <div className="flex gap-2">
+                          {['Easy', 'Medium', 'Hard'].map((level) => (
+                            <button
+                              key={level}
+                              className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 text-sm transition-colors"
+                            >
+                              {level}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-white/80 text-sm font-medium mb-2 block">Topics</label>
+                        <div className="flex flex-wrap gap-2">
+                          {['Arrays', 'Strings', 'Trees', 'Graphs', 'DP', 'Sorting'].map((topic) => (
+                            <button
+                              key={topic}
+                              className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 text-sm transition-colors"
+                            >
+                              {topic}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setShowFilters(false)}
+                        className="w-full px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium transition-colors"
+                      >
+                        Apply Filters
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="p-6">
                   <ProfessionalChallenges onChallengeSelect={setSelectedChallenge} />

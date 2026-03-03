@@ -39,6 +39,10 @@ export function ProblemView({ slug }: ProblemViewProps) {
   const [selectedTestcase, setSelectedTestcase] = useState(0);
   const [revealedHints, setRevealedHints] = useState<number[]>([]);
   const [quickTestPassed, setQuickTestPassed] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [fontSize, setFontSize] = useState(14);
+  const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
 
   const { toast } = useToast();
   const { batchResult: quickResults, isExecuting: isQuickTesting, executeTestcases, clearResults: clearQuickResults } = useCodeExecution();
@@ -240,10 +244,31 @@ export function ProblemView({ slug }: ProblemViewProps) {
         <div className="border-r border-gray-200 dark:border-gray-800 flex flex-col">
           {/* Top Bar */}
           <div className="h-12 border-b border-gray-200 dark:border-gray-800 flex items-center px-4 gap-2 flex-shrink-0">
-            <Button variant="ghost" size="sm" className="h-8">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8"
+              onClick={() => {
+                if (problem && problem.id > 1) {
+                  const prevId = problem.id - 1;
+                  window.location.href = `/problem/problem-${prevId}`;
+                }
+              }}
+              disabled={!problem || problem.id <= 1}
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="h-8">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8"
+              onClick={() => {
+                if (problem) {
+                  const nextId = problem.id + 1;
+                  window.location.href = `/problem/problem-${nextId}`;
+                }
+              }}
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -280,7 +305,21 @@ export function ProblemView({ slug }: ProblemViewProps) {
                     </Badge>
                   )}
                   {problem.asked_by_faang && (
-                    <Star className="h-4 w-4 text-blue-500 fill-blue-500" />
+                    <button
+                      onClick={() => {
+                        setIsFavorited(!isFavorited);
+                        toast({
+                          title: isFavorited ? "Removed from favorites" : "Added to favorites",
+                          description: isFavorited ? "Problem removed from your favorites list" : "Problem added to your favorites list",
+                        });
+                      }}
+                      className="hover:scale-110 transition-transform"
+                    >
+                      <Star className={cn(
+                        "h-4 w-4 text-blue-500",
+                        isFavorited ? "fill-blue-500" : "fill-none"
+                      )} />
+                    </button>
                   )}
                 </div>
               </div>
@@ -431,7 +470,12 @@ export function ProblemView({ slug }: ProblemViewProps) {
               </Select>
               
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="h-8">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8"
+                  onClick={() => setShowSettings(!showSettings)}
+                >
                   <Settings className="h-4 w-4" />
                 </Button>
                 <Button 
@@ -450,6 +494,37 @@ export function ProblemView({ slug }: ProblemViewProps) {
               </div>
             </div>
 
+            {/* Settings Panel */}
+            {showSettings && (
+              <div className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Font Size</label>
+                  <Select value={fontSize.toString()} onValueChange={(v) => setFontSize(parseInt(v))}>
+                    <SelectTrigger className="w-[100px] h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[12, 14, 16, 18, 20].map(size => (
+                        <SelectItem key={size} value={size.toString()}>{size}px</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</label>
+                  <Select value={theme} onValueChange={(v) => setTheme(v as 'vs-dark' | 'light')}>
+                    <SelectTrigger className="w-[100px] h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="vs-dark">Dark</SelectItem>
+                      <SelectItem value="light">Light</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
             {/* Monaco Editor */}
             <div className="flex-1 overflow-hidden">
               <Editor
@@ -457,10 +532,10 @@ export function ProblemView({ slug }: ProblemViewProps) {
                 language={getLanguageForMonaco(selectedLanguage)}
                 value={code}
                 onChange={(value) => setCode(value || "")}
-                theme="vs-dark"
+                theme={theme}
                 options={{
                   minimap: { enabled: false },
-                  fontSize: 14,
+                  fontSize: fontSize,
                   lineNumbers: "on",
                   scrollBeyondLastLine: false,
                   automaticLayout: true,

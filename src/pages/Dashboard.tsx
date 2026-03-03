@@ -118,7 +118,10 @@ const Dashboard = () => {
                       <p className="text-white/60 text-sm">Test your skills</p>
                     </div>
                   </div>
-                  <Button className="w-full bg-cyan-600 hover:bg-cyan-700">
+                  <Button 
+                    className="w-full bg-cyan-600 hover:bg-cyan-700"
+                    onClick={() => navigate('/challenges')}
+                  >
                     Start Challenge
                   </Button>
                 </div>
@@ -133,7 +136,10 @@ const Dashboard = () => {
                       <p className="text-white/60 text-sm">View detailed analytics</p>
                     </div>
                   </div>
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                  <Button 
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    onClick={() => setActiveTab('analytics')}
+                  >
                     View Report
                   </Button>
                 </div>
