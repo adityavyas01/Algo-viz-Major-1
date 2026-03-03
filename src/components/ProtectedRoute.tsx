@@ -1,5 +1,5 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React, { useMemo, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,6 +20,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Memoize the from path to prevent unnecessary re-renders
+  const fromPath = useMemo(() => location.pathname, [location.pathname]);
+
+  // Handle authentication redirect using useEffect to prevent infinite loops
+  useEffect(() => {
+    if (!authLoading && !adminLoading && requireAuth && !user && location.pathname !== '/login') {
+      navigate('/login', { state: { from: fromPath }, replace: true });
+    }
+  }, [authLoading, adminLoading, requireAuth, user, location.pathname, navigate, fromPath]);
 
   // Show loading state
   if (authLoading || (requireAdmin && adminLoading)) {
@@ -36,9 +47,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Check authentication requirement
+  // If not authenticated and require auth, show loading while redirect happens
   if (requireAuth && !user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
+      </div>
+    );
   }
 
   // Check admin requirement
