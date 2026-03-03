@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/contexts/AdminContext';
@@ -21,16 +21,23 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAdmin, loading: adminLoading } = useAdmin();
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Memoize the from path to prevent unnecessary re-renders
-  const fromPath = useMemo(() => location.pathname, [location.pathname]);
+  const hasAttemptedRedirect = useRef(false);
 
-  // Handle authentication redirect using useEffect to prevent infinite loops
+  // Handle authentication redirect using useEffect with redirect guard
   useEffect(() => {
-    if (!authLoading && !adminLoading && requireAuth && !user && location.pathname !== '/login') {
-      navigate('/login', { state: { from: fromPath }, replace: true });
+    if (!authLoading && !adminLoading && requireAuth && !user) {
+      // Prevent redirect if already on login page or already attempted
+      if (location.pathname !== '/login' && !hasAttemptedRedirect.current) {
+        hasAttemptedRedirect.current = true;
+        navigate('/login', { state: { from: location.pathname }, replace: true });
+      }
     }
-  }, [authLoading, adminLoading, requireAuth, user, location.pathname, navigate, fromPath]);
+    
+    // Reset redirect flag if user becomes authenticated
+    if (user) {
+      hasAttemptedRedirect.current = false;
+    }
+  }, [authLoading, adminLoading, requireAuth, user, location.pathname, navigate]);
 
   // Show loading state
   if (authLoading || (requireAdmin && adminLoading)) {
