@@ -28,7 +28,7 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      navigate('/');
     }
   }, [user, navigate]);
 
@@ -220,14 +220,10 @@ const Login = () => {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-cyan-400/30 rounded-lg p-3 space-y-1">
                 <p className="text-xs text-cyan-300 font-semibold flex items-center gap-1">
                   <ShieldCheck className="h-3 w-3" />
-                  Demo Credentials
+                  Demo Access
                 </p>
-                <div className="text-xs text-white/70 space-y-0.5 font-mono">
-                  <p>📧 admin@algoviz.com</p>
-                  <p>🔑 Admin@123</p>
-                </div>
                 <p className="text-xs text-white/50 pt-1">
-                  Level 99 • Full Access • 2,157 Problems
+                  Click "Quick Demo Login" above for instant full access — no signup needed.
                 </p>
               </div>
             </div>

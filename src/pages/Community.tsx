@@ -74,7 +74,7 @@ const Community: React.FC = () => {
     console.log('Commenting on activity:', activityId);
   };
 
-  const activitiesWithLikes = mockActivityFeed.map(activity => ({
+  const activitiesWithLikes = (realActivities || []).map(activity => ({
     ...activity,
     isLiked: likedActivities.has(activity.id)
   }));

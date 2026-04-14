@@ -6,6 +6,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ExecutionRequest, BatchExecutionResult, TestcaseExecution } from "@/types/execution";
 import { executeTestcase, executeBatch } from "./multiLangExecutor";
+import { updatePostSubmissionStats } from "./submissionStatsService";
 
 export interface Testcase {
   id: string;
@@ -392,6 +393,14 @@ export async function createSubmission(
       // Mark as attempted even if not all tests passed
       await updateUserProgress(user.id, problemId, "attempted", submission.id);
     }
+
+    // Update stats, streaks, achievements, and notifications (fire-and-forget)
+    updatePostSubmissionStats(
+      user.id,
+      problemId,
+      status === "accepted",
+      problem.difficulty
+    ).catch((err) => console.error("Post-submission stats error:", err));
 
     return {
       submissionId: submission.id,

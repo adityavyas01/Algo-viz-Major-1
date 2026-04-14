@@ -4,9 +4,6 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { executeBatch } from "./multiLangExecutor";
-import { getTestcasesForProblem } from "./testcaseService";
-import type { ExecutionRequest } from "@/types/execution";
 
 export interface Contest {
   id: string;
@@ -25,8 +22,6 @@ export interface Contest {
   registration_end?: string;
   rules?: string;
   prizes?: string;
-  bracket_data?: any;
-  prize_pool?: any;
   created_at: string;
   updated_at: string;
 }
@@ -34,10 +29,9 @@ export interface Contest {
 export interface ContestProblem {
   id: string;
   contest_id: string;
-  problem_id: string;
+  problem_id: number;
   order_index: number;
   points: number;
-  solved_count: number;
   created_at: string;
   problem?: {
     title: string;
@@ -56,15 +50,15 @@ export interface ContestParticipant {
   problems_solved: number;
   registered_at: string;
   last_submission_at?: string;
-  user?: {
-    email: string;
+  profile?: {
+    display_name: string;
   };
 }
 
 export interface ContestSubmission {
   id: string;
   contest_id: string;
-  problem_id: string;
+  problem_id: number;
   user_id: string;
   code: string;
   language: string;
@@ -87,6 +81,10 @@ export interface ContestAnnouncement {
   priority: "low" | "normal" | "high" | "urgent";
   created_at: string;
 }
+
+// ============================================
+// Read Operations
+// ============================================
 
 /**
  * Fetch all contests with optional filters
@@ -114,33 +112,6 @@ export async function getContests(filters?: {
   if (error) {
     console.error("Error fetching contests:", error);
     throw new Error(`Failed to fetch contests: ${error.message}`);
-  }
-
-  return data || [];
-}
-
-/**
- * Get tournaments (contests with format='tournament')
- */
-export async function getTournaments(filters?: {
-  status?: Contest["status"];
-}): Promise<Contest[]> {
-  let query = supabase
-    .from("contests")
-    .select("*")
-    .eq("visibility", "public")
-    .eq("format", "tournament")
-    .order("start_time", { ascending: false });
-
-  if (filters?.status) {
-    query = query.eq("status", filters.status);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching tournaments:", error);
-    throw new Error(`Failed to fetch tournaments: ${error.message}`);
   }
 
   return data || [];
@@ -201,7 +172,7 @@ export async function registerForContest(contestId: string): Promise<boolean> {
     .select("id")
     .eq("contest_id", contestId)
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     return true; // Already registered
@@ -220,6 +191,11 @@ export async function registerForContest(contestId: string): Promise<boolean> {
     throw new Error(`Failed to register: ${error.message}`);
   }
 
+  // Increment participant count
+  await supabase.rpc("increment_contest_participants", { contest_uuid: contestId }).catch(() => {
+    // Fallback: just ignore if function doesn't exist
+  });
+
   return true;
 }
 
@@ -236,26 +212,24 @@ export async function isUserRegistered(contestId: string): Promise<boolean> {
     .select("id")
     .eq("contest_id", contestId)
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   return !!data;
 }
 
 /**
- * Get leaderboard for a contest
+ * Get leaderboard for a contest with display names
  */
 export async function getContestLeaderboard(
   contestId: string,
   limit: number = 100
 ): Promise<ContestParticipant[]> {
-  const { data, error } = await supabase
+  const { data: participants, error } = await supabase
     .from("contest_participants")
-    .select(`
-      *,
-      user:auth.users(email)
-    `)
+    .select("*")
     .eq("contest_id", contestId)
-    .order("rank", { ascending: true })
+    .order("score", { ascending: false })
+    .order("penalty_time", { ascending: true })
     .limit(limit);
 
   if (error) {
@@ -263,157 +237,44 @@ export async function getContestLeaderboard(
     throw new Error(`Failed to fetch leaderboard: ${error.message}`);
   }
 
-  return data || [];
+  if (!participants || participants.length === 0) return [];
+
+  // Enrich with display names
+  const userIds = participants.map((p) => p.user_id);
+  const { data: profiles } = await supabase
+    .from("user_profiles")
+    .select("user_id, display_name")
+    .in("user_id", userIds);
+
+  const profileMap = new Map(
+    (profiles || []).map((p: any) => [p.user_id, p])
+  );
+
+  return participants.map((p, index) => ({
+    ...p,
+    rank: p.rank || index + 1,
+    profile: profileMap.get(p.user_id) || { display_name: "User" },
+  }));
 }
 
 /**
- * Recalculate contest rankings
+ * Get contest announcements
  */
-export async function updateContestRankings(contestId: string): Promise<void> {
-  const { error } = await supabase.rpc("calculate_contest_rankings", {
-    contest_uuid: contestId,
-  });
+export async function getContestAnnouncements(
+  contestId: string
+): Promise<ContestAnnouncement[]> {
+  const { data, error } = await supabase
+    .from("contest_announcements")
+    .select("*")
+    .eq("contest_id", contestId)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error updating rankings:", error);
-    throw new Error(`Failed to update rankings: ${error.message}`);
-  }
-}
-
-/**
- * Submit code for a contest problem
- */
-export async function submitContestCode(
-  contestId: string,
-  problemId: string,
-  code: string,
-  language: string
-): Promise<{ submissionId: string; results: any }> {
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("User must be authenticated to submit code");
+    console.error("Error fetching announcements:", error);
+    return [];
   }
 
-  // Check if user is registered
-  const registered = await isUserRegistered(contestId);
-  if (!registered) {
-    throw new Error("You must register for the contest before submitting");
-  }
-
-  // Check if contest is active
-  const contest = await getContestById(contestId);
-  if (!contest) {
-    throw new Error("Contest not found");
-  }
-
-  if (contest.status !== "active") {
-    throw new Error("Contest is not currently active");
-  }
-
-  // Get testcases
-  const testcases = await getTestcasesForProblem(problemId, true);
-
-  if (testcases.length === 0) {
-    throw new Error("No testcases found for this problem");
-  }
-
-  // Create submission record
-  const { data: submission, error: submissionError } = await supabase
-    .from("contest_submissions")
-    .insert({
-      contest_id: contestId,
-      problem_id: problemId,
-      user_id: user.id,
-      code,
-      language,
-      status: "running",
-      score: 0,
-      passed_testcases: 0,
-      total_testcases: testcases.length,
-      submitted_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (submissionError || !submission) {
-    console.error("Error creating contest submission:", submissionError);
-    throw new Error(`Failed to create submission: ${submissionError?.message}`);
-  }
-
-  // Execute code against all testcases
-  try {
-    const executionRequests: ExecutionRequest[] = testcases.map((tc) => ({
-      code,
-      language,
-      input: tc.input,
-      expectedOutput: tc.expected_output,
-    }));
-
-    const results = await executeBatch(executionRequests);
-
-    // Calculate statistics
-    const passedCount = results.results.filter((r) => r.verdict === "Accepted").length;
-    const totalRuntime = results.results.reduce((sum, r) => sum + (r.runtime || 0), 0);
-    const avgRuntime = Math.round(totalRuntime / results.results.length);
-    const maxMemory = Math.max(...results.results.map((r) => r.memory || 0));
-
-    // Determine overall status
-    let status: ContestSubmission["status"] = "accepted";
-    let verdict = "Accepted";
-
-    if (results.results.some((r) => r.verdict === "Compilation Error")) {
-      status = "compilation_error";
-      verdict = "Compilation Error";
-    } else if (results.results.some((r) => r.verdict === "Runtime Error")) {
-      status = "runtime_error";
-      verdict = "Runtime Error";
-    } else if (results.results.some((r) => r.verdict === "Time Limit Exceeded")) {
-      status = "time_limit_exceeded";
-      verdict = "Time Limit Exceeded";
-    } else if (passedCount < results.results.length) {
-      status = "wrong_answer";
-      verdict = `Wrong Answer (${passedCount}/${results.results.length})`;
-    }
-
-    // Calculate score
-    const score = status === "accepted" ? 100 : Math.round((passedCount / results.results.length) * 100);
-
-    // Update submission with results
-    await supabase
-      .from("contest_submissions")
-      .update({
-        status,
-        verdict,
-        score,
-        passed_testcases: passedCount,
-        total_testcases: results.results.length,
-        runtime: avgRuntime,
-        memory: maxMemory,
-        judged_at: new Date().toISOString(),
-      })
-      .eq("id", submission.id);
-
-    // Update rankings after submission
-    await updateContestRankings(contestId);
-
-    return {
-      submissionId: submission.id,
-      results,
-    };
-  } catch (executionError) {
-    // Update submission to show error
-    await supabase
-      .from("contest_submissions")
-      .update({
-        status: "runtime_error",
-        verdict: "Execution Failed",
-        judged_at: new Date().toISOString(),
-      })
-      .eq("id", submission.id);
-
-    throw executionError;
-  }
+  return data || [];
 }
 
 /**
@@ -448,25 +309,176 @@ export async function getContestSubmissions(
   return data || [];
 }
 
+// ============================================
+// Admin Operations
+// ============================================
+
 /**
- * Get contest announcements
+ * Create a new contest (admin only)
  */
-export async function getContestAnnouncements(
-  contestId: string
-): Promise<ContestAnnouncement[]> {
+export async function createContest(contestData: {
+  title: string;
+  description?: string;
+  start_time: string;
+  end_time: string;
+  duration: number;
+  type: Contest["type"];
+  visibility?: Contest["visibility"];
+  max_participants?: number;
+  rules?: string;
+  prizes?: string;
+}): Promise<Contest> {
   const { data, error } = await supabase
-    .from("contest_announcements")
-    .select("*")
-    .eq("contest_id", contestId)
-    .order("created_at", { ascending: false });
+    .from("contests")
+    .insert({
+      ...contestData,
+      status: "upcoming",
+      format: "standard",
+      visibility: contestData.visibility || "public",
+      total_participants: 0,
+    })
+    .select()
+    .single();
 
   if (error) {
-    console.error("Error fetching announcements:", error);
+    console.error("Error creating contest:", error);
+    throw new Error(`Failed to create contest: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Update a contest (admin only)
+ */
+export async function updateContest(
+  contestId: string,
+  updates: Partial<Contest>
+): Promise<Contest> {
+  const { data, error } = await supabase
+    .from("contests")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", contestId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating contest:", error);
+    throw new Error(`Failed to update contest: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
+ * Delete a contest (admin only)
+ */
+export async function deleteContest(contestId: string): Promise<void> {
+  // Delete related data first
+  await supabase.from("contest_announcements").delete().eq("contest_id", contestId);
+  await supabase.from("contest_submissions").delete().eq("contest_id", contestId);
+  await supabase.from("contest_participants").delete().eq("contest_id", contestId);
+  await supabase.from("contest_problems").delete().eq("contest_id", contestId);
+
+  const { error } = await supabase
+    .from("contests")
+    .delete()
+    .eq("id", contestId);
+
+  if (error) {
+    console.error("Error deleting contest:", error);
+    throw new Error(`Failed to delete contest: ${error.message}`);
+  }
+}
+
+/**
+ * Add a problem to a contest (admin only)
+ */
+export async function addProblemToContest(
+  contestId: string,
+  problemId: number,
+  orderIndex: number,
+  points: number
+): Promise<void> {
+  const { error } = await supabase
+    .from("contest_problems")
+    .insert({
+      contest_id: contestId,
+      problem_id: problemId,
+      order_index: orderIndex,
+      points,
+    });
+
+  if (error) {
+    console.error("Error adding problem to contest:", error);
+    throw new Error(`Failed to add problem: ${error.message}`);
+  }
+}
+
+/**
+ * Remove a problem from a contest (admin only)
+ */
+export async function removeProblemFromContest(
+  contestId: string,
+  problemId: number
+): Promise<void> {
+  const { error } = await supabase
+    .from("contest_problems")
+    .delete()
+    .eq("contest_id", contestId)
+    .eq("problem_id", problemId);
+
+  if (error) {
+    throw new Error(`Failed to remove problem: ${error.message}`);
+  }
+}
+
+/**
+ * Create a contest announcement (admin only)
+ */
+export async function createAnnouncement(
+  contestId: string,
+  title: string,
+  message: string,
+  priority: ContestAnnouncement["priority"] = "normal"
+): Promise<void> {
+  const { error } = await supabase
+    .from("contest_announcements")
+    .insert({
+      contest_id: contestId,
+      title,
+      message,
+      priority,
+    });
+
+  if (error) {
+    throw new Error(`Failed to create announcement: ${error.message}`);
+  }
+}
+
+/**
+ * Get all problems (for admin contest problem picker)
+ */
+export async function getAllProblems(): Promise<{ id: number; title: string; difficulty: string }[]> {
+  const { data, error } = await supabase
+    .from("problems")
+    .select("id, title, difficulty")
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching problems:", error);
     return [];
   }
 
   return data || [];
 }
+
+// ============================================
+// Realtime Subscriptions
+// ============================================
 
 /**
  * Subscribe to real-time leaderboard updates
@@ -510,120 +522,4 @@ export function subscribeToAnnouncements(
       callback
     )
     .subscribe();
-}
-
-/**
- * Generate tournament bracket
- * Creates a single-elimination bracket structure
- */
-export function generateBracket(participants: ContestParticipant[]): any {
-  const numParticipants = participants.length;
-  const rounds = Math.ceil(Math.log2(numParticipants));
-  const bracketSize = Math.pow(2, rounds);
-  
-  // Seed participants
-  const seededParticipants = [...participants];
-  
-  // Add byes if needed
-  while (seededParticipants.length < bracketSize) {
-    seededParticipants.push(null as any);
-  }
-
-  // Build bracket structure
-  const bracket: any = {
-    rounds: [],
-    total_rounds: rounds,
-    bracket_size: bracketSize
-  };
-
-  // First round matchups
-  const firstRound = [];
-  for (let i = 0; i < bracketSize / 2; i++) {
-    firstRound.push({
-      match_id: `r1_m${i + 1}`,
-      round: 1,
-      participant1: seededParticipants[i * 2],
-      participant2: seededParticipants[i * 2 + 1],
-      winner: null,
-      completed: false
-    });
-  }
-  bracket.rounds.push(firstRound);
-
-  // Subsequent rounds (empty until matches complete)
-  for (let r = 2; r <= rounds; r++) {
-    const roundMatches = [];
-    const numMatches = bracketSize / Math.pow(2, r);
-    for (let m = 0; m < numMatches; m++) {
-      roundMatches.push({
-        match_id: `r${r}_m${m + 1}`,
-        round: r,
-        participant1: null,
-        participant2: null,
-        winner: null,
-        completed: false
-      });
-    }
-    bracket.rounds.push(roundMatches);
-  }
-
-  return bracket;
-}
-
-/**
- * Update tournament bracket after match completion
- */
-export async function updateTournamentBracket(
-  contestId: string,
-  matchId: string,
-  winnerId: string
-): Promise<void> {
-  // Fetch current bracket
-  const contest = await getContestById(contestId);
-  if (!contest || !contest.bracket_data) {
-    throw new Error("Invalid tournament or bracket data");
-  }
-
-  const bracket = contest.bracket_data;
-  
-  // Find and update the match
-  let matchFound = false;
-  for (const round of bracket.rounds) {
-    const match = round.find((m: any) => m.match_id === matchId);
-    if (match) {
-      match.winner = winnerId;
-      match.completed = true;
-      matchFound = true;
-
-      // Advance winner to next round
-      const [roundNum, matchNum] = matchId.split('_')[0].slice(1).split('m');
-      const nextRoundIndex = parseInt(roundNum);
-      const nextMatchIndex = Math.floor((parseInt(matchNum) - 1) / 2);
-      
-      if (nextRoundIndex < bracket.rounds.length) {
-        const nextMatch = bracket.rounds[nextRoundIndex][nextMatchIndex];
-        if (!nextMatch.participant1) {
-          nextMatch.participant1 = winnerId;
-        } else {
-          nextMatch.participant2 = winnerId;
-        }
-      }
-      
-      break;
-    }
-  }
-
-  if (!matchFound) {
-    throw new Error("Match not found in bracket");
-  }
-
-  // Update contest with new bracket data
-  const { error } = await supabase
-    .from("contests")
-    .update({ bracket_data: bracket })
-    .eq("id", contestId);
-
-  if (error) {
-    throw new Error(`Failed to update bracket: ${error.message}`);
-  }
 }

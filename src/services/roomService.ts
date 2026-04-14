@@ -13,6 +13,7 @@ export interface StudyRoom {
   created_by: string;
   max_members: number;
   is_private: boolean;
+  join_code?: string;
   status: "active" | "archived";
   active_members: number;
   created_at: string;
@@ -27,7 +28,7 @@ export interface RoomMember {
   is_online: boolean;
   last_seen: string;
   joined_at: string;
-  user?: { email: string };
+  profile?: { display_name: string; avatar_url: string | null };
 }
 
 export interface RoomMessage {
@@ -38,7 +39,7 @@ export interface RoomMessage {
   message_type: "text" | "code" | "system" | "file";
   metadata?: any;
   created_at: string;
-  user?: { email: string };
+  profile?: { display_name: string };
 }
 
 export interface SharedCode {
@@ -95,6 +96,7 @@ export async function getUserRooms(): Promise<StudyRoom[]> {
 
 /**
  * Create a new study room
+ * The DB trigger auto-joins the creator and auto-creates shared code
  */
 export async function createRoom(
   name: string,
@@ -120,7 +122,7 @@ export async function createRoom(
       max_members: maxMembers,
       status: "active",
     })
-    .select()
+    .select("*")
     .single();
 
   if (error) {
@@ -132,7 +134,7 @@ export async function createRoom(
 }
 
 /**
- * Join a room
+ * Join a room (public)
  */
 export async function joinRoom(roomId: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -147,15 +149,30 @@ export async function joinRoom(roomId: string): Promise<boolean> {
     .select("id")
     .eq("room_id", roomId)
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     // Already a member, just set online
     await supabase
       .from("room_members")
-      .update({ is_online: true })
+      .update({ is_online: true, last_seen: new Date().toISOString() })
       .eq("id", existing.id);
     return true;
+  }
+
+  // Check room capacity
+  const { data: room } = await supabase
+    .from("study_rooms")
+    .select("max_members, active_members, is_private")
+    .eq("id", roomId)
+    .single();
+
+  if (room && room.active_members >= room.max_members) {
+    throw new Error("Room is full");
+  }
+
+  if (room?.is_private) {
+    throw new Error("This is a private room. Use a join code to enter.");
   }
 
   // Join as new member
@@ -177,6 +194,66 @@ export async function joinRoom(roomId: string): Promise<boolean> {
 }
 
 /**
+ * Join a private room with join code
+ */
+export async function joinRoomWithCode(joinCode: string): Promise<StudyRoom> {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User must be authenticated to join rooms");
+  }
+
+  // Find room by join code
+  const { data: room, error: roomError } = await supabase
+    .from("study_rooms")
+    .select("*")
+    .eq("join_code", joinCode.toUpperCase())
+    .eq("status", "active")
+    .single();
+
+  if (roomError || !room) {
+    throw new Error("Invalid join code. Please check and try again.");
+  }
+
+  // Check if already a member
+  const { data: existing } = await supabase
+    .from("room_members")
+    .select("id")
+    .eq("room_id", room.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("room_members")
+      .update({ is_online: true })
+      .eq("id", existing.id);
+    return room;
+  }
+
+  // Check capacity
+  if (room.active_members >= room.max_members) {
+    throw new Error("Room is full");
+  }
+
+  // Join
+  const { error } = await supabase
+    .from("room_members")
+    .insert({
+      room_id: room.id,
+      user_id: user.id,
+      role: "member",
+      is_online: true,
+    });
+
+  if (error) {
+    throw new Error(`Failed to join room: ${error.message}`);
+  }
+
+  return room;
+}
+
+/**
  * Leave a room
  */
 export async function leaveRoom(roomId: string): Promise<void> {
@@ -192,12 +269,12 @@ export async function leaveRoom(roomId: string): Promise<void> {
 }
 
 /**
- * Get room members
+ * Get room members with display names from user_profiles
  */
 export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
-  const { data, error } = await supabase
+  const { data: members, error } = await supabase
     .from("room_members")
-    .select("*, user:auth.users(email)")
+    .select("*")
     .eq("room_id", roomId)
     .order("joined_at", { ascending: true });
 
@@ -206,7 +283,23 @@ export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
     return [];
   }
 
-  return data || [];
+  if (!members || members.length === 0) return [];
+
+  // Enrich with display names from user_profiles
+  const userIds = members.map((m) => m.user_id);
+  const { data: profiles } = await supabase
+    .from("user_profiles")
+    .select("user_id, display_name, avatar_url")
+    .in("user_id", userIds);
+
+  const profileMap = new Map(
+    (profiles || []).map((p: any) => [p.user_id, p])
+  );
+
+  return members.map((m) => ({
+    ...m,
+    profile: profileMap.get(m.user_id) || { display_name: "User", avatar_url: null },
+  }));
 }
 
 /**
@@ -241,15 +334,15 @@ export async function sendMessage(
 }
 
 /**
- * Get room messages
+ * Get room messages with user display names
  */
 export async function getRoomMessages(
   roomId: string,
-  limit: number = 50
+  limit: number = 100
 ): Promise<RoomMessage[]> {
-  const { data, error } = await supabase
+  const { data: messages, error } = await supabase
     .from("room_messages")
-    .select("*, user:auth.users(email)")
+    .select("*")
     .eq("room_id", roomId)
     .order("created_at", { ascending: true })
     .limit(limit);
@@ -259,52 +352,46 @@ export async function getRoomMessages(
     return [];
   }
 
-  return data || [];
+  if (!messages || messages.length === 0) return [];
+
+  // Enrich with display names
+  const userIds = [...new Set(messages.map((m) => m.user_id))];
+  const { data: profiles } = await supabase
+    .from("user_profiles")
+    .select("user_id, display_name")
+    .in("user_id", userIds);
+
+  const profileMap = new Map(
+    (profiles || []).map((p: any) => [p.user_id, p])
+  );
+
+  return messages.map((m) => ({
+    ...m,
+    profile: profileMap.get(m.user_id) || { display_name: "User" },
+  }));
 }
 
 /**
- * Get or create shared code for room
+ * Get shared code for room (auto-created by trigger)
  */
 export async function getRoomSharedCode(roomId: string): Promise<SharedCode | null> {
   const { data, error } = await supabase
     .from("room_shared_code")
     .select("*")
     .eq("room_id", roomId)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== "PGRST116") {
+  if (error) {
     console.error("Error fetching shared code:", error);
     return null;
-  }
-
-  if (!data) {
-    // Create new shared code
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: newCode, error: createError } = await supabase
-      .from("room_shared_code")
-      .insert({
-        room_id: roomId,
-        title: "Shared Code",
-        code: "# Write collaborative code here\n",
-        language: "python",
-        created_by: user?.id,
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error("Error creating shared code:", createError);
-      return null;
-    }
-
-    return newCode;
   }
 
   return data;
 }
 
 /**
- * Update shared code
+ * Update shared code — uses a simple update (version managed server-side is overkill,
+ * just increment on client since we have realtime sync)
  */
 export async function updateSharedCode(
   codeId: string,
@@ -313,10 +400,10 @@ export async function updateSharedCode(
 ): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
 
-  const updates: any = {
+  const updates: Record<string, any> = {
     code,
     last_edited_by: user?.id,
-    version: supabase.sql`version + 1`,
+    updated_at: new Date().toISOString(),
   };
 
   if (language) {
@@ -335,7 +422,25 @@ export async function updateSharedCode(
 }
 
 /**
- * Subscribe to room messages
+ * Get room details by ID
+ */
+export async function getRoomById(roomId: string): Promise<StudyRoom | null> {
+  const { data, error } = await supabase
+    .from("study_rooms")
+    .select("*")
+    .eq("id", roomId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching room:", error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Subscribe to room messages (realtime)
  */
 export function subscribeToMessages(roomId: string, callback: (message: RoomMessage) => void) {
   return supabase
@@ -348,25 +453,15 @@ export function subscribeToMessages(roomId: string, callback: (message: RoomMess
         table: "room_messages",
         filter: `room_id=eq.${roomId}`,
       },
-      async (payload) => {
-        // Fetch user details
-        const { data: user } = await supabase
-          .from("auth.users")
-          .select("email")
-          .eq("id", payload.new.user_id)
-          .single();
-
-        callback({
-          ...payload.new,
-          user,
-        } as RoomMessage);
+      (payload) => {
+        callback(payload.new as RoomMessage);
       }
     )
     .subscribe();
 }
 
 /**
- * Subscribe to room members
+ * Subscribe to room members (realtime)
  */
 export function subscribeToMembers(roomId: string, callback: () => void) {
   return supabase
@@ -385,7 +480,7 @@ export function subscribeToMembers(roomId: string, callback: () => void) {
 }
 
 /**
- * Subscribe to shared code updates
+ * Subscribe to shared code updates (realtime)
  */
 export function subscribeToSharedCode(roomId: string, callback: (code: SharedCode) => void) {
   return supabase

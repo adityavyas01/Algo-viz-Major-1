@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+				mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,7 +66,25 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				/* Deep Logic surface tiers */
+				surface: {
+					base: '#0b1326',
+					low: '#131b2e',
+					DEFAULT: '#171f33',
+					high: '#222a3d',
+					highest: '#2d3449',
+					bright: '#31394d',
+				},
+				cyan: {
+					DEFAULT: '#06b6d4',
+					light: '#4cd7f6',
+					dim: '#1e4d58',
+				},
+				warm: {
+					DEFAULT: '#ffb873',
+					container: '#e89337',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

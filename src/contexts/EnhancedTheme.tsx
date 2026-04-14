@@ -220,40 +220,48 @@ const darkTheme: VisualizationTheme = {
   ...lightTheme,
   colors: {
     ...lightTheme.colors,
-    primary: '#60a5fa',
-    secondary: '#818cf8',
-    accent: '#a78bfa',
-    background: '#0f172a',
-    surface: '#1e293b',
-    text: '#f1f5f9',
-    textSecondary: '#94a3b8',
-    border: '#334155',
-    success: '#34d399',
-    warning: '#fbbf24',
-    error: '#f87171',
-    info: '#22d3ee',
+    primary: '#4cd7f6',
+    secondary: '#a1cedb',
+    accent: '#ffb873',
+    background: '#0b1326',
+    surface: '#171f33',
+    text: '#dae2fd',
+    textSecondary: '#bcc9cd',
+    border: '#3d494c',
+    success: '#10b981',
+    warning: '#ffb873',
+    error: '#ffb4ab',
+    info: '#4cd7f6',
     sorting: {
-      comparing: '#fbbf24',
-      swapping: '#f87171',
-      sorted: '#34d399',
-      pivot: '#c084fc',
-      active: '#60a5fa',
-      inactive: '#475569'
+      comparing: '#ffb873',
+      swapping: '#ffb4ab',
+      sorted: '#10b981',
+      pivot: '#a1cedb',
+      active: '#4cd7f6',
+      inactive: '#2d3449'
     },
     graph: {
-      node: '#60a5fa',
-      nodeVisited: '#34d399',
-      nodeActive: '#fbbf24',
-      edge: '#64748b',
-      edgeActive: '#60a5fa',
-      path: '#34d399'
+      node: '#4cd7f6',
+      nodeVisited: '#10b981',
+      nodeActive: '#ffb873',
+      edge: '#3d494c',
+      edgeActive: '#4cd7f6',
+      path: '#10b981'
     },
     tree: {
-      node: '#60a5fa',
-      nodeActive: '#fbbf24',
-      nodeVisited: '#34d399',
-      edge: '#64748b',
-      leaf: '#c084fc'
+      node: '#4cd7f6',
+      nodeActive: '#ffb873',
+      nodeVisited: '#10b981',
+      edge: '#3d494c',
+      leaf: '#a1cedb'
+    }
+  },
+  typography: {
+    ...lightTheme.typography,
+    fontFamily: {
+      sans: '"Inter", system-ui, -apple-system, sans-serif',
+      mono: '"JetBrains Mono", "Fira Code", Consolas, monospace',
+      display: '"Space Grotesk", system-ui, sans-serif'
     }
   }
 }
@@ -274,9 +282,9 @@ export function EnhancedThemeProvider({ children }: { children: React.ReactNode 
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('algo-viz-theme') as Theme
-      return stored || 'auto'
+      return stored || 'dark'
     }
-    return 'auto'
+    return 'dark'
   })
 
   const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>(() => {
@@ -287,7 +295,7 @@ export function EnhancedThemeProvider({ children }: { children: React.ReactNode 
     return 'normal'
   })
 
-  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light')
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('dark')
 
   // Listen for system theme changes
   useEffect(() => {
@@ -337,14 +345,7 @@ export function EnhancedThemeProvider({ children }: { children: React.ReactNode 
 
   return (
     <ThemeContext.Provider value={value}>
-      <div 
-        className="min-h-screen transition-colors duration-300"
-        style={{
-          backgroundColor: currentTheme.colors.background,
-          color: currentTheme.colors.text,
-          fontFamily: currentTheme.typography.fontFamily.sans
-        }}
-      >
+      <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
         {children}
       </div>
     </ThemeContext.Provider>

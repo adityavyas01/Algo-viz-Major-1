@@ -3,7 +3,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/* ═══════════════════════════════════════════════════════════════
+   Design System: "Deep Logic"
+   
+   Surface Hierarchy (instead of borders/glassmorphism):
+     base     #0b1326  →  Page background
+     low      #131b2e  →  Sidebar, secondary areas
+     DEFAULT  #171f33  →  Card backgrounds
+     high     #222a3d  →  Elevated cards, active items
+     highest  #2d3449  →  Tooltips, dropdowns
+     bright   #31394d  →  Selected/active highlights
+   
+   Typography:
+     Headlines  →  Space Grotesk (geometric, precise)
+     Body       →  Inter (functional clarity)
+   ═══════════════════════════════════════════════════════════════ */
 
 @layer base {
   :root {
@@ -16,7 +30,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 188 100% 45%;
+    --primary: 187 94% 42%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -33,63 +47,58 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 187 94% 42%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 187 94% 42%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Deep Logic: Dark Slate Palette */
+    --background: 226 55% 10%;
+    --foreground: 228 68% 93%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 224 40% 14%;
+    --card-foreground: 228 68% 93%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 223 35% 16%;
+    --popover-foreground: 228 68% 93%;
 
-    --primary: 188 100% 45%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 187 94% 42%;
+    --primary-foreground: 191 100% 12%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 195 50% 23%;
+    --secondary-foreground: 192 32% 67%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 224 26% 18%;
+    --muted-foreground: 192 15% 66%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 223 22% 19%;
+    --accent-foreground: 228 68% 93%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 84%;
+    --destructive-foreground: 0 100% 10%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 200 12% 27%;
+    --input: 224 26% 18%;
+    --ring: 187 94% 42%;
+
+    --sidebar-background: 226 40% 11%;
+    --sidebar-foreground: 228 68% 93%;
+    --sidebar-primary: 187 94% 42%;
+    --sidebar-primary-foreground: 191 100% 12%;
+    --sidebar-accent: 224 22% 16%;
+    --sidebar-accent-foreground: 228 68% 93%;
+    --sidebar-border: 200 12% 27%;
+    --sidebar-ring: 187 94% 42%;
   }
 }
 
@@ -99,13 +108,14 @@
   }
 
   body {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
     font-weight: 400;
+    letter-spacing: -0.01em;
 
     color-scheme: light dark;
     color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
+    background-color: #0b1326;
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -113,8 +123,27 @@
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
 
-    /* Responsive text scaling */
     font-size: 16px;
+  }
+
+  /* Headlines use Space Grotesk */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  h1 { font-weight: 700; }
+
+  /* Label-style section headers */
+  .section-label {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #bcc9cd;
   }
 
   /* Mobile-first responsive scaling */
@@ -210,24 +239,98 @@
       min-width: 44px;
     }
   }
+
+  /* Custom scrollbar — matches Deep Logic surfaces */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0b1326;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2d3449;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #31394d;
+  }
 }
 
-/* Dark theme optimized button variants */
+/* Deep Logic button variants */
 @layer components {
+  .btn-primary {
+    @apply text-white border-0 transition-all duration-200;
+    background: linear-gradient(135deg, #06b6d4, #4cd7f6);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 500;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    @apply text-white border-0 transition-colors;
+    background: #222a3d;
+    color: #4cd7f6;
+  }
+
+  .btn-secondary:hover {
+    background: #2d3449;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent transition-colors;
+    color: #bcc9cd;
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #4cd7f6;
+  }
+
+  /* Legacy dark button compat */
   .btn-dark-primary {
-    @apply bg-cyan-600 hover:bg-cyan-700 text-white border-0 transition-colors;
+    @apply border-0 transition-all duration-200;
+    background: linear-gradient(135deg, #06b6d4, #4cd7f6);
+    color: #003640;
+    font-weight: 500;
   }
   
   .btn-dark-secondary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white border-0 transition-colors;
+    @apply border-0 transition-colors;
+    background: #222a3d;
+    color: #4cd7f6;
   }
   
   .btn-dark-outline {
-    @apply bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 transition-all;
+    @apply bg-transparent transition-all;
+    border: 1px solid rgba(76, 215, 246, 0.3);
+    color: #4cd7f6;
+  }
+
+  .btn-dark-outline:hover {
+    border-color: rgba(76, 215, 246, 0.5);
+    background: rgba(76, 215, 246, 0.05);
   }
   
   .btn-dark-ghost {
-    @apply bg-transparent hover:bg-white/10 text-white transition-colors;
+    @apply bg-transparent transition-colors;
+    color: #bcc9cd;
+  }
+
+  .btn-dark-ghost:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Ghost border utility */
+  .ghost-border {
+    border: 1px solid rgba(61, 73, 76, 0.2);
   }
 }
 
@@ -238,12 +341,12 @@
   border: 10px solid #0000;
   box-sizing: border-box;
   background: 
-    radial-gradient(farthest-side,#fff 98%,#0000) 0    0/20px 20px,
-    radial-gradient(farthest-side,#fff 98%,#0000) 100% 0/20px 20px,
-    radial-gradient(farthest-side,#fff 98%,#0000) 100% 100%/20px 20px,
-    radial-gradient(farthest-side,#fff 98%,#0000) 0 100%/20px 20px,
-    linear-gradient(#fff 0 0) 50%/40px 40px,
-    #000;
+    radial-gradient(farthest-side,#4cd7f6 98%,#0000) 0    0/20px 20px,
+    radial-gradient(farthest-side,#4cd7f6 98%,#0000) 100% 0/20px 20px,
+    radial-gradient(farthest-side,#4cd7f6 98%,#0000) 100% 100%/20px 20px,
+    radial-gradient(farthest-side,#4cd7f6 98%,#0000) 0 100%/20px 20px,
+    linear-gradient(#4cd7f6 0 0) 50%/40px 40px,
+    #0b1326;
   background-repeat: no-repeat;
   filter: blur(4px) contrast(10);
   animation: l12 0.8s infinite;
@@ -350,10 +453,10 @@
 
 @keyframes glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
   }
   50% {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.6), 0 0 40px rgba(6, 182, 212, 0.2);
   }
 }
 
@@ -363,6 +466,15 @@
   }
   100% {
     background-position: 200% 0;
+  }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 
@@ -395,7 +507,7 @@
 }
 
 .animate-shimmer {
-  background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-image: linear-gradient(90deg, transparent, rgba(76, 215, 246, 0.15), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -403,6 +515,10 @@
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient 3s ease infinite;
+}
+
+.animate-subtle-pulse {
+  animation: subtle-pulse 3s ease-in-out infinite;
 }
 
 .delay-200 {
@@ -439,8 +555,8 @@
 }
 
 .hover-lift:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
 }
 
 .hover-glow {
@@ -448,7 +564,7 @@
 }
 
 .hover-glow:hover {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
 }
 
 /* Background Grid */
@@ -456,28 +572,29 @@
   background-image: radial-gradient(circle, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
 }
 
-/* Enhanced Shadows */
+/* Enhanced Shadows — Deep Logic ambient shadows */
 .shadow-3xl {
-  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(76, 215, 246, 0.03);
 }
+
 /* React Split Gutter Styles */
 .gutter {
-  background-color: rgb(229, 231, 235);
+  background-color: #171f33;
   background-repeat: no-repeat;
   background-position: 50%;
   transition: background-color 0.2s ease;
 }
 
 .dark .gutter {
-  background-color: rgb(31, 41, 55);
+  background-color: #171f33;
 }
 
 .gutter:hover {
-  background-color: rgb(59, 130, 246);
+  background-color: #06b6d4;
 }
 
 .dark .gutter:hover {
-  background-color: rgb(59, 130, 246);
+  background-color: #06b6d4;
 }
 
 .gutter.gutter-horizontal {

@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -10,8 +10,8 @@ import { CollaborationProvider } from "@/contexts/CollaborationContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PageLoader } from "@/components/ui/loader";
-import { AnimatePresence } from "framer-motion";
-import { PageTransition } from "@/components/motion/MotionWrapper";
+
+
 import { PWAProvider } from "@/components/PWAProvider";
 import { usePerformanceOptimization } from "@/lib/optimization";
 import { performanceMonitor } from "@/lib/performance";
@@ -22,30 +22,22 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 
 // Lazy-loaded pages for better performance
-const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
 const LearnPageRouter = React.lazy(() => import("@/pages/Learn/LearnPageRouter"));
 const ArticlePage = React.lazy(() => import("@/pages/Learn/ArticlePage"));
 const Community = React.lazy(() => import("@/pages/Community"));
 const Challenges = React.lazy(() => import("@/pages/Challenges"));
 const Profile = React.lazy(() => import("@/pages/Profile"));
-const SkillsAssessment = React.lazy(() => import("@/pages/SkillsAssessment"));
 const EmailVerification = React.lazy(() => import("@/pages/EmailVerification"));
 const EmailVerificationSuccess = React.lazy(() => import("@/pages/EmailVerificationSuccess"));
 const ForgotPassword = React.lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = React.lazy(() => import("@/pages/ResetPassword"));
-const AdminPage = React.lazy(() => import("@/pages/AdminPage"));
 const ManageCategoriesPage = React.lazy(() => import("@/pages/Admin/ManageCategoriesPage"));
 const ManageAlgorithmsPage = React.lazy(() => import("@/pages/Admin/ManageAlgorithmsPage"));
 const ManageArticlesPage = React.lazy(() => import("@/pages/Admin/ManageArticlesPage"));
-const AdvancedFeatures = React.lazy(() => import("@/pages/AdvancedFeatures"));
-const PracticeProblems = React.lazy(() => import("@/pages/PracticeProblems"));
 const Leaderboard = React.lazy(() => import("@/pages/Leaderboard"));
-const RealTimeCollaboration = React.lazy(() => import("@/components/RealTimeCollaboration"));
 const NotFound = React.lazy(() => import("@/pages/NotFound"));
-const CollaborativeSessionPage = React.lazy(() => import("@/pages/CollaborativeSessionPage"));
 const MyCertificatesPage = React.lazy(() => import("@/pages/Profile/MyCertificatesPage"));
 const VerifyCertificatePage = React.lazy(() => import("@/pages/VerifyCertificatePage"));
-const CodeRunner = React.lazy(() => import("@/pages/CodeRunner"));
 const ProblemsPage = React.lazy(() => import("@/pages/ProblemsPage"));
 const ProblemView = React.lazy(() => import("@/components/ProblemView"));
 const ContestsPage = React.lazy(() => import("@/pages/ContestsPage"));
@@ -78,14 +70,10 @@ const ProblemViewWrapper = () => {
   return <ProblemView slug={slug || ""} />;
 };
 
-// Animated Routes wrapper component
-const AnimatedRoutes = () => {
-  const location = useLocation();
-  
+// Routes wrapper component
+const AppRoutes = () => {
   return (
-    <AnimatePresence mode="wait">
-      <PageTransition key={location.pathname}>
-        <Routes location={location}>
+        <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -96,14 +84,6 @@ const AnimatedRoutes = () => {
           <Route path="/email-verification-success" element={<EmailVerificationSuccess />} />
         
           {/* Protected Routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
           <Route 
             path="/learning" 
             element={<LearnPageRouter />} 
@@ -119,14 +99,6 @@ const AnimatedRoutes = () => {
           <Route 
             path="/challenges" 
             element={<Challenges />} 
-          />
-          <Route 
-            path="/practice" 
-            element={
-              <ProtectedRoute>
-                <PracticeProblems />
-              </ProtectedRoute>
-            } 
           />
           <Route 
             path="/profile" 
@@ -149,36 +121,10 @@ const AnimatedRoutes = () => {
             element={<VerifyCertificatePage />} 
           />
           <Route 
-            path="/skills-assessment" 
-            element={
-              <ProtectedRoute>
-                <SkillsAssessment />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
             path="/leaderboard" 
             element={
               <ProtectedRoute>
                 <Leaderboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/advanced-features" 
-            element={
-              <ProtectedRoute>
-                <AdvancedFeatures />
-              </ProtectedRoute>
-            } 
-          />
-
-          {/* Collaboration Routes */}
-          <Route 
-            path="/collaborate/:sessionId" 
-            element={
-              <ProtectedRoute>
-                <RealTimeCollaboration />
               </ProtectedRoute>
             } 
           />
@@ -216,22 +162,7 @@ const AnimatedRoutes = () => {
               </ProtectedRoute>
             } 
           />
-          
-          {/* New Collaborative Session Route */}
-          <Route 
-            path="/session/:sessionId" 
-            element={
-              <ProtectedRoute>
-                <CollaborativeSessionPage />
-              </ProtectedRoute>
-            } 
-          />
 
-          {/* Code Runner Demo - Multi-Language Execution */}
-          <Route 
-            path="/code-runner" 
-            element={<CodeRunner />} 
-          />
 
           {/* Problems - LeetCode style problem solving */}
           <Route 
@@ -267,8 +198,6 @@ const AnimatedRoutes = () => {
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
-      </PageTransition>
-    </AnimatePresence>
   );
 };
 
@@ -300,7 +229,7 @@ function App() {
                     <PWAProvider>
                       <div className="App">
                         <Suspense fallback={<PageLoader />}>
-                          <AnimatedRoutes />
+                          <AppRoutes />
                         </Suspense>
                         
                         <Toaster 

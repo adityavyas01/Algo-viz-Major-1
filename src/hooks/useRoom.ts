@@ -1,20 +1,18 @@
 /**
  * useRoom Hook
- * React hooks for managing study room state
+ * React hooks for managing study room state with real-time subscriptions
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   getPublicRooms,
   getUserRooms,
-  createRoom,
-  joinRoom,
-  leaveRoom,
   getRoomMembers,
-  sendMessage,
   getRoomMessages,
   getRoomSharedCode,
-  updateSharedCode,
+  getRoomById,
+  sendMessage as sendMessageService,
+  updateSharedCode as updateSharedCodeService,
   subscribeToMessages,
   subscribeToMembers,
   subscribeToSharedCode,
@@ -23,7 +21,11 @@ import {
   type RoomMessage,
   type SharedCode,
 } from "@/services/roomService";
+import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Hook for the study rooms listing page
+ */
 export function useRooms() {
   const [publicRooms, setPublicRooms] = useState<StudyRoom[]>([]);
   const [userRooms, setUserRooms] = useState<StudyRoom[]>([]);
@@ -57,20 +59,29 @@ export function useRooms() {
   };
 }
 
+/**
+ * Hook for a single room view with real-time updates
+ */
 export function useRoom(roomId: string) {
+  const [room, setRoom] = useState<StudyRoom | null>(null);
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const [sharedCode, setSharedCode] = useState<SharedCode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const presenceChannelRef = useRef<any>(null);
 
-  const loadRoomData = async () => {
+  const loadRoomData = useCallback(async () => {
+    if (!roomId) return;
     setIsLoading(true);
     try {
-      const [membersData, messagesData, codeData] = await Promise.all([
+      const [roomData, membersData, messagesData, codeData] = await Promise.all([
+        getRoomById(roomId),
         getRoomMembers(roomId),
         getRoomMessages(roomId),
         getRoomSharedCode(roomId),
       ]);
+      setRoom(roomData);
       setMembers(membersData);
       setMessages(messagesData);
       setSharedCode(codeData);
@@ -79,48 +90,90 @@ export function useRoom(roomId: string) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [roomId]);
 
   useEffect(() => {
     if (!roomId) return;
 
     loadRoomData();
 
-    // Set up real-time subscriptions
-    const messageSubscription = subscribeToMessages(roomId, (message) => {
-      setMessages((prev) => [...prev, message]);
+    // Real-time message subscription
+    const messageSubscription = subscribeToMessages(roomId, (newMessage) => {
+      setMessages((prev) => {
+        // Deduplicate by id
+        if (prev.some((m) => m.id === newMessage.id)) return prev;
+        return [...prev, newMessage];
+      });
     });
 
+    // Real-time member changes
     const memberSubscription = subscribeToMembers(roomId, () => {
       getRoomMembers(roomId).then(setMembers);
     });
 
-    const codeSubscription = subscribeToSharedCode(roomId, (code) => {
-      setSharedCode(code);
+    // Real-time code updates
+    const codeSubscription = subscribeToSharedCode(roomId, (updatedCode) => {
+      setSharedCode(updatedCode);
     });
+
+    // Presence channel for online status
+    const presenceChannel = supabase.channel(`room_${roomId}_presence`, {
+      config: { presence: { key: "user_id" } },
+    });
+
+    presenceChannel
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChannel.presenceState();
+        const online = new Set<string>();
+        Object.keys(state).forEach((key) => {
+          const presences = state[key] as any[];
+          presences.forEach((p) => {
+            if (p.user_id) online.add(p.user_id);
+          });
+        });
+        setOnlineUsers(online);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await presenceChannel.track({
+              user_id: user.id,
+              online_at: new Date().toISOString(),
+            });
+          }
+        }
+      });
+
+    presenceChannelRef.current = presenceChannel;
 
     return () => {
       messageSubscription.unsubscribe();
       memberSubscription.unsubscribe();
       codeSubscription.unsubscribe();
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+      }
     };
-  }, [roomId]);
+  }, [roomId, loadRoomData]);
 
-  const handleSendMessage = async (message: string) => {
-    await sendMessage(roomId, message);
+  const handleSendMessage = async (message: string, messageType: RoomMessage["message_type"] = "text", metadata?: any) => {
+    await sendMessageService(roomId, message, messageType, metadata);
   };
 
   const handleUpdateCode = async (code: string, language?: string) => {
     if (sharedCode) {
-      await updateSharedCode(sharedCode.id, code, language);
+      await updateSharedCodeService(sharedCode.id, code, language);
     }
   };
 
   return {
+    room,
     members,
     messages,
     sharedCode,
     isLoading,
+    onlineUsers,
     sendMessage: handleSendMessage,
     updateCode: handleUpdateCode,
     reload: loadRoomData,

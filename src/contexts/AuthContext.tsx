@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(mockUser);
       setSession(mockSession);
       setLoading(false);
-      console.log("✅ Fallback admin session restored from localStorage");
+
       
       // No need to set up Supabase listener for fallback admin
       return () => { mounted = false; };
@@ -148,7 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               const currentPath = window.location.pathname;
               
               // Don't redirect if user is already on a valid authenticated page
-              const authenticatedPaths = ['/dashboard', '/learning', '/community', '/challenges', '/profile', '/skills-assessment', '/practice', '/advanced-features', '/leaderboard'];
+              const authenticatedPaths = ['/learning', '/community', '/challenges', '/profile', '/leaderboard', '/problems', '/contests', '/rooms'];
               const isOnAuthenticatedPage = authenticatedPaths.some(path => currentPath.startsWith(path));
             
             if (!isOnAuthenticatedPage) {
@@ -164,9 +164,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               
               if (shouldRedirect) {
                 if (!assessment) {
-                  navigate("/skills-assessment");
+                  navigate("/");
                 } else {
-                  navigate("/dashboard");
+                  navigate("/");
                 }
               }
             }
@@ -284,7 +284,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
       
       setLoading(false);
-      navigate("/dashboard");
+      navigate("/");
       return { error: null };
     }
     
@@ -379,7 +379,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
       if (error) throw error;

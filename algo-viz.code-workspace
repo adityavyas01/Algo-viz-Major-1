@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "algo-viz",
+			"path": "."
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "algo-viz",
+		"chat.agent.maxRequests": 1e+34
+	}
+}

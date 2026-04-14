@@ -1,22 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' http://localhost:2358 https://lctytebgxakcztdijbxu.supabase.co wss://lctytebgxakcztdijbxu.supabase.co https://*.ingest.sentry.io https://*.sentry.io https://judge0-ce.p.rapidapi.com https://cdn.jsdelivr.net; worker-src 'self' blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' http://localhost:2358 https://lctytebgxakcztdijbxu.supabase.co wss://lctytebgxakcztdijbxu.supabase.co https://*.ingest.sentry.io https://*.sentry.io https://judge0-ce.p.rapidapi.com https://cdn.jsdelivr.net; worker-src 'self' blob:;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
     
+    <!-- Google Fonts: Space Grotesk (headlines) + Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
     <!-- App Meta -->
     <title>AlgoViz - Interactive Algorithm Visualization Platform</title>
     <meta name="description" content="Master data structures and algorithms with interactive visualizations, real-time collaboration, and gamified learning experiences." />
     <meta name="author" content="AlgoViz" />
     <meta name="keywords" content="algorithms, data structures, visualization, learning, coding, computer science, DSA" />
-    <meta name="theme-color" content="#0891b2" />
+    <meta name="theme-color" content="#0b1326" />
     
     <!-- Open Graph -->
     <meta property="og:title" content="AlgoViz - Interactive Algorithm Visualization" />

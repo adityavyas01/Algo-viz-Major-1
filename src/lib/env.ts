@@ -92,13 +92,4 @@ export const isAnalyticsEnabled = () => env.VERCEL_ANALYTICS;
 export const isSentryEnabled = () => !!env.SENTRY_DSN;
 export const isRateLimitEnabled = () => env.RATE_LIMIT_ENABLED;
 
-// Environment info for debugging (development only)
-if (isDevelopment()) {
-  console.log('Environment Configuration:', {
-    NODE_ENV: env.NODE_ENV,
-    SUPABASE_URL: env.SUPABASE_URL,
-    ANALYTICS_ENABLED: env.VERCEL_ANALYTICS,
-    SENTRY_ENABLED: isSentryEnabled(),
-    RATE_LIMIT_ENABLED: env.RATE_LIMIT_ENABLED,
-  });
-}
+// Environment info available via env object for debugging when needed
