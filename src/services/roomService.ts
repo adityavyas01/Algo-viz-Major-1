@@ -96,7 +96,7 @@ export async function getUserRooms(): Promise<StudyRoom[]> {
 
 /**
  * Create a new study room
- * The DB trigger auto-joins the creator and auto-creates shared code
+ * Handles both trigger-based and manual member/code creation
  */
 export async function createRoom(
   name: string,
@@ -111,6 +111,7 @@ export async function createRoom(
     throw new Error("User must be authenticated to create rooms");
   }
 
+  // Step 1: Create the room
   const { data, error } = await supabase
     .from("study_rooms")
     .insert({
@@ -128,6 +129,41 @@ export async function createRoom(
   if (error) {
     console.error("Error creating room:", error);
     throw new Error(`Failed to create room: ${error.message}`);
+  }
+
+  // Step 2: Ensure creator is a room member (idempotent — handles trigger or manual)
+  const { error: memberError } = await supabase
+    .from("room_members")
+    .upsert(
+      {
+        room_id: data.id,
+        user_id: user.id,
+        role: "owner",
+        is_online: true,
+      },
+      { onConflict: "room_id,user_id", ignoreDuplicates: true }
+    );
+
+  if (memberError && !memberError.message.includes("duplicate")) {
+    console.warn("Could not add creator as member:", memberError.message);
+  }
+
+  // Step 3: Ensure shared code pad exists
+  const { error: codeError } = await supabase
+    .from("room_shared_code")
+    .upsert(
+      {
+        room_id: data.id,
+        title: "Shared Code",
+        code: "",
+        language: "python",
+        created_by: user.id,
+      },
+      { ignoreDuplicates: true }
+    );
+
+  if (codeError && !codeError.message.includes("duplicate")) {
+    console.warn("Could not create shared code:", codeError.message);
   }
 
   return data;

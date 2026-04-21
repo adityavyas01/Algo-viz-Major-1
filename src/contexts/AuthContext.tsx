@@ -33,54 +33,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     let mounted = true;
     
-    // CHECK FOR FALLBACK ADMIN FIRST (synchronous check)
-    const isFallbackAdmin = localStorage.getItem('algviz_fallback_admin') === 'true';
-    
-    if (isFallbackAdmin) {
-      // Restore fallback admin session immediately (no async needed)
-      const mockUser = {
-        id: "00000000-0000-0000-0000-000000000001",
-        email: "admin@algoviz.com",
-        email_confirmed_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        aud: "authenticated",
-        role: "authenticated",
-        app_metadata: { provider: "email", is_admin: true },
-        user_metadata: { full_name: "AlgoViz Admin", is_admin: true },
-      } as User;
-
-      const mockSession = {
-        access_token: "mock-admin-token",
-        token_type: "bearer",
-        expires_in: 3600,
-        expires_at: Date.now() + 3600000,
-        refresh_token: "mock-refresh-token",
-        user: mockUser,
-      } as Session;
-
-      setUser(mockUser);
-      setSession(mockSession);
-      setLoading(false);
-
+    // Always try real Supabase session first, even if fallback flag exists
+    const initSession = async () => {
+      const { data: { session: realSession } } = await supabase.auth.getSession();
       
-      // No need to set up Supabase listener for fallback admin
-      return () => { mounted = false; };
-    }
-    
-    // For real Supabase users: Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
-        setSession(session);
-        setUser(session?.user ?? null);
+      if (realSession && mounted) {
+        // Real session found — use it, clear any stale fallback flag
+        setSession(realSession);
+        setUser(realSession.user);
         setLoading(false);
-        
-        // Store last visit for analytics
-        if (session) {
-          localStorage.setItem('algviz_last_visit', new Date().toISOString());
-        }
+        localStorage.removeItem('algviz_fallback_admin');
+        localStorage.setItem('algviz_last_visit', new Date().toISOString());
+        return;
       }
-    });
+
+      // No real session — check for fallback admin flag (offline mode only)
+      const isFallbackAdmin = localStorage.getItem('algviz_fallback_admin') === 'true';
+      if (isFallbackAdmin && mounted) {
+        const mockUser = {
+          id: "00000000-0000-0000-0000-000000000001",
+          email: "admin@algoviz.com",
+          email_confirmed_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          aud: "authenticated",
+          role: "authenticated",
+          app_metadata: { provider: "email", is_admin: true },
+          user_metadata: { full_name: "AlgoViz Admin", is_admin: true },
+        } as User;
+
+        const mockSession = {
+          access_token: "mock-admin-token",
+          token_type: "bearer",
+          expires_in: 3600,
+          expires_at: Date.now() + 3600000,
+          refresh_token: "mock-refresh-token",
+          user: mockUser,
+        } as Session;
+
+        setUser(mockUser);
+        setSession(mockSession);
+        console.warn("⚠️ Using offline mock admin — DB write operations will fail");
+      }
+      
+      if (mounted) setLoading(false);
+    };
+
+    initSession();
+    
     
     // For real Supabase users: Set up auth listener
     const {
@@ -248,53 +248,99 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     
-    // HARDCODED FALLBACK ADMIN ACCOUNT (Emergency Access)
-    // Credentials: admin@algoviz.com / Admin@123
-    if (email === "admin@algoviz.com" && password === "Admin@123") {
-      const mockUser = {
-        id: "00000000-0000-0000-0000-000000000001",
-        email: "admin@algoviz.com",
-        email_confirmed_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        aud: "authenticated",
-        role: "authenticated",
-        app_metadata: { provider: "email", is_admin: true },
-        user_metadata: { full_name: "AlgoViz Admin", is_admin: true },
-      } as User;
-
-      const mockSession = {
-        access_token: "mock-admin-token",
-        token_type: "bearer",
-        expires_in: 3600,
-        expires_at: Date.now() + 3600000,
-        refresh_token: "mock-refresh-token",
-        user: mockUser,
-      } as Session;
-
-      setUser(mockUser);
-      setSession(mockSession);
-      localStorage.setItem('algviz_fallback_admin', 'true');
-      
-      // No DB operations for fallback admin - it should work offline
-      
-      toast({
-        title: "🔑 Admin Access Granted",
-        description: "Logged in with fallback admin account (offline mode)",
-      });
-      
-      setLoading(false);
-      navigate("/");
-      return { error: null };
-    }
-    
     try {
+      // Try real Supabase auth first (works for ALL users including admin)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        // If admin credentials and user doesn't exist, auto-create
+        if (email === "admin@algoviz.com" && password === "Admin@123" && error.message.includes("Invalid login")) {
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: "admin@algoviz.com",
+            password: "Admin@123",
+            options: {
+              data: { full_name: "AlgoViz Admin", is_admin: true },
+            },
+          });
+
+          if (signUpError) {
+            // Supabase completely unreachable — use offline mock as last resort
+            console.warn("Supabase unreachable, falling back to offline mock admin");
+            const mockUser = {
+              id: "00000000-0000-0000-0000-000000000001",
+              email: "admin@algoviz.com",
+              email_confirmed_at: new Date().toISOString(),
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              aud: "authenticated",
+              role: "authenticated",
+              app_metadata: { provider: "email", is_admin: true },
+              user_metadata: { full_name: "AlgoViz Admin", is_admin: true },
+            } as User;
+
+            const mockSession = {
+              access_token: "mock-admin-token",
+              token_type: "bearer",
+              expires_in: 3600,
+              expires_at: Date.now() + 3600000,
+              refresh_token: "mock-refresh-token",
+              user: mockUser,
+            } as Session;
+
+            setUser(mockUser);
+            setSession(mockSession);
+            localStorage.setItem('algviz_fallback_admin', 'true');
+            
+            toast({
+              title: "⚠️ Offline Mode",
+              description: "Using offline mock admin. DB operations (rooms, contests) will not work.",
+              variant: "destructive",
+            });
+            
+            setLoading(false);
+            navigate("/");
+            return { error: null };
+          }
+
+          // SignUp succeeded — if auto-confirmed, sign in immediately
+          if (signUpData.session) {
+            toast({
+              title: "🔑 Admin Account Created & Logged In",
+              description: "Welcome to AlgoViz as admin!",
+            });
+            setLoading(false);
+            navigate("/");
+            return { error: null };
+          }
+
+          // If email confirmation required, try signing in anyway (some projects disable confirmation)
+          const { error: retryError } = await supabase.auth.signInWithPassword({
+            email: "admin@algoviz.com",
+            password: "Admin@123",
+          });
+
+          if (retryError) {
+            toast({
+              title: "Admin account created",
+              description: "Check email for verification link, then log in again.",
+            });
+            setLoading(false);
+            return { error: retryError };
+          }
+
+          toast({
+            title: "🔑 Admin Access Granted",
+            description: "Logged in with admin account",
+          });
+          setLoading(false);
+          navigate("/");
+          return { error: null };
+        }
+
+        // Regular login failure
         toast({
           title: "Login Failed",
           description: error.message,
@@ -305,6 +351,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (data.user) {
+        // Clear any stale fallback flag
+        localStorage.removeItem('algviz_fallback_admin');
+        
         toast({
           title: "Login Successful! 👋",
           description: `Welcome back, ${data.user.email}!`,

@@ -1,147 +1,23 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bookmark, BookmarkCheck, Heart, HeartOff, Star, Trash2, Filter, AlertCircle } from 'lucide-react';
-import { algorithmDatabase, type AlgorithmExplanation } from '@/data/algorithmDatabase';
-import { useAuth } from '@/contexts/AuthContext';
-import { addUserBookmark, removeUserBookmark } from '@/hooks/useDatabase';
-import { useToast } from '@/hooks/use-toast';
+import { Bookmark, BookmarkCheck, Heart, Star, Trash2, AlertCircle } from 'lucide-react';
+import { algorithmDatabase } from '@/data/algorithmDatabase';
+import { useBookmarks } from '@/hooks/useBookmarks';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface BookmarkItem {
-  id: string;
-  algorithmId: string;
-  type: 'bookmark' | 'favorite';
-  dateAdded: string;
-  notes?: string;
-}
-
 export const BookmarkSystem: React.FC = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [filter, setFilter] = useState<'all' | 'bookmarks' | 'favorites'>('all');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      loadBookmarks();
-    } else {
-      // For non-authenticated users, fall back to localStorage
-      loadLocalBookmarks();
-    }
-  }, [user]);
-
-  const loadBookmarks = async () => {
-    if (!user) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // In a real implementation, you would fetch from the database
-      // For now, we'll simulate with localStorage but add database structure
-      const savedBookmarks = localStorage.getItem(`algorithmBookmarks_${user.id}`);
-      if (savedBookmarks) {
-        setBookmarks(JSON.parse(savedBookmarks));
-      } else {
-        setBookmarks([]);
-      }
-    } catch (err) {
-      console.error('Error loading bookmarks:', err);
-      setError('Failed to load bookmarks');
-      setBookmarks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadLocalBookmarks = () => {
-    setLoading(true);
-    const savedBookmarks = localStorage.getItem('algorithmBookmarks');
-    if (savedBookmarks) {
-      setBookmarks(JSON.parse(savedBookmarks));
-    } else {
-      setBookmarks([]);
-    }
-    setLoading(false);
-  };
-
-  const saveBookmarks = (newBookmarks: BookmarkItem[]) => {
-    setBookmarks(newBookmarks);
-    if (user) {
-      localStorage.setItem(`algorithmBookmarks_${user.id}`, JSON.stringify(newBookmarks));
-    } else {
-      localStorage.setItem('algorithmBookmarks', JSON.stringify(newBookmarks));
-    }
-  };
-
-  const addBookmark = async (algorithmId: string, type: 'bookmark' | 'favorite') => {
-    const newBookmark: BookmarkItem = {
-      id: `${algorithmId}-${type}-${Date.now()}`,
-      algorithmId,
-      type,
-      dateAdded: new Date().toISOString()
-    };
-    
-    const updated = [...bookmarks.filter(b => !(b.algorithmId === algorithmId && b.type === type)), newBookmark];
-    saveBookmarks(updated);
-
-    if (user) {
-      try {
-        await addUserBookmark(algorithmId, type);
-        toast({
-          title: `${type === 'bookmark' ? 'Bookmarked' : 'Added to Favorites'}! 🔖`,
-          description: `${algorithmDatabase.find(a => a.id === algorithmId)?.name || 'Algorithm'} has been saved.`,
-        });
-      } catch (error) {
-        console.error('Error saving bookmark to database:', error);
-        toast({
-          title: "Bookmark Saved Locally",
-          description: "Your bookmark was saved locally, but couldn't sync to the cloud.",
-        });
-      }
-    } else {
-      toast({
-        title: `${type === 'bookmark' ? 'Bookmarked' : 'Added to Favorites'}! 🔖`,
-        description: "Sign in to sync your bookmarks across devices.",
-      });
-    }
-  };
-
-  const removeBookmark = async (bookmarkId: string) => {
-    const bookmark = bookmarks.find(b => b.id === bookmarkId);
-    const updated = bookmarks.filter(b => b.id !== bookmarkId);
-    saveBookmarks(updated);
-
-    if (user && bookmark) {
-      try {
-        await removeUserBookmark(bookmarkId);
-        toast({
-          title: "Bookmark Removed",
-          description: "Your bookmark has been removed.",
-        });
-      } catch (error) {
-        console.error('Error removing bookmark from database:', error);
-        toast({
-          title: "Bookmark Removed Locally",
-          description: "The bookmark was removed locally, but couldn't sync to the cloud.",
-        });
-      }
-    } else {
-      toast({
-        title: "Bookmark Removed",
-        description: "Your bookmark has been removed.",
-      });
-    }
-  };
-
-  const isBookmarked = (algorithmId: string, type: 'bookmark' | 'favorite') => {
-    return bookmarks.some(b => b.algorithmId === algorithmId && b.type === type);
-  };
+  const { 
+    bookmarks, 
+    loading, 
+    error, 
+    addBookmark, 
+    removeBookmark, 
+    isBookmarked, 
+    loadBookmarks 
+  } = useBookmarks();
 
   const getFilteredBookmarks = () => {
     switch (filter) {

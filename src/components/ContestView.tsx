@@ -123,7 +123,7 @@ export function ContestView() {
             <div className="flex items-center gap-3 mt-3">
               <Badge variant="outline">{contest.type}</Badge>
               <Badge variant={timeStatus === "active" ? "default" : "secondary"}>
-                {timeStatus === "active" ? "🔴 Live" : timeStatus === "upcoming" ? "Upcoming" : "Finished"}
+                {timeStatus === "active" ? "🔴 Live" : timeStatus === "not-started" ? "Upcoming" : "Finished"}
               </Badge>
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Users className="h-4 w-4" />

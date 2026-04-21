@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,150 +6,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Video, 
-  Mic, 
-  MicOff, 
-  VideoOff, 
-  Share2, 
-  MessageSquare, 
   Users, 
   Code,
   Clock,
-  Play,
-  Pause,
-  Settings,
-  Phone
+  Phone,
+  Share2
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-
-interface CollaborativeSession {
-  id: string;
-  title: string;
-  host: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  participants: Array<{
-    id: string;
-    name: string;
-    avatar?: string;
-    isOnline: boolean;
-  }>;
-  status: 'waiting' | 'active' | 'paused';
-  algorithm: string;
-  duration: number; // in minutes
-  maxParticipants: number;
-  isPublic: boolean;
-}
-
-const mockSessions: CollaborativeSession[] = [
-  {
-    id: '1',
-    title: 'Binary Search Deep Dive',
-    host: { id: '1', name: 'Alice Johnson' },
-    participants: [
-      { id: '2', name: 'Bob Smith', isOnline: true },
-      { id: '3', name: 'Carol Wilson', isOnline: true },
-      { id: '4', name: 'David Brown', isOnline: false },
-    ],
-    status: 'active',
-    algorithm: 'binary-search',
-    duration: 45,
-    maxParticipants: 8,
-    isPublic: true,
-  },
-  {
-    id: '2', 
-    title: 'Quick Sort Implementation Practice',
-    host: { id: '5', name: 'Eve Davis' },
-    participants: [
-      { id: '6', name: 'Frank Miller', isOnline: true },
-      { id: '7', name: 'Grace Lee', isOnline: true },
-    ],
-    status: 'waiting',
-    algorithm: 'quick-sort',
-    duration: 60,
-    maxParticipants: 6,
-    isPublic: false,
-  },
-];
+import { useCollaborationSession, mockSessions } from '@/hooks/useCollaborationSession';
+import { MediaControls } from './collaborative/MediaControls';
+import { ChatPanel } from './collaborative/ChatPanel';
 
 export const AdvancedCollaborativeFeatures: React.FC = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [activeSession, setActiveSession] = useState<CollaborativeSession | null>(null);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-
-  const handleJoinSession = (sessionId: string) => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to join collaborative sessions",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const session = mockSessions.find(s => s.id === sessionId);
-    if (session) {
-      setActiveSession(session);
-      toast({
-        title: "Joined Session",
-        description: `Connected to "${session.title}"`,
-      });
-    }
-  };
-
-  const handleLeaveSession = () => {
-    setActiveSession(null);
-    toast({
-      title: "Left Session",
-      description: "You have disconnected from the collaborative session",
-    });
-  };
-
-  const handleCreateSession = () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required", 
-        description: "Please sign in to create collaborative sessions",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Create Session",
-      description: "Session creation feature coming soon!",
-    });
-  };
-
-  const toggleVideo = () => {
-    setIsVideoEnabled(!isVideoEnabled);
-    toast({
-      title: isVideoEnabled ? "Video Disabled" : "Video Enabled",
-      description: `Your camera is now ${isVideoEnabled ? 'off' : 'on'}`,
-    });
-  };
-
-  const toggleAudio = () => {
-    setIsAudioEnabled(!isAudioEnabled);
-    toast({
-      title: isAudioEnabled ? "Microphone Muted" : "Microphone Unmuted",
-      description: `Your microphone is now ${isAudioEnabled ? 'muted' : 'unmuted'}`,
-    });
-  };
-
-  const toggleScreenShare = () => {
-    setIsScreenSharing(!isScreenSharing);
-    toast({
-      title: isScreenSharing ? "Screen Share Stopped" : "Screen Share Started",
-      description: `Screen sharing is now ${isScreenSharing ? 'disabled' : 'enabled'}`,
-    });
-  };
+  const {
+    activeSession,
+    isVideoEnabled,
+    isAudioEnabled,
+    isScreenSharing,
+    handleJoinSession,
+    handleLeaveSession,
+    handleCreateSession,
+    toggleVideo,
+    toggleAudio,
+    toggleScreenShare
+  } = useCollaborationSession();
 
   if (activeSession) {
     return (
@@ -168,11 +47,7 @@ export const AdvancedCollaborativeFeatures: React.FC = () => {
                   Hosted by {activeSession.host.name} • {activeSession.participants.length + 1} participants
                 </p>
               </div>
-              <Button
-                onClick={handleLeaveSession}
-                variant="destructive"
-                size="sm"
-              >
+              <Button onClick={handleLeaveSession} variant="destructive" size="sm">
                 <Phone className="w-4 h-4 mr-2" />
                 Leave Session
               </Button>
@@ -203,39 +78,14 @@ export const AdvancedCollaborativeFeatures: React.FC = () => {
 
                   {/* Controls Overlay */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                    <div className="flex items-center gap-2 bg-black/80 rounded-full px-4 py-2">
-                      <Button
-                        onClick={toggleVideo}
-                        size="sm"
-                        variant={isVideoEnabled ? "default" : "outline"}
-                        className="rounded-full"
-                      >
-                        {isVideoEnabled ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        onClick={toggleAudio}
-                        size="sm"
-                        variant={isAudioEnabled ? "default" : "destructive"}
-                        className="rounded-full"
-                      >
-                        {isAudioEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        onClick={toggleScreenShare}
-                        size="sm"
-                        variant={isScreenSharing ? "destructive" : "outline"}
-                        className="rounded-full"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                      >
-                        <Settings className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <MediaControls
+                      isVideoEnabled={isVideoEnabled}
+                      isAudioEnabled={isAudioEnabled}
+                      isScreenSharing={isScreenSharing}
+                      onToggleVideo={toggleVideo}
+                      onToggleAudio={toggleAudio}
+                      onToggleScreenShare={toggleScreenShare}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -335,40 +185,7 @@ console.log(binarySearch(testArray, 7)); // Output: 3`}</code>
             </Card>
 
             {/* Chat */}
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white text-lg flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  Chat
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-3 max-h-60 overflow-y-auto">
-                  <div className="p-3 bg-blue-500/10 rounded-lg">
-                    <p className="text-blue-400 text-xs font-medium">Alice Johnson</p>
-                    <p className="text-white text-sm">Let's walk through the binary search step by step</p>
-                  </div>
-                  <div className="p-3 bg-green-500/10 rounded-lg">
-                    <p className="text-green-400 text-xs font-medium">Bob Smith</p>
-                    <p className="text-white text-sm">Great! I'm following along</p>
-                  </div>
-                  <div className="p-3 bg-purple-500/10 rounded-lg">
-                    <p className="text-purple-400 text-xs font-medium">Carol Wilson</p>
-                    <p className="text-white text-sm">Can we slow down the visualization?</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Type a message..."
-                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/50"
-                  />
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    Send
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ChatPanel />
           </div>
         </div>
       </div>

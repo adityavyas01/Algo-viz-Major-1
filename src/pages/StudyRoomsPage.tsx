@@ -3,7 +3,7 @@
  * Browse, create, and join study rooms — with join code for private rooms
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, Plus, Lock, Globe, Search, KeyRound, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,13 +19,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRooms } from "@/hooks/useRoom";
 import { createRoom, joinRoom, joinRoomWithCode } from "@/services/roomService";
 
 export default function StudyRoomsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, session } = useAuth();
   const { publicRooms, userRooms, isLoading, reload } = useRooms();
+
+  // Check if user has real Supabase auth (not fallback mock)
+  const isRealAuth = useCallback(() => {
+    if (!user || !session) return false;
+    // Fallback admin uses a mock token
+    if (session.access_token === 'mock-admin-token') return false;
+    return true;
+  }, [user, session]);
+
+  const requireAuth = useCallback(() => {
+    if (!isRealAuth()) {
+      toast({
+        title: "Login required",
+        description: "Please sign in with your account to use this feature",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  }, [isRealAuth, toast]);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isJoinCodeDialogOpen, setIsJoinCodeDialogOpen] = useState(false);
@@ -43,6 +65,7 @@ export default function StudyRoomsPage() {
   });
 
   const handleCreateRoom = async () => {
+    if (!requireAuth()) return;
     if (!newRoom.name.trim()) {
       toast({ title: "Name required", description: "Please enter a room name", variant: "destructive" });
       return;
@@ -75,6 +98,7 @@ export default function StudyRoomsPage() {
   };
 
   const handleJoinRoom = async (roomId: string) => {
+    if (!requireAuth()) return;
     try {
       await joinRoom(roomId);
       navigate(`/room/${roomId}`);
@@ -89,6 +113,7 @@ export default function StudyRoomsPage() {
   };
 
   const handleJoinWithCode = async () => {
+    if (!requireAuth()) return;
     if (!joinCode.trim()) {
       toast({ title: "Code required", description: "Please enter a join code", variant: "destructive" });
       return;

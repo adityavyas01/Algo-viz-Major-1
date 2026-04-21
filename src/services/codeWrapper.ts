@@ -44,44 +44,43 @@ export function wrapCode(config: WrapperConfig): string {
       };
     }
     
-    switch (language) {
-      case 'python':
-      case 'python3':
-        return wrapPython(userCode, inputCode, parsed, signature);
-      case 'javascript':
-        return wrapJavaScript(userCode, inputCode, parsed, signature);
-      case 'typescript':
-        return wrapTypeScript(userCode, inputCode, parsed, signature);
-      case 'java':
-        return wrapJava(userCode, inputCode, parsed, signature);
-      case 'cpp':
-        return wrapCpp(userCode, inputCode, parsed, signature);
-      case 'c':
-        return wrapC(userCode, inputCode, parsed, signature);
-      case 'csharp':
-        return wrapCSharp(userCode, inputCode, parsed, signature);
-      case 'go':
-        return wrapGo(userCode, inputCode, parsed, signature);
-      case 'rust':
-        return wrapRust(userCode, inputCode, parsed, signature);
-      case 'kotlin':
-        return wrapKotlin(userCode, inputCode, parsed, signature);
-      case 'swift':
-        return wrapSwift(userCode, inputCode, parsed, signature);
-      case 'ruby':
-        return wrapRuby(userCode, inputCode, parsed, signature);
-      case 'php':
-        return wrapPhp(userCode, inputCode, parsed, signature);
-      case 'scala':
-        return wrapScala(userCode, inputCode, parsed, signature);
-      case 'dart':
-        return wrapDart(userCode, inputCode, parsed, signature);
-      default:
-        throw new WrapperError(`Unsupported language: ${language}`, {
-          language,
-          problemId,
-          testcaseId
-        });
+    const wrapperConfig: Record<string, any> = {
+      python: wrapPython,
+      python3: wrapPython,
+      javascript: wrapJavaScript,
+      typescript: wrapTypeScript,
+      java: wrapJava,
+      cpp: wrapCpp,
+      c: wrapC,
+      csharp: wrapCSharp,
+      go: wrapGo,
+      rust: wrapRust,
+      kotlin: wrapKotlin,
+      swift: wrapSwift,
+      ruby: wrapRuby,
+      php: wrapPhp,
+      scala: wrapScala,
+      dart: wrapDart,
+      haskell: wrapHaskell,
+      lua: wrapLua,
+      perl: wrapPerl,
+      r: wrapR,
+      bash: wrapBash,
+      elixir: wrapElixir,
+      clojure: wrapClojure,
+      fsharp: wrapFSharp,
+      groovy: wrapGroovy
+    };
+
+    const wrapperFn = wrapperConfig[language];
+    if (wrapperFn) {
+      return wrapperFn(userCode, inputCode, parsed, signature);
+    } else {
+      throw new WrapperError(`Unsupported language: ${language}`, {
+        language,
+        problemId,
+        testcaseId
+      });
     }
   } catch (error) {
     if (error instanceof WrapperError) {
