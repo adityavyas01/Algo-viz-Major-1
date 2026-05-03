@@ -19,7 +19,7 @@ import { getCodeTemplate, getCodeTemplates, getHints } from "@/services/codeTemp
 import type { Problem, Testcase } from "@/services/testcaseService";
 import type { CodeTemplate, Hint } from "@/services/codeTemplateService";
 import type { LanguageId } from "@/types/execution";
-import { SUPPORTED_LANGUAGES } from "@/services/piston";
+import { SUPPORTED_LANGUAGES } from "@/services/judge0";
 import { cn } from "@/lib/utils";
 import { getLeetCodeTemplate } from "@/services/codeWrapper";
 
