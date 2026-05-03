@@ -1,8 +1,12 @@
 /**
  * Judge0 CE (Community Edition) Service
- * Free multi-language code execution using Judge0 API
- * Supports 60+ programming languages
- * Rate limit: Generous (varies by RapidAPI tier, free tier: 50 requests/day)
+ * Multi-language code execution using Judge0 API via RapidAPI.
+ *
+ * Setup: Set VITE_RAPIDAPI_KEY in your environment (Vercel project settings)
+ * with a valid RapidAPI key from https://rapidapi.com/judge0-official/api/judge0-ce
+ *
+ * When no key is configured, executeCode() returns a clear error message
+ * instead of silently failing with a network error.
  */
 
 import type {
@@ -13,15 +17,22 @@ import type {
 } from '@/types/execution';
 import { env } from '@/lib/env';
 
-// Judge0 CE API Configuration
-// OPTION 1 (FREE): Self-hosted Judge0 (see docs/SELF_HOSTED_JUDGE0.md)
-// OPTION 2 (PAID): RapidAPI ($0.0017/request)
-const USE_SELF_HOSTED = env.RAPIDAPI_KEY === 'demo-key-limited' || env.RAPIDAPI_KEY === 'self-hosted';
-const JUDGE0_API_URL = USE_SELF_HOSTED 
-  ? 'http://localhost:2358'  // Local self-hosted instance
-  : 'https://judge0-ce.p.rapidapi.com';  // RapidAPI (paid)
+// Placeholder values that indicate no real key is set
+const PLACEHOLDER_KEYS = ['demo-key-limited', 'self-hosted', '', undefined];
+
+// Detect if a real API key is configured
 const RAPIDAPI_KEY = env.RAPIDAPI_KEY;
+const IS_CONFIGURED = !PLACEHOLDER_KEYS.includes(RAPIDAPI_KEY);
+const JUDGE0_API_URL = 'https://judge0-ce.p.rapidapi.com';
 const RAPIDAPI_HOST = 'judge0-ce.p.rapidapi.com';
+
+/**
+ * Check if Judge0 code execution is available.
+ * Use this in UI to show/hide run buttons or show setup instructions.
+ */
+export function isExecutionAvailable(): boolean {
+  return IS_CONFIGURED;
+}
 
 // Judge0 language ID mapping (Judge0 uses numeric IDs)
 const JUDGE0_LANGUAGE_IDS: Record<LanguageId, number> = {
@@ -233,13 +244,9 @@ async function submitToJudge0(request: ExecutionRequest): Promise<string> {
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-RapidAPI-Key': RAPIDAPI_KEY,
+    'X-RapidAPI-Host': RAPIDAPI_HOST,
   };
-
-  // Add RapidAPI headers only if using RapidAPI (not self-hosted)
-  if (!USE_SELF_HOSTED) {
-    headers['X-RapidAPI-Key'] = RAPIDAPI_KEY;
-    headers['X-RapidAPI-Host'] = RAPIDAPI_HOST;
-  }
 
   const response = await fetch(`${JUDGE0_API_URL}/submissions?base64_encoded=true&wait=true`, {
     method: 'POST',
@@ -259,13 +266,10 @@ async function submitToJudge0(request: ExecutionRequest): Promise<string> {
  * Get submission result from Judge0
  */
 async function getSubmissionResult(token: string): Promise<Judge0Submission> {
-  const headers: Record<string, string> = {};
-
-  // Add RapidAPI headers only if using RapidAPI (not self-hosted)
-  if (!USE_SELF_HOSTED) {
-    headers['X-RapidAPI-Key'] = RAPIDAPI_KEY;
-    headers['X-RapidAPI-Host'] = RAPIDAPI_HOST;
-  }
+  const headers: Record<string, string> = {
+    'X-RapidAPI-Key': RAPIDAPI_KEY,
+    'X-RapidAPI-Host': RAPIDAPI_HOST,
+  };
 
   const response = await fetch(`${JUDGE0_API_URL}/submissions/${token}?base64_encoded=true`, {
     method: 'GET',
@@ -283,6 +287,19 @@ async function getSubmissionResult(token: string): Promise<Judge0Submission> {
  * Execute code using Judge0 API
  */
 export async function executeCode(request: ExecutionRequest): Promise<ExecutionResult> {
+  // Early guard: if no API key is configured, return a clear error
+  if (!IS_CONFIGURED) {
+    return {
+      success: false,
+      stdout: '',
+      stderr: 'Code execution is not configured. Please set VITE_RAPIDAPI_KEY in your environment.',
+      output: '',
+      exitCode: 1,
+      runtime: 0,
+      error: 'Code execution requires a Judge0 API key. Contact the site administrator.'
+    };
+  }
+
   try {
     const startTime = performance.now();
 
