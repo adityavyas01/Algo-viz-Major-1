@@ -305,6 +305,18 @@ export async function leaveRoom(roomId: string): Promise<void> {
 }
 
 /**
+ * Set a member's online status to false (presence cleanup).
+ * Fire-and-forget — used on unmount and beforeunload.
+ */
+export async function setMemberOffline(roomId: string, userId: string): Promise<void> {
+  await supabase
+    .from("room_members")
+    .update({ is_online: false, last_seen: new Date().toISOString() })
+    .eq("room_id", roomId)
+    .eq("user_id", userId);
+}
+
+/**
  * Get room members with display names from user_profiles
  */
 export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
@@ -370,18 +382,26 @@ export async function sendMessage(
 }
 
 /**
- * Get room messages with user display names
+ * Get room messages with user display names.
+ * Supports cursor-based pagination: pass `before` (ISO timestamp) to load older messages.
  */
 export async function getRoomMessages(
   roomId: string,
-  limit: number = 100
+  limit: number = 100,
+  before?: string
 ): Promise<RoomMessage[]> {
-  const { data: messages, error } = await supabase
+  let query = supabase
     .from("room_messages")
     .select("*")
     .eq("room_id", roomId)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (before) {
+    query = query.lt("created_at", before);
+  }
+
+  const { data: messages, error } = await query;
 
   if (error) {
     console.error("Error fetching messages:", error);
@@ -401,10 +421,13 @@ export async function getRoomMessages(
     (profiles || []).map((p: any) => [p.user_id, p])
   );
 
-  return messages.map((m) => ({
-    ...m,
-    profile: profileMap.get(m.user_id) || { display_name: "User" },
-  }));
+  // Reverse to chronological order (we fetched DESC for pagination)
+  return messages
+    .map((m) => ({
+      ...m,
+      profile: profileMap.get(m.user_id) || { display_name: "User" },
+    }))
+    .reverse();
 }
 
 /**

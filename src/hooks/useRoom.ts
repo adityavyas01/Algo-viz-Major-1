@@ -1,6 +1,7 @@
 /**
  * useRoom Hook
- * React hooks for managing study room state with real-time subscriptions
+ * React hooks for managing study room state with real-time subscriptions.
+ * Production-grade: handles echo suppression, presence cleanup, and pagination.
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -13,6 +14,7 @@ import {
   getRoomById,
   sendMessage as sendMessageService,
   updateSharedCode as updateSharedCodeService,
+  setMemberOffline,
   subscribeToMessages,
   subscribeToMembers,
   subscribeToSharedCode,
@@ -70,6 +72,10 @@ export function useRoom(roomId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const presenceChannelRef = useRef<any>(null);
+  // Track local edits to suppress realtime echo of own code changes
+  const isLocalEditRef = useRef(false);
+  const localEditTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
 
   const loadRoomData = useCallback(async () => {
     if (!roomId) return;
@@ -97,10 +103,14 @@ export function useRoom(roomId: string) {
 
     loadRoomData();
 
-    // Real-time message subscription
+    // Cache current user ID for echo suppression
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      currentUserIdRef.current = user?.id || null;
+    });
+
+    // Real-time message subscription with dedup
     const messageSubscription = subscribeToMessages(roomId, (newMessage) => {
       setMessages((prev) => {
-        // Deduplicate by id
         if (prev.some((m) => m.id === newMessage.id)) return prev;
         return [...prev, newMessage];
       });
@@ -111,8 +121,12 @@ export function useRoom(roomId: string) {
       getRoomMembers(roomId).then(setMembers);
     });
 
-    // Real-time code updates
+    // Real-time code updates — suppress echo from own edits
     const codeSubscription = subscribeToSharedCode(roomId, (updatedCode) => {
+      if (isLocalEditRef.current && updatedCode.last_edited_by === currentUserIdRef.current) {
+        // This is the echo of our own edit — skip UI update
+        return;
+      }
       setSharedCode(updatedCode);
     });
 
@@ -147,13 +161,30 @@ export function useRoom(roomId: string) {
 
     presenceChannelRef.current = presenceChannel;
 
+    // Cleanup: untrack presence + set offline on unmount/tab close
+    const handleBeforeUnload = () => {
+      if (currentUserIdRef.current) {
+        setMemberOffline(roomId, currentUserIdRef.current);
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       messageSubscription.unsubscribe();
       memberSubscription.unsubscribe();
       codeSubscription.unsubscribe();
+      // Untrack presence before removing channel
       if (presenceChannelRef.current) {
+        presenceChannelRef.current.untrack().catch(() => {});
         supabase.removeChannel(presenceChannelRef.current);
       }
+      // Mark offline in DB
+      if (currentUserIdRef.current) {
+        setMemberOffline(roomId, currentUserIdRef.current);
+      }
+      // Clear local edit timer
+      if (localEditTimerRef.current) clearTimeout(localEditTimerRef.current);
     };
   }, [roomId, loadRoomData]);
 
@@ -163,6 +194,13 @@ export function useRoom(roomId: string) {
 
   const handleUpdateCode = async (code: string, language?: string) => {
     if (sharedCode) {
+      // Mark as local edit to suppress our own realtime echo
+      isLocalEditRef.current = true;
+      if (localEditTimerRef.current) clearTimeout(localEditTimerRef.current);
+      // Reset local edit flag after 3s (enough for round-trip)
+      localEditTimerRef.current = setTimeout(() => {
+        isLocalEditRef.current = false;
+      }, 3000);
       await updateSharedCodeService(sharedCode.id, code, language);
     }
   };

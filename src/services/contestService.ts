@@ -114,7 +114,29 @@ export async function getContests(filters?: {
     throw new Error(`Failed to fetch contests: ${error.message}`);
   }
 
-  return data || [];
+  // Compute effective status client-side (DB status may be stale)
+  return (data || []).map(enrichContestStatus);
+}
+
+/**
+ * Compute the real-time effective status of a contest based on timestamps.
+ * The DB `status` column may not be updated in real-time, so we derive it.
+ */
+export function getEffectiveStatus(contest: Contest): Contest["status"] {
+  const now = Date.now();
+  const start = new Date(contest.start_time).getTime();
+  const end = new Date(contest.end_time).getTime();
+
+  if (now < start) return "upcoming";
+  if (now >= start && now <= end) return "active";
+  return "finished";
+}
+
+/**
+ * Enrich a contest object with computed effective status
+ */
+function enrichContestStatus(contest: Contest): Contest {
+  return { ...contest, status: getEffectiveStatus(contest) };
 }
 
 /**
@@ -132,7 +154,7 @@ export async function getContestById(contestId: string): Promise<Contest | null>
     return null;
   }
 
-  return data;
+  return data ? enrichContestStatus(data) : null;
 }
 
 /**
